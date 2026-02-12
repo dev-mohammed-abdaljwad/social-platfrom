@@ -3,14 +3,18 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\FriendshipStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +25,11 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'profile_picture',
+        'bio',
+        'phone',
+        'is_active',
+        'username',
     ];
 
     /**
@@ -43,6 +52,107 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Get all posts by the user.
+     */
+    public function posts(): HasMany
+    {
+        return $this->hasMany(Post::class);
+    }
+
+    /**
+     * Get all comments by the user.
+     */
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    /**
+     * Get all likes by the user.
+     */
+    public function likes(): HasMany
+    {
+        return $this->hasMany(Like::class);
+    }
+
+    /**
+     * Get friend requests sent by the user.
+     */
+    public function sentFriendRequests(): HasMany
+    {
+        return $this->hasMany(Friendship::class, 'sender_id');
+    }
+
+    /**
+     * Get friend requests received by the user.
+     */
+    public function receivedFriendRequests(): HasMany
+    {
+        return $this->hasMany(Friendship::class, 'receiver_id');
+    }
+
+    /**
+     * Get pending friend requests received by the user.
+     */
+    public function pendingFriendRequests(): HasMany
+    {
+        return $this->receivedFriendRequests()->where('status', FriendshipStatusEnum::Pending);
+    }
+
+    /**
+     * Get all friends of the user.
+     */
+    public function friends()
+    {
+        $sentAccepted = $this->sentFriendRequests()
+            ->where('status', FriendshipStatusEnum::Accepted)
+            ->pluck('receiver_id');
+
+        $receivedAccepted = $this->receivedFriendRequests()
+            ->where('status', FriendshipStatusEnum::Accepted)
+            ->pluck('sender_id');
+
+        return User::whereIn('id', $sentAccepted->merge($receivedAccepted));
+    }
+
+    /**
+     * Check if user is friends with another user.
+     */
+    public function isFriendWith(User $user): bool
+    {
+        return Friendship::where(function ($query) use ($user) {
+            $query->where('sender_id', $this->id)
+                ->where('receiver_id', $user->id);
+        })->orWhere(function ($query) use ($user) {
+            $query->where('sender_id', $user->id)
+                ->where('receiver_id', $this->id);
+        })->where('status', FriendshipStatusEnum::Accepted)->exists();
+    }
+
+    /**
+     * Check if there's a pending friend request between users.
+     */
+    public function hasPendingFriendRequestFrom(User $user): bool
+    {
+        return Friendship::where('sender_id', $user->id)
+            ->where('receiver_id', $this->id)
+            ->where('status', FriendshipStatusEnum::Pending)
+            ->exists();
+    }
+
+    /**
+     * Check if user has sent a friend request to another user.
+     */
+    public function hasSentFriendRequestTo(User $user): bool
+    {
+        return Friendship::where('sender_id', $this->id)
+            ->where('receiver_id', $user->id)
+            ->where('status', FriendshipStatusEnum::Pending)
+            ->exists();
     }
 }
