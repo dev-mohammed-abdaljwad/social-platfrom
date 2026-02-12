@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', ($user->name ?? 'Profile') . ' - SocialHub')
+@section('title', ($user->name ?? 'Profile') . ' - SocialTime')
 
 @section('content')
     <!-- Profile Header -->

@@ -167,4 +167,19 @@ class PageController extends Controller
     {
         return view('explore');
     }
+
+    /**
+     * Saved posts page.
+     */
+    public function saved()
+    {
+        $user = auth()->user();
+        
+        $savedPosts = $user->savedPosts()
+            ->with(['user', 'comments', 'likes', 'shares'])
+            ->orderByPivot('created_at', 'desc')
+            ->get();
+
+        return view('saved', compact('savedPosts'));
+    }
 }

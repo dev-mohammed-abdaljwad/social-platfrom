@@ -4,14 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Register - SocialHub</title>
+    <title>Register - SocialTime</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gradient-to-br from-purple-500 to-blue-600 min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-md">
         <!-- Logo -->
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold text-white">SocialHub</h1>
+            <div class="flex justify-center mb-3">
+                <svg viewBox="0 0 200 200" width="64" height="64">
+                    <defs>
+                        <linearGradient id="whiteGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#e0e7ff;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <circle cx="60" cy="70" r="35" fill="url(#whiteGradient)" opacity="0.9"/>
+                    <circle cx="140" cy="100" r="40" fill="url(#whiteGradient)" opacity="0.8"/>
+                    <circle cx="100" cy="30" r="25" fill="url(#whiteGradient)" opacity="0.95"/>
+                    <line x1="85" y1="50" x2="100" y2="35" stroke="url(#whiteGradient)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+                    <line x1="90" y1="100" x2="115" y2="90" stroke="url(#whiteGradient)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+                    <path d="M 35 100 L 25 115 L 40 105 Z" fill="url(#whiteGradient)" opacity="0.9"/>
+                    <circle cx="100" cy="80" r="8" fill="#7c3aed" opacity="0.3"/>
+                </svg>
+            </div>
+            <h1 class="text-4xl font-bold text-white">SocialTime</h1>
             <p class="text-purple-100 mt-2">Create an account and start connecting.</p>
         </div>
 

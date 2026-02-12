@@ -7,6 +7,7 @@ use App\Enums\PrivacyTypeEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Storage;
@@ -147,6 +148,22 @@ class Post extends Model
     public function isLikedBy(User $user): bool
     {
         return $this->likes()->where('user_id', $user->id)->exists();
+    }
+
+    /**
+     * Get all users who saved this post.
+     */
+    public function savedBy(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'saved_posts')->withTimestamps();
+    }
+
+    /**
+     * Check if a user has saved this post.
+     */
+    public function isSavedBy(User $user): bool
+    {
+        return $this->savedBy()->where('user_id', $user->id)->exists();
     }
 
     /**

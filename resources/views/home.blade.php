@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Home - SocialHub')
+@section('title', 'Home - SocialTime')
 
 @section('content')
     <!-- Create Post Card -->
@@ -773,11 +773,76 @@
                 }
             });
         });
+
+        // Re-attach save button listeners
+        document.querySelectorAll('.save-btn:not([data-listener])').forEach(btn => {
+            btn.setAttribute('data-listener', 'true');
+            btn.addEventListener('click', async function() {
+                const postId = this.dataset.postId;
+                const btn = this;
+                try {
+                    const response = await fetch(`/posts/${postId}/save`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const svg = btn.querySelector('svg');
+                        
+                        if (data.saved) {
+                            btn.classList.add('text-yellow-500');
+                            svg.setAttribute('fill', 'currentColor');
+                        } else {
+                            btn.classList.remove('text-yellow-500');
+                            svg.setAttribute('fill', 'none');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error saving post:', error);
+                }
+            });
+        });
     }
     
     // Mark existing buttons as having listeners
-    document.querySelectorAll('.like-btn, .comment-toggle-btn, .share-btn, .comment-form').forEach(el => {
+    document.querySelectorAll('.like-btn, .comment-toggle-btn, .share-btn, .save-btn, .comment-form').forEach(el => {
         el.setAttribute('data-listener', 'true');
+    });
+
+    // Save button functionality
+    document.querySelectorAll('.save-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const postId = this.dataset.postId;
+            const btn = this;
+            try {
+                const response = await fetch(`/posts/${postId}/save`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const svg = btn.querySelector('svg');
+                    
+                    if (data.saved) {
+                        btn.classList.add('text-yellow-500');
+                        svg.setAttribute('fill', 'currentColor');
+                    } else {
+                        btn.classList.remove('text-yellow-500');
+                        svg.setAttribute('fill', 'none');
+                    }
+                }
+            } catch (error) {
+                console.error('Error saving post:', error);
+            }
+        });
     });
 </script>
 @endpush

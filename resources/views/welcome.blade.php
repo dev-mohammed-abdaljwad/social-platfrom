@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Social Feed</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>SocialHub - Logo Showcase</title>
     <style>
         * {
             margin: 0;
@@ -13,355 +12,476 @@
         }
 
         body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
         }
 
-        .reaction-button {
-            transition: all 0.2s ease;
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
         }
 
-        .reaction-button:hover {
-            transform: scale(1.1);
+        h1 {
+            text-align: center;
+            color: #1a365d;
+            margin-bottom: 50px;
+            font-size: 2.5rem;
         }
 
-        .reaction-button.active {
-            color: #ec4899;
-            font-weight: 600;
+        .section {
+            margin-bottom: 60px;
         }
 
-        .like-button:hover {
-            color: #ef4444;
+        .section-title {
+            font-size: 1.8rem;
+            color: #2d3748;
+            margin-bottom: 30px;
+            padding-left: 10px;
+            border-left: 4px solid #2563eb;
         }
 
-        .love-button:hover {
-            color: #ec4899;
+        /* Grid layouts */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
         }
 
-        .haha-button:hover {
-            color: #f97316;
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
         }
 
-        .wow-button:hover {
-            color: #eab308;
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .sad-button:hover {
-            color: #06b6d4;
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
         }
 
-        .angry-button:hover {
-            color: #dc2626;
+        .card-dark {
+            background: #1a202c;
+            color: white;
         }
 
-        .post-card {
-            background: rgba(30, 41, 59, 0.8);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(71, 85, 105, 0.5);
+        .card-label {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #718096;
+            text-align: center;
         }
 
-        .avatar {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        .card-dark .card-label {
+            color: #cbd5e0;
         }
 
-        .avatar.alt {
-            background: linear-gradient(135deg, #ec4899, #f97316);
+        /* Icon and logo display */
+        svg {
+            max-width: 100%;
+            height: auto;
         }
 
-        .media-preview {
-            background: rgba(15, 23, 42, 0.5);
-            border: 1px solid rgba(71, 85, 105, 0.3);
-            border-radius: 8px;
-        }
-
-        .video-play {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 56px;
-            height: 56px;
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 50%;
+        .icon-display {
+            width: 180px;
+            height: 180px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
         }
 
-        .media-preview:hover .video-play {
-            background: rgba(255, 255, 255, 1);
-            transform: translate(-50%, -50%) scale(1.1);
-        }
-
-        .location-tag {
-            display: inline-flex;
+        .logo-display {
+            width: 100%;
+            height: 150px;
+            display: flex;
             align-items: center;
-            gap: 6px;
-            padding: 4px 12px;
-            background: rgba(59, 130, 246, 0.1);
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            border-radius: 6px;
-            font-size: 12px;
-            color: #60a5fa;
+            justify-content: center;
         }
 
-        .text-balance {
-            text-wrap: balance;
+        .app-icon {
+            width: 120px;
+            height: 120px;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .typography-section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .font-showcase {
+            margin: 30px 0;
+        }
+
+        .font-showcase h3 {
+            color: #2d3748;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .font-sample {
+            font-size: 1.2rem;
+            color: #4a5568;
+            margin: 10px 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+
+        .color-box {
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            color: white;
+            font-weight: 600;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .color-name {
+            font-size: 0.85rem;
+            margin-top: 10px;
+            opacity: 0.9;
+        }
+
+        .description {
+            color: #718096;
+            text-align: center;
+            margin-top: 10px;
+            font-size: 0.9rem;
         }
 
         @media (max-width: 768px) {
-            .avatar {
-                width: 40px;
-                height: 40px;
+            h1 {
+                font-size: 1.8rem;
             }
 
-            .post-card {
-                margin: 12px;
-                border-radius: 12px;
+            .icon-display {
+                width: 120px;
+                height: 120px;
+            }
+
+            .grid-4 {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
 </head>
-<body class="min-h-screen py-4 md:py-8">
-    <div class="max-w-2xl mx-auto px-0 md:px-4">
-        <!-- Post 1: Image Post -->
-        <div class="post-card rounded-lg md:rounded-xl p-4 md:p-6 mb-4 md:mb-6 shadow-lg">
-            <!-- Header -->
-            <div class="flex items-start justify-between mb-4">
-                <div class="flex items-center gap-3 flex-1 min-w-0">
-                    <div class="avatar flex-shrink-0"></div>
-                    <div class="flex-1 min-w-0">
-                        <h3 class="text-sm md:text-base font-semibold text-white truncate">Sarah Anderson</h3>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <p class="text-xs md:text-sm text-gray-400">2 hours ago</p>
-                            <span class="location-tag">
-                                <span>📍</span>
-                                San Francisco, CA
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <button class="text-gray-400 hover:text-white text-lg flex-shrink-0">⋮</button>
-            </div>
+<body>
+    <div class="container">
+        <h1>SocialHub Logo System</h1>
 
-            <!-- Post Content -->
-            <p class="text-white text-sm md:text-base leading-relaxed mb-4 text-balance">
-                Just finished an amazing sunset hike at Twin Peaks! The views were absolutely breathtaking. Who else loves weekend adventures? 🌄✨
-            </p>
+        <!-- Icon Only -->
+        <div class="section">
+            <h2 class="section-title">Icon Only</h2>
+            <div class="grid-2">
+                <!-- Light Version -->
+               
 
-            <!-- Image Preview -->
-            <div class="media-preview mb-4 overflow-hidden">
-                <div class="aspect-video bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center relative">
-                    <svg class="w-12 h-12 text-white opacity-50" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
-                    </svg>
-                </div>
-            </div>
-
-            <!-- Engagement Summary -->
-            <div class="flex items-center justify-between text-xs md:text-sm text-gray-400 mb-4 pb-4 border-b border-gray-700">
-                <div class="flex items-center gap-2">
-                    <span>❤️ 👍 😊</span>
-                    <span>1.2K reactions</span>
-                </div>
-                <div class="flex gap-4">
-                    <span>342 comments</span>
-                    <span>89 shares</span>
-                </div>
-            </div>
-
-            <!-- Reaction Buttons -->
-            <div class="grid grid-cols-3 md:grid-cols-6 gap-2 mb-4">
-                <button class="reaction-button like-button flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-gray-300 text-sm md:text-base">
-                    <span class="text-base">👍</span>
-                    <span class="hidden md:inline">Like</span>
-                </button>
-                <button class="reaction-button love-button flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-gray-300 text-sm md:text-base">
-                    <span class="text-base">❤️</span>
-                    <span class="hidden md:inline">Love</span>
-                </button>
-                <button class="reaction-button haha-button flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-gray-300 text-sm md:text-base">
-                    <span class="text-base">😊</span>
-                    <span class="hidden md:inline">Haha</span>
-                </button>
-                <button class="reaction-button wow-button flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-gray-300 text-sm md:text-base">
-                    <span class="text-base">😮</span>
-                    <span class="hidden md:inline">Wow</span>
-                </button>
-                <button class="reaction-button sad-button flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-gray-300 text-sm md:text-base">
-                    <span class="text-base">😢</span>
-                    <span class="hidden md:inline">Sad</span>
-                </button>
-                <button class="reaction-button angry-button flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-gray-300 text-sm md:text-base">
-                    <span class="text-base">😠</span>
-                    <span class="hidden md:inline">Angry</span>
-                </button>
-            </div>
-
-            <!-- Comments Section -->
-            <button class="w-full text-left text-sm md:text-base text-blue-400 hover:text-blue-300 transition font-medium">
-                View all 342 comments →
-            </button>
-        </div>
-
-        <!-- Post 2: Video Post -->
-        <div class="post-card rounded-lg md:rounded-xl p-4 md:p-6 mb-4 md:mb-6 shadow-lg">
-            <!-- Header -->
-            <div class="flex items-start justify-between mb-4">
-                <div class="flex items-center gap-3 flex-1 min-w-0">
-                    <div class="avatar alt flex-shrink-0"></div>
-                    <div class="flex-1 min-w-0">
-                        <h3 class="text-sm md:text-base font-semibold text-white truncate">Marcus Chen</h3>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <p class="text-xs md:text-sm text-gray-400">4 hours ago</p>
-                            <span class="location-tag">
-                                <span>📍</span>
-                                New York, NY
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                <button class="text-gray-400 hover:text-white text-lg flex-shrink-0">⋮</button>
-            </div>
-
-            <!-- Post Content -->
-            <p class="text-white text-sm md:text-base leading-relaxed mb-4 text-balance">
-                Check out this amazing coffee art! ☕ The barista at this new café deserves a standing ovation. Have you tried latte art before?
-            </p>
-
-            <!-- Video Preview -->
-            <div class="media-preview mb-4 overflow-hidden relative group cursor-pointer">
-                <div class="aspect-video bg-gradient-to-br from-orange-500 to-red-600 flex items-center justify-center relative">
-                    <svg class="w-12 h-12 text-white opacity-50" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm12 12H4l4-8 3 6 2-4 3 6z" />
-                    </svg>
-                    <div class="video-play">
-                        <svg class="w-6 h-6 text-orange-500" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                <!-- Dark Version -->
+                <div class="card card-dark">
+                    <div class="icon-display">
+                        <svg viewBox="0 0 200 200" width="180" height="180">
+                            <defs>
+                                <linearGradient id="whiteGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#f3f4f6;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                            
+                            <circle cx="60" cy="70" r="35" fill="url(#whiteGradient)" opacity="0.95"/>
+                            <circle cx="140" cy="100" r="40" fill="url(#whiteGradient)" opacity="0.85"/>
+                            <circle cx="100" cy="30" r="25" fill="url(#whiteGradient)" opacity="1"/>
+                            
+                            <line x1="85" y1="50" x2="100" y2="35" stroke="url(#whiteGradient)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+                            <line x1="90" y1="100" x2="115" y2="90" stroke="url(#whiteGradient)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+                            
+                            <path d="M 35 100 L 25 115 L 40 105 Z" fill="url(#whiteGradient)" opacity="0.95"/>
+                            <circle cx="100" cy="80" r="8" fill="#1a202c" opacity="0.2"/>
                         </svg>
                     </div>
+                    <p class="card-label">Dark Version</p>
                 </div>
             </div>
-
-            <!-- Engagement Summary -->
-            <div class="flex items-center justify-between text-xs md:text-sm text-gray-400 mb-4 pb-4 border-b border-gray-700">
-                <div class="flex items-center gap-2">
-                    <span>❤️ 👍</span>
-                    <span>856 reactions</span>
-                </div>
-                <div class="flex gap-4">
-                    <span>124 comments</span>
-                    <span>43 shares</span>
-                </div>
-            </div>
-
-            <!-- Reaction Buttons -->
-            <div class="grid grid-cols-3 md:grid-cols-6 gap-2 mb-4">
-                <button class="reaction-button like-button flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-gray-300 text-sm md:text-base">
-                    <span class="text-base">👍</span>
-                    <span class="hidden md:inline">Like</span>
-                </button>
-                <button class="reaction-button love-button active flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-sm md:text-base">
-                    <span class="text-base">❤️</span>
-                    <span class="hidden md:inline">Love</span>
-                </button>
-                <button class="reaction-button haha-button flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-gray-300 text-sm md:text-base">
-                    <span class="text-base">😊</span>
-                    <span class="hidden md:inline">Haha</span>
-                </button>
-                <button class="reaction-button wow-button flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-gray-300 text-sm md:text-base">
-                    <span class="text-base">😮</span>
-                    <span class="hidden md:inline">Wow</span>
-                </button>
-                <button class="reaction-button sad-button flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-gray-300 text-sm md:text-base">
-                    <span class="text-base">😢</span>
-                    <span class="hidden md:inline">Sad</span>
-                </button>
-                <button class="reaction-button angry-button flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-gray-300 text-sm md:text-base">
-                    <span class="text-base">😠</span>
-                    <span class="hidden md:inline">Angry</span>
-                </button>
-            </div>
-
-            <!-- Comments Section -->
-            <button class="w-full text-left text-sm md:text-base text-blue-400 hover:text-blue-300 transition font-medium">
-                View all 124 comments →
-            </button>
         </div>
 
-        <!-- Post 3: Text-only Post -->
-        <div class="post-card rounded-lg md:rounded-xl p-4 md:p-6 shadow-lg">
-            <!-- Header -->
-            <div class="flex items-start justify-between mb-4">
-                <div class="flex items-center gap-3 flex-1 min-w-0">
-                    <div class="avatar flex-shrink-0"></div>
-                    <div class="flex-1 min-w-0">
-                        <h3 class="text-sm md:text-base font-semibold text-white truncate">Elena Rodriguez</h3>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <p class="text-xs md:text-sm text-gray-400">Just now</p>
-                            <span class="location-tag">
-                                <span>📍</span>
-                                Austin, TX
-                            </span>
-                        </div>
+        <!-- Logo with Text -->
+        <div class="section">
+            <h2 class="section-title">Logo with Text</h2>
+            <div class="grid-2">
+                <!-- Light Logo -->
+                <div class="card">
+                    <div class="logo-display">
+                        <svg viewBox="0 0 400 200" width="100%">
+                            <defs>
+                                <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                            
+                            <!-- Icon -->
+                            <circle cx="50" cy="60" r="25" fill="url(#blueGrad)" opacity="0.9"/>
+                            <circle cx="100" cy="80" r="28" fill="url(#blueGrad)" opacity="0.8"/>
+                            <circle cx="75" cy="25" r="18" fill="url(#blueGrad)" opacity="0.95"/>
+                            <line x1="65" y1="42" x2="75" y2="30" stroke="url(#blueGrad)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <line x1="70" y1="75" x2="88" y2="68" stroke="url(#blueGrad)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <path d="M 32 85 L 24 98 L 37 88 Z" fill="url(#blueGrad)" opacity="0.9"/>
+                            
+                            <!-- Text -->
+                            <text x="140" y="95" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="700" fill="#1a365d">SocialHub</text>
+                        </svg>
+                    </div>
+                    <p class="card-label">Light Version</p>
+                </div>
+
+                <!-- Dark Logo -->
+                <div class="card card-dark">
+                    <div class="logo-display">
+                        <svg viewBox="0 0 400 200" width="100%">
+                            <defs>
+                                <linearGradient id="whiteGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#f3f4f6;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                            
+                            <!-- Icon -->
+                            <circle cx="50" cy="60" r="25" fill="url(#whiteGrad)" opacity="0.95"/>
+                            <circle cx="100" cy="80" r="28" fill="url(#whiteGrad)" opacity="0.85"/>
+                            <circle cx="75" cy="25" r="18" fill="url(#whiteGrad)" opacity="1"/>
+                            <line x1="65" y1="42" x2="75" y2="30" stroke="url(#whiteGrad)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <line x1="70" y1="75" x2="88" y2="68" stroke="url(#whiteGrad)" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <path d="M 32 85 L 24 98 L 37 88 Z" fill="url(#whiteGrad)" opacity="0.95"/>
+                            
+                            <!-- Text -->
+                            <text x="140" y="95" font-family="system-ui, -apple-system, sans-serif" font-size="48" font-weight="700" fill="#ffffff">SocialHub</text>
+                        </svg>
+                    </div>
+                    <p class="card-label">Dark Version</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- App Icon Style -->
+        <div class="section">
+            <h2 class="section-title">App Icon Styles</h2>
+            <div class="grid-4">
+                <!-- Rounded Square - Blue -->
+                <div class="card">
+                    <div class="app-icon" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); border-radius: 24px;">
+                        <svg viewBox="0 0 200 200" width="80" height="80">
+                            <circle cx="60" cy="70" r="25" fill="white" opacity="0.9"/>
+                            <circle cx="100" cy="85" r="28" fill="white" opacity="0.8"/>
+                            <circle cx="80" cy="35" r="18" fill="white" opacity="0.95"/>
+                            <line x1="72" y1="48" x2="80" y2="38" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <line x1="75" y1="78" x2="90" y2="72" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <path d="M 38 88 L 30 102 L 43 93 Z" fill="white" opacity="0.9"/>
+                        </svg>
+                    </div>
+                    <p class="card-label">Rounded Square</p>
+                </div>
+
+                <!-- Pill Shape - Blue -->
+                <div class="card">
+                    <div class="app-icon" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); border-radius: 50px;">
+                        <svg viewBox="0 0 200 200" width="80" height="80">
+                            <circle cx="60" cy="70" r="25" fill="white" opacity="0.9"/>
+                            <circle cx="100" cy="85" r="28" fill="white" opacity="0.8"/>
+                            <circle cx="80" cy="35" r="18" fill="white" opacity="0.95"/>
+                            <line x1="72" y1="48" x2="80" y2="38" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <line x1="75" y1="78" x2="90" y2="72" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <path d="M 38 88 L 30 102 L 43 93 Z" fill="white" opacity="0.9"/>
+                        </svg>
+                    </div>
+                    <p class="card-label">Pill Shape</p>
+                </div>
+
+                <!-- Circle - Blue -->
+                <div class="card">
+                    <div class="app-icon" style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); border-radius: 50%;">
+                        <svg viewBox="0 0 200 200" width="80" height="80">
+                            <circle cx="60" cy="70" r="25" fill="white" opacity="0.9"/>
+                            <circle cx="100" cy="85" r="28" fill="white" opacity="0.8"/>
+                            <circle cx="80" cy="35" r="18" fill="white" opacity="0.95"/>
+                            <line x1="72" y1="48" x2="80" y2="38" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <line x1="75" y1="78" x2="90" y2="72" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <path d="M 38 88 L 30 102 L 43 93 Z" fill="white" opacity="0.9"/>
+                        </svg>
+                    </div>
+                    <p class="card-label">Circle</p>
+                </div>
+
+                <!-- Gradient with Cyan - Rounded Square -->
+                <div class="card">
+                    <div class="app-icon" style="background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%); border-radius: 24px;">
+                        <svg viewBox="0 0 200 200" width="80" height="80">
+                            <circle cx="60" cy="70" r="25" fill="white" opacity="0.9"/>
+                            <circle cx="100" cy="85" r="28" fill="white" opacity="0.8"/>
+                            <circle cx="80" cy="35" r="18" fill="white" opacity="0.95"/>
+                            <line x1="72" y1="48" x2="80" y2="38" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <line x1="75" y1="78" x2="90" y2="72" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <path d="M 38 88 L 30 102 L 43 93 Z" fill="white" opacity="0.9"/>
+                        </svg>
+                    </div>
+                    <p class="card-label">Blue + Cyan</p>
+                </div>
+
+                <!-- Blue + Purple -->
+                <div class="card">
+                    <div class="app-icon" style="background: linear-gradient(135deg, #2563eb 0%, #a855f7 100%); border-radius: 24px;">
+                        <svg viewBox="0 0 200 200" width="80" height="80">
+                            <circle cx="60" cy="70" r="25" fill="white" opacity="0.9"/>
+                            <circle cx="100" cy="85" r="28" fill="white" opacity="0.8"/>
+                            <circle cx="80" cy="35" r="18" fill="white" opacity="0.95"/>
+                            <line x1="72" y1="48" x2="80" y2="38" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <line x1="75" y1="78" x2="90" y2="72" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <path d="M 38 88 L 30 102 L 43 93 Z" fill="white" opacity="0.9"/>
+                        </svg>
+                    </div>
+                    <p class="card-label">Blue + Purple</p>
+                </div>
+
+                <!-- Solid Blue -->
+                <div class="card">
+                    <div class="app-icon" style="background: #2563eb; border-radius: 24px;">
+                        <svg viewBox="0 0 200 200" width="80" height="80">
+                            <circle cx="60" cy="70" r="25" fill="white" opacity="0.9"/>
+                            <circle cx="100" cy="85" r="28" fill="white" opacity="0.8"/>
+                            <circle cx="80" cy="35" r="18" fill="white" opacity="0.95"/>
+                            <line x1="72" y1="48" x2="80" y2="38" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <line x1="75" y1="78" x2="90" y2="72" stroke="white" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+                            <path d="M 38 88 L 30 102 L 43 93 Z" fill="white" opacity="0.9"/>
+                        </svg>
+                    </div>
+                    <p class="card-label">Solid Blue</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Color Palette -->
+        <div class="section">
+            <h2 class="section-title">Color Palette</h2>
+            <div class="typography-section">
+                <div class="color-grid">
+                    <div class="color-box" style="background: #2563eb;">
+                        Primary Blue
+                        <div class="color-name">#2563eb</div>
+                    </div>
+                    <div class="color-box" style="background: #1e40af;">
+                        Dark Blue
+                        <div class="color-name">#1e40af</div>
+                    </div>
+                    <div class="color-box" style="background: #dbeafe;">
+                        Light Blue
+                        <div class="color-name">#dbeafe</div>
+                    </div>
+                    <div class="color-box" style="background: #a855f7;">
+                        Purple Accent
+                        <div class="color-name">#a855f7</div>
+                    </div>
+                    <div class="color-box" style="background: #06b6d4;">
+                        Cyan Accent
+                        <div class="color-name">#06b6d4</div>
+                    </div>
+                    <div class="color-box" style="background: #ffffff; color: #2d3748; border: 2px solid #e2e8f0;">
+                        White
+                        <div class="color-name">#ffffff</div>
+                    </div>
+                    <div class="color-box" style="background: #f3f4f6; color: #2d3748;">
+                        Light Gray
+                        <div class="color-name">#f3f4f6</div>
+                    </div>
+                    <div class="color-box" style="background: #1a202c;">
+                        Dark Gray
+                        <div class="color-name">#1a202c</div>
                     </div>
                 </div>
-                <button class="text-gray-400 hover:text-white text-lg flex-shrink-0">⋮</button>
             </div>
+        </div>
 
-            <!-- Post Content -->
-            <p class="text-white text-sm md:text-base leading-relaxed mb-4 text-balance">
-                Excited to announce that I just launched my new project! 🎉 It's been months of hard work, and I can't wait to share it with the community. Special thanks to everyone who supported me along the way. Follow along for updates and behind-the-scenes content!
-            </p>
-
-            <!-- Engagement Summary -->
-            <div class="flex items-center justify-between text-xs md:text-sm text-gray-400 mb-4 pb-4 border-b border-gray-700">
-                <div class="flex items-center gap-2">
-                    <span>❤️ 👍 😮</span>
-                    <span>2.1K reactions</span>
+        <!-- Typography -->
+        <div class="section">
+            <h2 class="section-title">Typography</h2>
+            <div class="typography-section">
+                <div class="font-showcase">
+                    <h3>Font Family: System UI Sans-Serif</h3>
+                    <p class="font-sample" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; font-weight: 400;">
+                        Regular (400) - The quick brown fox jumps over the lazy dog
+                    </p>
+                    <p class="font-sample" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; font-weight: 600;">
+                        Semibold (600) - The quick brown fox jumps over the lazy dog
+                    </p>
+                    <p class="font-sample" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; font-weight: 700;">
+                        Bold (700) - The quick brown fox jumps over the lazy dog
+                    </p>
                 </div>
-                <div class="flex gap-4">
-                    <span>567 comments</span>
-                    <span>234 shares</span>
+
+                <div class="font-showcase">
+                    <h3>Recommended Sizes</h3>
+                    <p style="font-size: 2rem; font-weight: 700; color: #1a365d; margin: 10px 0;">Display Large (32px)</p>
+                    <p style="font-size: 1.5rem; font-weight: 700; color: #2d3748; margin: 10px 0;">Heading 1 (24px)</p>
+                    <p style="font-size: 1.25rem; font-weight: 600; color: #2d3748; margin: 10px 0;">Heading 2 (20px)</p>
+                    <p style="font-size: 1rem; font-weight: 600; color: #4a5568; margin: 10px 0;">Heading 3 / Body Large (16px)</p>
+                    <p style="font-size: 0.95rem; font-weight: 400; color: #4a5568; margin: 10px 0;">Body (15px)</p>
+                    <p style="font-size: 0.875rem; font-weight: 400; color: #718096; margin: 10px 0;">Caption (14px)</p>
                 </div>
             </div>
+        </div>
 
-            <!-- Reaction Buttons -->
-            <div class="grid grid-cols-3 md:grid-cols-6 gap-2 mb-4">
-                <button class="reaction-button like-button active flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-sm md:text-base">
-                    <span class="text-base">👍</span>
-                    <span class="hidden md:inline">Like</span>
-                </button>
-                <button class="reaction-button love-button flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-gray-300 text-sm md:text-base">
-                    <span class="text-base">❤️</span>
-                    <span class="hidden md:inline">Love</span>
-                </button>
-                <button class="reaction-button haha-button flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-gray-300 text-sm md:text-base">
-                    <span class="text-base">😊</span>
-                    <span class="hidden md:inline">Haha</span>
-                </button>
-                <button class="reaction-button wow-button active flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-sm md:text-base">
-                    <span class="text-base">😮</span>
-                    <span class="hidden md:inline">Wow</span>
-                </button>
-                <button class="reaction-button sad-button flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-gray-300 text-sm md:text-base">
-                    <span class="text-base">😢</span>
-                    <span class="hidden md:inline">Sad</span>
-                </button>
-                <button class="reaction-button angry-button flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-gray-800 transition text-gray-300 text-sm md:text-base">
-                    <span class="text-base">😠</span>
-                    <span class="hidden md:inline">Angry</span>
-                </button>
+        <!-- Design Guidelines -->
+        <div class="section">
+            <h2 class="section-title">Design Guidelines</h2>
+            <div class="typography-section">
+                <h3 style="color: #2d3748; margin-bottom: 20px;">Icon Design Principles</h3>
+                <ul style="color: #4a5568; line-height: 1.8; margin-left: 20px;">
+                    <li><strong>Connected Bubbles:</strong> Represents three chat bubbles connected by lines, symbolizing seamless communication</li>
+                    <li><strong>Modern & Minimal:</strong> Clean flat design with smooth curves and rounded shapes</li>
+                    <li><strong>Scalable:</strong> Works well from 16px favicon size to large 512px app icons</li>
+                    <li><strong>Friendly Feel:</strong> Soft gradients and organic shapes create an approachable, welcoming vibe</li>
+                    <li><strong>Versatile:</strong> Works in light and dark modes, with white text on dark backgrounds and blue on light</li>
+                </ul>
+
+                <h3 style="color: #2d3748; margin-top: 30px; margin-bottom: 20px;">Usage Guidelines</h3>
+                <ul style="color: #4a5568; line-height: 1.8; margin-left: 20px;">
+                    <li><strong>Minimum Size:</strong> Do not use smaller than 16px in digital contexts</li>
+                    <li><strong>Spacing:</strong> Maintain clear space around the logo - at least 1/4 of the icon height on all sides</li>
+                    <li><strong>Color Variations:</strong> Use blue gradient on light backgrounds, white on dark backgrounds</li>
+                    <li><strong>Accessibility:</strong> Ensure sufficient contrast ratio (WCAG AA minimum 4.5:1 for text)</li>
+                    <li><strong>Background:</strong> Icon works on white, light gray, and solid color backgrounds</li>
+                </ul>
+
+                <h3 style="color: #2d3748; margin-top: 30px; margin-bottom: 20px;">Why This Design</h3>
+                <p style="color: #4a5568; line-height: 1.8;">
+                    The three connected chat bubbles represent the core value of social media: connection and communication. 
+                    The design is abstract enough to be original (inspired by but distinct from Facebook and Twitter) while remaining 
+                    immediately recognizable. The modern minimalist style ensures it works across all platforms and devices, from web to mobile apps. 
+                    The rounded, friendly shapes create an inviting, professional appearance suitable for a Laravel-based social networking platform.
+                </p>
             </div>
-
-            <!-- Comments Section -->
-            <button class="w-full text-left text-sm md:text-base text-blue-400 hover:text-blue-300 transition font-medium">
-                View all 567 comments →
-            </button>
         </div>
     </div>
 </body>

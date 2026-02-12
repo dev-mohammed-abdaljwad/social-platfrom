@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Enums\FriendshipStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -197,5 +198,13 @@ class User extends Authenticatable
             ->where('receiver_id', $user->id)
             ->where('status', FriendshipStatusEnum::Pending)
             ->exists();
+    }
+
+    /**
+     * Get posts saved by the user.
+     */
+    public function savedPosts(): BelongsToMany
+    {
+        return $this->belongsToMany(Post::class, 'saved_posts')->withTimestamps();
     }
 }

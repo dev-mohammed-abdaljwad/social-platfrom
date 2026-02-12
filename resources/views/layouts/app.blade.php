@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', 'SocialHub')</title>
+    <title>@yield('title', 'SocialTime')</title>
     <script src="https://cdn.tailwindcss.com"></script>
     @stack('styles')
 </head>
@@ -20,7 +20,24 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>
                     </button>
-                    <a href="{{ url('/') }}" class="text-2xl font-bold text-blue-600">SocialHub</a>
+                    <a href="{{ url('/') }}" class="flex items-center gap-2">
+                        <svg viewBox="0 0 200 200" width="36" height="36">
+                            <defs>
+                                <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" style="stop-color:#2563eb;stop-opacity:1" />
+                                    <stop offset="100%" style="stop-color:#1e40af;stop-opacity:1" />
+                                </linearGradient>
+                            </defs>
+                            <circle cx="60" cy="70" r="35" fill="url(#logoGradient)" opacity="0.9"/>
+                            <circle cx="140" cy="100" r="40" fill="url(#logoGradient)" opacity="0.8"/>
+                            <circle cx="100" cy="30" r="25" fill="url(#logoGradient)" opacity="0.95"/>
+                            <line x1="85" y1="50" x2="100" y2="35" stroke="url(#logoGradient)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+                            <line x1="90" y1="100" x2="115" y2="90" stroke="url(#logoGradient)" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+                            <path d="M 35 100 L 25 115 L 40 105 Z" fill="url(#logoGradient)" opacity="0.9"/>
+                            <circle cx="100" cy="80" r="8" fill="white" opacity="0.3"/>
+                        </svg>
+                        <span class="text-2xl font-bold text-blue-600">SocialTime</span>
+                    </a>
                 </div>
 
                 <!-- Search Bar (Desktop) -->
@@ -208,7 +225,7 @@
                 </button>
 
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome back</h2>
-                <p class="text-gray-500 mb-6">Sign in to continue to SocialHub</p>
+                <p class="text-gray-500 mb-6">Sign in to continue to SocialTime</p>
 
                 <!-- Login Error -->
                 <div id="loginError" class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
@@ -293,7 +310,7 @@
                 </button>
 
                 <h2 class="text-2xl font-bold text-gray-800 mb-2">Create account</h2>
-                <p class="text-gray-500 mb-6">Join SocialHub and connect with friends</p>
+                <p class="text-gray-500 mb-6">Join SocialTime and connect with friends</p>
 
                 <!-- Register Error -->
                 <div id="registerError" class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>

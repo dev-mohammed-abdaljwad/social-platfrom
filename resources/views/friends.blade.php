@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Friends - SocialHub')
+@section('title', 'Friends - SocialTime')
 
 @section('content')
     <div class="max-w-4xl mx-auto">

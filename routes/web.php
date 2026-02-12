@@ -43,6 +43,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/posts', [PostController::class, 'store'])->name('posts.store');
     Route::post('/posts/{post}/like', [PostController::class, 'toggleLike'])->name('posts.like');
     Route::post('/posts/{post}/share', [PostController::class, 'share'])->name('posts.share');
+    Route::post('/posts/{post}/save', [PostController::class, 'toggleSave'])->name('posts.save');
+    
+    // Saved Posts Page
+    Route::get('/saved', [PageController::class, 'saved'])->name('saved');
     
     // Comments
     Route::post('/posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
@@ -72,3 +76,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile/picture', [ProfileController::class, 'removeProfilePicture'])->name('profile.picture.remove');
     Route::delete('/profile/cover', [ProfileController::class, 'removeCoverPhoto'])->name('profile.cover.remove');
 });
+
+
+Route::get('/logo', function () {
+    return view('welcome');
+}); 

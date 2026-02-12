@@ -75,7 +75,11 @@ class PostController extends Controller
             $liked = true;
         }
 
-        return response()->json(['success' => true, 'liked' => $liked]);
+        return response()->json([
+            'success' => true,
+            'liked' => $liked,
+            'likes_count' => $post->likes()->count(),
+        ]);
     }
 
     /**
@@ -112,6 +116,27 @@ class PostController extends Controller
             'success' => true,
             'shared' => true,
             'shares_count' => $post->shares()->count(),
+        ]);
+    }
+
+    /**
+     * Toggle save on a post.
+     */
+    public function toggleSave(Post $post)
+    {
+        $user = auth()->user();
+        
+        if ($post->isSavedBy($user)) {
+            $user->savedPosts()->detach($post->id);
+            $saved = false;
+        } else {
+            $user->savedPosts()->attach($post->id);
+            $saved = true;
+        }
+
+        return response()->json([
+            'success' => true,
+            'saved' => $saved,
         ]);
     }
 }
