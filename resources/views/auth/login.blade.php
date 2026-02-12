@@ -20,9 +20,22 @@
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Welcome back</h2>
 
             <!-- Error Alert -->
-            <div id="errorAlert" class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+            @if ($errors->any())
+            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                @foreach ($errors->all() as $error)
+                    <p>{{ $error }}</p>
+                @endforeach
+            </div>
+            @endif
 
-            <form id="loginForm" class="space-y-4">
+            @if (session('success'))
+            <div class="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+                {{ session('success') }}
+            </div>
+            @endif
+
+            <form method="POST" action="{{ route('login') }}" class="space-y-4">
+                @csrf
                 <!-- Email -->
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -31,8 +44,9 @@
                         id="email" 
                         name="email"
                         required
-                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors @error('email') border-red-500 @enderror"
                         placeholder="Enter your email"
+                        value="{{ old('email') }}"
                     >
                 </div>
 
@@ -64,7 +78,7 @@
                 <!-- Remember & Forgot -->
                 <div class="flex items-center justify-between">
                     <label class="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" id="remember" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                        <input type="checkbox" name="remember" id="remember" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500" {{ old('remember') ? 'checked' : '' }}>
                         <span class="text-sm text-gray-600">Remember me</span>
                     </label>
                     <a href="#" class="text-sm text-blue-600 hover:text-blue-700">Forgot password?</a>
@@ -139,53 +153,6 @@
                 `;
             }
         }
-
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const submitBtn = document.getElementById('submitBtn');
-            const spinner = document.getElementById('spinner');
-            const errorAlert = document.getElementById('errorAlert');
-            
-            submitBtn.disabled = true;
-            spinner.classList.remove('hidden');
-            errorAlert.classList.add('hidden');
-            
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            
-            try {
-                const response = await fetch('/api/v1/auth/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    // Store token
-                    localStorage.setItem('auth_token', data.data.token);
-                    localStorage.setItem('user', JSON.stringify(data.data.user));
-                    
-                    // Redirect to home
-                    window.location.href = '/';
-                } else {
-                    errorAlert.textContent = data.message || 'Invalid credentials. Please try again.';
-                    errorAlert.classList.remove('hidden');
-                }
-            } catch (error) {
-                errorAlert.textContent = 'Something went wrong. Please try again.';
-                errorAlert.classList.remove('hidden');
-            } finally {
-                submitBtn.disabled = false;
-                spinner.classList.add('hidden');
-            }
-        });
     </script>
 </body>
 </html>

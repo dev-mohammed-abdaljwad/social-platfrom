@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Storage;
 
 class Post extends Model
 {
@@ -24,12 +25,48 @@ class Post extends Model
         'type',
     ];
 
+    protected $appends = ['image_url', 'video_url'];
+
     protected function casts(): array
     {
         return [
             'privacy' => PrivacyTypeEnum::class,
             'type' => ContentTypeEnum::class,
         ];
+    }
+
+    /**
+     * Get the full URL for the post image.
+     */
+    public function getImageUrlAttribute(): ?string
+    {
+        if (!$this->image) {
+            return null;
+        }
+
+        // If already a full URL, return as is
+        if (filter_var($this->image, FILTER_VALIDATE_URL)) {
+            return $this->image;
+        }
+
+        return asset('storage/' . $this->image);
+    }
+
+    /**
+     * Get the full URL for the post video.
+     */
+    public function getVideoUrlAttribute(): ?string
+    {
+        if (!$this->video) {
+            return null;
+        }
+
+        // If already a full URL, return as is
+        if (filter_var($this->video, FILTER_VALIDATE_URL)) {
+            return $this->video;
+        }
+
+        return asset('storage/' . $this->video);
     }
 
     /**

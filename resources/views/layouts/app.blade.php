@@ -60,7 +60,7 @@
                     <div class="relative" x-data="{ open: false }">
                         <button onclick="toggleProfileMenu()" class="p-1 rounded-full hover:bg-gray-100 transition-colors">
                             <img 
-                                src="{{ auth()->user()->profile_picture ? asset('storage/' . auth()->user()->profile_picture) : 'https://ui-avatars.com/api/?name=' . urlencode(auth()->user()->name) }}" 
+                                src="{{ auth()->user()->avatar_url }}" 
                                 alt="Profile" 
                                 class="w-8 h-8 rounded-full object-cover"
                             >
@@ -69,15 +69,15 @@
                             <a href="{{ url('/profile') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">My Profile</a>
                             <a href="{{ url('/settings') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</a>
                             <hr class="my-2">
-                            <form method="POST" action="{{ url('/api/v1/auth/logout') }}" id="logoutForm">
+                            <form method="POST" action="{{ url('/logout') }}" id="logoutForm">
                                 @csrf
                                 <button type="submit" class="block w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100">Logout</button>
                             </form>
                         </div>
                     </div>
                     @else
-                    <a href="{{ url('/login') }}" class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">Login</a>
-                    <a href="{{ url('/register') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Sign Up</a>
+                    <button onclick="openLoginModal()" class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">Login</button>
+                    <button onclick="openRegisterModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">Sign Up</button>
                     @endauth
                 </div>
             </div>
@@ -87,6 +87,23 @@
     <div class="flex">
         <!-- Left Sidebar -->
         <aside id="sidebar" class="fixed left-0 top-16 h-[calc(100vh-64px)] w-64 bg-white border-r border-gray-200 shadow-sm overflow-y-auto -translate-x-full lg:translate-x-0 transition-transform duration-300 z-40 lg:z-0">
+            <!-- User Profile Section -->
+            @auth
+            <div class="p-4 border-b border-gray-200">
+                <a href="{{ url('/profile') }}" class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                    <img src="{{ auth()->user()->avatar_url }}" 
+                         alt="{{ auth()->user()->name }}" 
+                         class="w-12 h-12 rounded-full object-cover border-2 border-blue-500">
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold text-gray-900 truncate">{{ auth()->user()->name }}</p>
+                        <p class="text-sm text-gray-500 truncate">{{ '@' . auth()->user()->username }}</p>
+                    </div>
+                </a>
+            </div>
+            @else
+           
+            @endauth
+
             <nav class="p-4 space-y-2">
                 <!-- Home -->
                 <a href="{{ url('/') }}" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg transition-colors font-semibold {{ request()->is('/') ? 'bg-blue-50 text-blue-600' : '' }}">
@@ -177,6 +194,214 @@
         </div>
     </div>
 
+    <!-- Login Modal -->
+    @guest
+    <div id="loginModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeLoginModal()"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 transform transition-all">
+                <!-- Close Button -->
+                <button onclick="closeLoginModal()" class="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Welcome back</h2>
+                <p class="text-gray-500 mb-6">Sign in to continue to SocialHub</p>
+
+                <!-- Login Error -->
+                <div id="loginError" class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+
+                <form id="loginForm" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label for="loginEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input 
+                            type="email" 
+                            id="loginEmail" 
+                            name="email"
+                            required
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                            placeholder="Enter your email"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="loginPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <div class="relative">
+                            <input 
+                                type="password" 
+                                id="loginPassword" 
+                                name="password"
+                                required
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                                placeholder="Enter your password"
+                            >
+                            <button 
+                                type="button" 
+                                onclick="togglePasswordVisibility('loginPassword')"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" name="remember" class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                            <span class="text-sm text-gray-600">Remember me</span>
+                        </label>
+                        <a href="#" class="text-sm text-blue-600 hover:text-blue-700">Forgot password?</a>
+                    </div>
+
+                    <button 
+                        type="submit"
+                        id="loginSubmitBtn"
+                        class="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                        <span>Sign In</span>
+                        <svg id="loginSpinner" class="hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </form>
+
+                <p class="text-center text-gray-600 mt-6">
+                    Don't have an account? 
+                    <button onclick="switchToRegister()" class="text-blue-600 font-semibold hover:underline">Sign up</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="registerModal" class="fixed inset-0 z-[100] hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" onclick="closeRegisterModal()"></div>
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 transform transition-all max-h-[90vh] overflow-y-auto">
+                <!-- Close Button -->
+                <button onclick="closeRegisterModal()" class="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Create account</h2>
+                <p class="text-gray-500 mb-6">Join SocialHub and connect with friends</p>
+
+                <!-- Register Error -->
+                <div id="registerError" class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+
+                <form id="registerForm" class="space-y-4">
+                    @csrf
+                    <div>
+                        <label for="registerName" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                        <input 
+                            type="text" 
+                            id="registerName" 
+                            name="name"
+                            required
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                            placeholder="Enter your full name"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="registerUsername" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                        <input 
+                            type="text" 
+                            id="registerUsername" 
+                            name="username"
+                            required
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                            placeholder="Choose a username"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="registerEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input 
+                            type="email" 
+                            id="registerEmail" 
+                            name="email"
+                            required
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                            placeholder="Enter your email"
+                        >
+                    </div>
+
+                    <div>
+                        <label for="registerPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <div class="relative">
+                            <input 
+                                type="password" 
+                                id="registerPassword" 
+                                name="password"
+                                required
+                                minlength="8"
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                                placeholder="Create a password (min 8 characters)"
+                            >
+                            <button 
+                                type="button" 
+                                onclick="togglePasswordVisibility('registerPassword')"
+                                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                            >
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label for="registerPasswordConfirm" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                        <input 
+                            type="password" 
+                            id="registerPasswordConfirm" 
+                            name="password_confirmation"
+                            required
+                            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                            placeholder="Confirm your password"
+                        >
+                    </div>
+
+                    <div class="flex items-start gap-2">
+                        <input type="checkbox" id="terms" required class="w-4 h-4 mt-1 text-purple-600 rounded focus:ring-purple-500">
+                        <label for="terms" class="text-sm text-gray-600">
+                            I agree to the <a href="#" class="text-purple-600 hover:underline">Terms of Service</a> and <a href="#" class="text-purple-600 hover:underline">Privacy Policy</a>
+                        </label>
+                    </div>
+
+                    <button 
+                        type="submit"
+                        id="registerSubmitBtn"
+                        class="w-full py-3 bg-purple-600 text-white font-semibold rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                        <span>Create Account</span>
+                        <svg id="registerSpinner" class="hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </button>
+                </form>
+
+                <p class="text-center text-gray-600 mt-6">
+                    Already have an account? 
+                    <button onclick="switchToLogin()" class="text-purple-600 font-semibold hover:underline">Sign in</button>
+                </p>
+            </div>
+        </div>
+    </div>
+    @endguest
+
     <script>
         // Toggle sidebar for mobile
         function toggleSidebar() {
@@ -211,6 +436,157 @@
             const mobileSearch = document.getElementById('mobileSearch');
             mobileSearch.classList.toggle('hidden');
         }
+
+        // Auth Modal Functions
+        function openLoginModal() {
+            document.getElementById('loginModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            document.getElementById('loginEmail').focus();
+        }
+
+        function closeLoginModal() {
+            document.getElementById('loginModal').classList.add('hidden');
+            document.body.style.overflow = '';
+            document.getElementById('loginError').classList.add('hidden');
+            document.getElementById('loginForm').reset();
+        }
+
+        function openRegisterModal() {
+            document.getElementById('registerModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+            document.getElementById('registerName').focus();
+        }
+
+        function closeRegisterModal() {
+            document.getElementById('registerModal').classList.add('hidden');
+            document.body.style.overflow = '';
+            document.getElementById('registerError').classList.add('hidden');
+            document.getElementById('registerForm').reset();
+        }
+
+        function switchToRegister() {
+            closeLoginModal();
+            setTimeout(openRegisterModal, 200);
+        }
+
+        function switchToLogin() {
+            closeRegisterModal();
+            setTimeout(openLoginModal, 200);
+        }
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        // Login Form Submit
+        document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('loginSubmitBtn');
+            const spinner = document.getElementById('loginSpinner');
+            const errorDiv = document.getElementById('loginError');
+            
+            submitBtn.disabled = true;
+            spinner.classList.remove('hidden');
+            errorDiv.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({
+                        email: document.getElementById('loginEmail').value,
+                        password: document.getElementById('loginPassword').value
+                    })
+                });
+                
+                if (response.ok || response.redirected) {
+                    window.location.href = '/';
+                } else {
+                    const data = await response.json().catch(() => null);
+                    errorDiv.textContent = data?.message || 'Invalid credentials. Please try again.';
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Something went wrong. Please try again.';
+                errorDiv.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        });
+
+        // Register Form Submit
+        document.getElementById('registerForm')?.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('registerSubmitBtn');
+            const spinner = document.getElementById('registerSpinner');
+            const errorDiv = document.getElementById('registerError');
+            
+            const password = document.getElementById('registerPassword').value;
+            const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
+            
+            if (password !== passwordConfirm) {
+                errorDiv.textContent = 'Passwords do not match.';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            spinner.classList.remove('hidden');
+            errorDiv.classList.add('hidden');
+            
+            try {
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({
+                        name: document.getElementById('registerName').value,
+                        username: document.getElementById('registerUsername').value,
+                        email: document.getElementById('registerEmail').value,
+                        password: password,
+                        password_confirmation: passwordConfirm
+                    })
+                });
+                
+                if (response.ok || response.redirected) {
+                    window.location.href = '/';
+                } else {
+                    const data = await response.json().catch(() => null);
+                    if (data?.errors) {
+                        const messages = Object.values(data.errors).flat().join(' ');
+                        errorDiv.textContent = messages;
+                    } else {
+                        errorDiv.textContent = data?.message || 'Registration failed. Please try again.';
+                    }
+                    errorDiv.classList.remove('hidden');
+                }
+            } catch (error) {
+                errorDiv.textContent = 'Something went wrong. Please try again.';
+                errorDiv.classList.remove('hidden');
+            } finally {
+                submitBtn.disabled = false;
+                spinner.classList.add('hidden');
+            }
+        });
+
+        // Close modals on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLoginModal();
+                closeRegisterModal();
+            }
+        });
     </script>
     @stack('scripts')
 </body>

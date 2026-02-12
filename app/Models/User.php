@@ -32,6 +32,8 @@ class User extends Authenticatable
         'username',
     ];
 
+    protected $appends = ['avatar_url'];
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -54,6 +56,23 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
         ];
+    }
+
+    /**
+     * Get the full URL for the user's avatar.
+     */
+    public function getAvatarUrlAttribute(): string
+    {
+        if ($this->profile_picture) {
+            // If already a full URL, return as is
+            if (filter_var($this->profile_picture, FILTER_VALIDATE_URL)) {
+                return $this->profile_picture;
+            }
+            return asset('storage/' . $this->profile_picture);
+        }
+
+        // Default avatar using UI Avatars
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=3b82f6&color=fff';
     }
 
     /**

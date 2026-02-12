@@ -19,9 +19,16 @@
         <div class="bg-white rounded-2xl shadow-xl p-8">
             <h2 class="text-2xl font-bold text-gray-800 mb-6">Create account</h2>
 
-            <div id="errorAlert" class="hidden mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm"></div>
+            @if ($errors->any())
+            <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                @foreach ($errors->all() as $error)
+                    <p>{{ $error }}</p>
+                @endforeach
+            </div>
+            @endif
 
-            <form id="registerForm" class="space-y-4">
+            <form method="POST" action="{{ route('register') }}" class="space-y-4">
+                @csrf
                 <!-- Name -->
                 <div>
                     <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
@@ -30,8 +37,9 @@
                         id="name" 
                         name="name"
                         required
-                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors @error('name') border-red-500 @enderror"
                         placeholder="Enter your full name"
+                        value="{{ old('name') }}"
                     >
                 </div>
 
@@ -43,8 +51,9 @@
                         id="username" 
                         name="username"
                         required
-                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors @error('username') border-red-500 @enderror"
                         placeholder="Choose a username"
+                        value="{{ old('username') }}"
                     >
                 </div>
 
@@ -56,8 +65,9 @@
                         id="email" 
                         name="email"
                         required
-                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors"
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-colors @error('email') border-red-500 @enderror"
                         placeholder="Enter your email"
+                        value="{{ old('email') }}"
                     >
                 </div>
 
@@ -189,71 +199,6 @@
                 `;
             }
         }
-
-        document.getElementById('registerForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const submitBtn = document.getElementById('submitBtn');
-            const spinner = document.getElementById('spinner');
-            const errorAlert = document.getElementById('errorAlert');
-            
-            submitBtn.disabled = true;
-            spinner.classList.remove('hidden');
-            errorAlert.classList.add('hidden');
-            
-            const name = document.getElementById('name').value;
-            const username = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const password_confirmation = document.getElementById('password_confirmation').value;
-            
-            // Validate passwords match
-            if (password !== password_confirmation) {
-                errorAlert.textContent = 'Passwords do not match.';
-                errorAlert.classList.remove('hidden');
-                submitBtn.disabled = false;
-                spinner.classList.add('hidden');
-                return;
-            }
-            
-            try {
-                const response = await fetch('/api/v1/auth/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify({ name, username, email, password, password_confirmation })
-                });
-                
-                const data = await response.json();
-                
-                if (response.ok && data.success) {
-                    // Store token
-                    localStorage.setItem('auth_token', data.data.token);
-                    localStorage.setItem('user', JSON.stringify(data.data.user));
-                    
-                    // Redirect to home
-                    window.location.href = '/';
-                } else {
-                    // Handle validation errors
-                    if (data.errors) {
-                        const messages = Object.values(data.errors).flat().join(' ');
-                        errorAlert.textContent = messages;
-                    } else {
-                        errorAlert.textContent = data.message || 'Registration failed. Please try again.';
-                    }
-                    errorAlert.classList.remove('hidden');
-                }
-            } catch (error) {
-                errorAlert.textContent = 'Something went wrong. Please try again.';
-                errorAlert.classList.remove('hidden');
-            } finally {
-                submitBtn.disabled = false;
-                spinner.classList.add('hidden');
-            }
-        });
     </script>
 </body>
 </html>
