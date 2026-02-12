@@ -26,13 +26,14 @@ class User extends Authenticatable
         'email',
         'password',
         'profile_picture',
+        'cover_photo',
         'bio',
         'phone',
         'is_active',
         'username',
     ];
 
-    protected $appends = ['avatar_url'];
+    protected $appends = ['avatar_url', 'cover_url'];
 
     /**
      * The attributes that should be hidden for serialization.
@@ -76,6 +77,21 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the full URL for the user's cover photo.
+     */
+    public function getCoverUrlAttribute(): ?string
+    {
+        if ($this->cover_photo) {
+            if (filter_var($this->cover_photo, FILTER_VALIDATE_URL)) {
+                return $this->cover_photo;
+            }
+            return asset('storage/' . $this->cover_photo);
+        }
+
+        return null;
+    }
+
+    /**
      * Get all posts by the user.
      */
     public function posts(): HasMany
@@ -97,6 +113,14 @@ class User extends Authenticatable
     public function likes(): HasMany
     {
         return $this->hasMany(Like::class);
+    }
+
+    /**
+     * Get all shares by the user.
+     */
+    public function shares(): HasMany
+    {
+        return $this->hasMany(Share::class);
     }
 
     /**

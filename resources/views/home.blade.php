@@ -90,80 +90,9 @@
     <!-- Posts Feed -->
     <div id="postsFeed" class="space-y-6">
         @forelse($posts as $post)
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4" data-post-id="{{ $post->id }}">
-            <div class="flex gap-4">
-                <a href="{{ route('profile.show', $post->user) }}">
-                    <img src="{{ $post->user->avatar_url }}" 
-                         alt="{{ $post->user->name }}" 
-                         class="w-10 h-10 rounded-full object-cover">
-                </a>
-                <div class="flex-1">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <a href="{{ route('profile.show', $post->user) }}" class="font-semibold text-gray-800 hover:text-blue-600">{{ $post->user->name }}</a>
-                            <p class="text-sm text-gray-500">{{ $post->created_at->diffForHumans() }}</p>
-                        </div>
-                        <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                            <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
-                            </svg>
-                        </button>
-                    </div>
-                    
-                    <!-- Post Content -->
-                    @if($post->content)
-                    <p class="mt-3 text-gray-700 whitespace-pre-line">{{ $post->content }}</p>
-                    @endif
-                    
-                    <!-- Post Image -->
-                    @if($post->image_url)
-                    <img src="{{ $post->image_url }}" alt="Post image" class="mt-3 rounded-lg max-h-96 w-full object-cover">
-                    @endif
-                    
-                    <!-- Post Video -->
-                    @if($post->video_url)
-                    <video controls class="mt-3 rounded-lg max-h-96 w-full">
-                        <source src="{{ $post->video_url }}" type="video/mp4">
-                    </video>
-                    @endif
-                    
-                    <!-- Post Location -->
-                    @if($post->location)
-                    <p class="mt-2 text-sm text-gray-500 flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                        {{ $post->location }}
-                    </p>
-                    @endif
-                    
-                    <!-- Post Actions -->
-                    <div class="flex items-center gap-6 mt-4 pt-4 border-t border-gray-100">
-                        <button class="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors like-btn {{ auth()->check() && $post->isLikedBy(auth()->user()) ? 'text-red-500' : '' }}" data-post-id="{{ $post->id }}">
-                            <svg class="w-5 h-5" fill="{{ auth()->check() && $post->isLikedBy(auth()->user()) ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                            </svg>
-                            <span>{{ $post->likes->count() }}</span>
-                        </button>
-                        <button class="flex items-center gap-2 text-gray-600 hover:text-blue-500 transition-colors comment-btn" data-post-id="{{ $post->id }}">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                            </svg>
-                            <span>{{ $post->comments->count() }}</span>
-                        </button>
-                        <button class="flex items-center gap-2 text-gray-600 hover:text-green-500 transition-colors">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
-                            </svg>
-                            <span>Share</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
+        @include('partials.post-card', ['post' => $post])
         @empty
-        <div class="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200" id="emptyState">
             <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
             </svg>
@@ -172,53 +101,59 @@
         </div>
         @endforelse
         
-        <!-- Pagination -->
-        @if($posts->hasPages())
-        <div class="mt-6">
-            {{ $posts->links() }}
+        <!-- Loading Indicator (Sentinel for infinite scroll) -->
+        <div id="loadingIndicator" class="py-4 text-center min-h-[20px]">
+            <div id="loadingSpinner" class="hidden items-center justify-center gap-2 text-gray-500">
+                <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Loading more posts...</span>
+            </div>
         </div>
-        @endif
+        
+        <!-- End of Feed -->
+        <div id="endOfFeed" class="hidden py-6 text-center">
+            <p class="text-gray-400">You've reached the end of the feed</p>
+        </div>
     </div>
-@endsection
 
-@section('rightSidebar')
-    <!-- Friend Suggestions -->
-    <div class="mb-6">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Friend Suggestions</h3>
-        <div class="space-y-3" id="friendSuggestions">
-            <!-- Loading -->
-            <div class="flex items-center gap-3 animate-pulse">
-                <div class="w-10 h-10 bg-gray-200 rounded-full"></div>
-                <div class="flex-1">
-                    <div class="h-4 bg-gray-200 rounded w-3/4 mb-1"></div>
-                    <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+    <!-- Share Modal -->
+    <div id="shareModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">Share Post</h3>
+                <button onclick="closeShareModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6">
+                <textarea 
+                    id="shareContent" 
+                    placeholder="Add a comment to your share (optional)..." 
+                    class="w-full px-4 py-3 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    rows="3"
+                ></textarea>
+                
+                <!-- Post Preview -->
+                <div id="sharePostPreview" class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    <!-- Will be filled dynamically -->
                 </div>
+            </div>
+            <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <button onclick="closeShareModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium">
+                    Cancel
+                </button>
+                <button onclick="confirmShare()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                    Share
+                </button>
             </div>
         </div>
     </div>
-
-    <!-- Trending Topics -->
-    <div>
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Trending</h3>
-        <div class="space-y-3">
-            <a href="#" class="block p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                <p class="text-sm text-gray-500">#trending</p>
-                <p class="font-medium text-gray-800">Technology</p>
-                <p class="text-sm text-gray-500">2.5k posts</p>
-            </a>
-            <a href="#" class="block p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                <p class="text-sm text-gray-500">#trending</p>
-                <p class="font-medium text-gray-800">Sports</p>
-                <p class="text-sm text-gray-500">1.8k posts</p>
-            </a>
-            <a href="#" class="block p-3 hover:bg-gray-50 rounded-lg transition-colors">
-                <p class="text-sm text-gray-500">#trending</p>
-                <p class="font-medium text-gray-800">Music</p>
-                <p class="text-sm text-gray-500">1.2k posts</p>
-            </a>
-        </div>
-    </div>
 @endsection
+
 
 @push('scripts')
 <script>
@@ -325,6 +260,524 @@
             openLoginModal();
             @endauth
         });
+    });
+
+    // Share modal state
+    let currentSharePostId = null;
+    let currentShareBtn = null;
+
+    // Share button functionality - opens modal
+    document.querySelectorAll('.share-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            @auth
+            const postId = this.dataset.postId;
+            currentSharePostId = postId;
+            currentShareBtn = this;
+            
+            // Check if already shared - if so, unshare directly
+            if (this.classList.contains('text-green-500')) {
+                unsharePost(postId, this);
+                return;
+            }
+            
+            // Get post data for preview
+            const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+            const userName = postCard.querySelector('a.font-semibold')?.textContent || 'User';
+            const postContent = postCard.querySelector('.whitespace-pre-line')?.textContent || '';
+            const postImage = postCard.querySelector('img[alt="Post image"]')?.src || '';
+            
+            // Build preview
+            let previewHTML = `
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="font-semibold text-sm text-gray-800">${userName}</span>
+                </div>
+            `;
+            if (postContent) {
+                previewHTML += `<p class="text-gray-700 text-sm line-clamp-3">${postContent}</p>`;
+            }
+            if (postImage) {
+                previewHTML += `<img src="${postImage}" class="mt-2 rounded max-h-32 object-cover" alt="Preview">`;
+            }
+            
+            document.getElementById('sharePostPreview').innerHTML = previewHTML;
+            document.getElementById('shareContent').value = '';
+            document.getElementById('shareModal').classList.remove('hidden');
+            @else
+            openLoginModal();
+            @endauth
+        });
+    });
+
+    // Close share modal
+    function closeShareModal() {
+        document.getElementById('shareModal').classList.add('hidden');
+        currentSharePostId = null;
+        currentShareBtn = null;
+    }
+
+    // Confirm share with optional content
+    async function confirmShare() {
+        if (!currentSharePostId) return;
+        
+        const content = document.getElementById('shareContent').value.trim();
+        
+        try {
+            const response = await fetch(`/posts/${currentSharePostId}/share`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ content: content || null })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const countSpan = currentShareBtn.querySelector('.shares-count');
+                const svg = currentShareBtn.querySelector('svg');
+                
+                countSpan.textContent = data.shares_count;
+                
+                if (data.shared) {
+                    currentShareBtn.classList.add('text-green-500');
+                    svg.setAttribute('fill', 'currentColor');
+                }
+                
+                closeShareModal();
+            }
+        } catch (error) {
+            console.error('Error sharing post:', error);
+        }
+    }
+
+    // Unshare post (toggle off)
+    async function unsharePost(postId, btn) {
+        try {
+            const response = await fetch(`/posts/${postId}/share`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const countSpan = btn.querySelector('.shares-count');
+                const svg = btn.querySelector('svg');
+                
+                countSpan.textContent = data.shares_count;
+                
+                if (!data.shared) {
+                    btn.classList.remove('text-green-500');
+                    svg.setAttribute('fill', 'none');
+                }
+            }
+        } catch (error) {
+            console.error('Error unsharing post:', error);
+        }
+    }
+
+    // Comment toggle functionality
+    document.querySelectorAll('.comment-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const postId = this.dataset.postId;
+            const commentsSection = document.getElementById(`comments-${postId}`);
+            const commentsList = document.getElementById(`comments-list-${postId}`);
+            
+            // Toggle visibility
+            commentsSection.classList.toggle('hidden');
+            
+            // Load comments if opening
+            if (!commentsSection.classList.contains('hidden')) {
+                await loadComments(postId, commentsList);
+            }
+        });
+    });
+
+    // Load comments function
+    async function loadComments(postId, container) {
+        try {
+            const response = await fetch(`/posts/${postId}/comments`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await response.json();
+            
+            if (data.success && data.comments.length > 0) {
+                container.innerHTML = data.comments.map(comment => createCommentHTML(comment)).join('');
+            } else {
+                container.innerHTML = '<p class="text-gray-500 text-sm text-center py-2">No comments yet. Be the first to comment!</p>';
+            }
+        } catch (error) {
+            console.error('Error loading comments:', error);
+            container.innerHTML = '<p class="text-red-500 text-sm text-center py-2">Error loading comments</p>';
+        }
+    }
+
+    // Create comment HTML
+    function createCommentHTML(comment) {
+        const deleteBtn = comment.is_owner ? `
+            <button onclick="deleteComment(${comment.id})" class="text-gray-400 hover:text-red-500 text-xs">
+                Delete
+            </button>
+        ` : '';
+        
+        const likedClass = comment.is_liked ? 'text-red-500' : 'text-gray-400';
+        const heartFill = comment.is_liked ? 'fill-current' : '';
+        
+        return `
+            <div class="flex gap-3 comment-item" id="comment-${comment.id}">
+                <img src="${comment.user.avatar_url}" alt="${comment.user.name}" class="w-8 h-8 rounded-full object-cover">
+                <div class="flex-1">
+                    <div class="bg-gray-100 rounded-2xl px-4 py-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-semibold text-sm text-gray-800">${comment.user.name}</span>
+                            ${deleteBtn}
+                        </div>
+                        <p class="text-gray-700 text-sm">${comment.content}</p>
+                    </div>
+                    <div class="flex items-center gap-4 mt-1 ml-2">
+                        <span class="text-xs text-gray-500">${comment.created_at}</span>
+                        <button onclick="likeComment(${comment.id})" class="comment-like-btn flex items-center gap-1 text-xs ${likedClass} hover:text-red-500 transition-colors" data-comment-id="${comment.id}">
+                            <svg class="w-4 h-4 ${heartFill}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                            </svg>
+                            <span class="comment-likes-count">${comment.likes_count || 0}</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Comment form submit
+    document.querySelectorAll('.comment-form').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const postId = this.dataset.postId;
+            const input = this.querySelector('input[name="content"]');
+            const content = input.value.trim();
+            
+            if (!content) return;
+            
+            try {
+                const response = await fetch(`/posts/${postId}/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ content })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Clear input
+                    input.value = '';
+                    
+                    // Add comment to list
+                    const commentsList = document.getElementById(`comments-list-${postId}`);
+                    const noCommentsMsg = commentsList.querySelector('p');
+                    if (noCommentsMsg) noCommentsMsg.remove();
+                    
+                    commentsList.insertAdjacentHTML('afterbegin', createCommentHTML({
+                        ...data.comment,
+                        is_owner: true
+                    }));
+                    
+                    // Update count
+                    const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+                    const countSpan = postCard.querySelector('.comment-count');
+                    countSpan.textContent = parseInt(countSpan.textContent) + 1;
+                }
+            } catch (error) {
+                console.error('Error posting comment:', error);
+            }
+        });
+    });
+
+    // Delete comment function
+    async function deleteComment(commentId) {
+        if (!confirm('Delete this comment?')) return;
+        
+        try {
+            const response = await fetch(`/comments/${commentId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+            
+            if (response.ok) {
+                const commentEl = document.getElementById(`comment-${commentId}`);
+                const postCard = commentEl.closest('[data-post-id]');
+                const countSpan = postCard.querySelector('.comment-count');
+                countSpan.textContent = parseInt(countSpan.textContent) - 1;
+                commentEl.remove();
+            }
+        } catch (error) {
+            console.error('Error deleting comment:', error);
+        }
+    }
+
+    // Like comment function
+    async function likeComment(commentId) {
+        @auth
+        try {
+            const response = await fetch(`/comments/${commentId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                const commentEl = document.getElementById(`comment-${commentId}`);
+                const likeBtn = commentEl.querySelector('.comment-like-btn');
+                const countSpan = likeBtn.querySelector('.comment-likes-count');
+                const svg = likeBtn.querySelector('svg');
+                
+                countSpan.textContent = data.likes_count;
+                
+                if (data.liked) {
+                    likeBtn.classList.remove('text-gray-400');
+                    likeBtn.classList.add('text-red-500');
+                    svg.classList.add('fill-current');
+                } else {
+                    likeBtn.classList.remove('text-red-500');
+                    likeBtn.classList.add('text-gray-400');
+                    svg.classList.remove('fill-current');
+                }
+            }
+        } catch (error) {
+            console.error('Error liking comment:', error);
+        }
+        @else
+        openLoginModal();
+        @endauth
+    }
+
+    // Infinite Scroll
+    let lastPostId = {{ $posts->last()?->id ?? 'null' }};
+    let isLoading = false;
+    let hasMore = {{ $posts->count() >= 10 ? 'true' : 'false' }};
+    
+    const postsFeed = document.getElementById('postsFeed');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const endOfFeed = document.getElementById('endOfFeed');
+    
+    // Intersection Observer for infinite scroll
+    const observerCallback = async (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && !isLoading && hasMore) {
+            await loadMorePosts();
+        }
+    };
+    
+    const observer = new IntersectionObserver(observerCallback, {
+        root: null,
+        rootMargin: '200px',
+        threshold: 0
+    });
+    
+    // Start observing the loading indicator
+    if (loadingIndicator && hasMore) {
+        observer.observe(loadingIndicator);
+    }
+    
+    async function loadMorePosts() {
+        if (isLoading || !hasMore || !lastPostId) return;
+        
+        isLoading = true;
+        loadingSpinner.classList.remove('hidden');
+        loadingSpinner.classList.add('flex');
+        
+        try {
+            const response = await fetch(`/posts/feed?last_id=${lastPostId}&limit=10`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                if (data.html && data.html.trim()) {
+                    // Insert new posts before the loading indicator
+                    loadingIndicator.insertAdjacentHTML('beforebegin', data.html);
+                    
+                    // Re-attach event listeners to new posts
+                    attachEventListenersToNewPosts();
+                    
+                    lastPostId = data.last_id;
+                    hasMore = data.has_more;
+                } else {
+                    hasMore = false;
+                }
+                
+                if (!hasMore) {
+                    loadingIndicator.classList.add('hidden');
+                    endOfFeed.classList.remove('hidden');
+                    observer.disconnect();
+                }
+            }
+        } catch (error) {
+            console.error('Error loading posts:', error);
+        } finally {
+            isLoading = false;
+            loadingSpinner.classList.add('hidden');
+            loadingSpinner.classList.remove('flex');
+        }
+    }
+    
+    function attachEventListenersToNewPosts() {
+        // Re-attach like button listeners
+        document.querySelectorAll('.like-btn:not([data-listener])').forEach(btn => {
+            btn.setAttribute('data-listener', 'true');
+            btn.addEventListener('click', async function() {
+                @auth
+                const postId = this.dataset.postId;
+                const btn = this;
+                try {
+                    const response = await fetch(`/posts/${postId}/like`, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        const countSpan = btn.querySelector('span');
+                        const svg = btn.querySelector('svg');
+                        
+                        countSpan.textContent = data.likes_count;
+                        
+                        if (data.liked) {
+                            btn.classList.add('text-red-500');
+                            svg.setAttribute('fill', 'currentColor');
+                        } else {
+                            btn.classList.remove('text-red-500');
+                            svg.setAttribute('fill', 'none');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error liking post:', error);
+                }
+                @else
+                openLoginModal();
+                @endauth
+            });
+        });
+        
+        // Re-attach comment toggle listeners
+        document.querySelectorAll('.comment-toggle-btn:not([data-listener])').forEach(btn => {
+            btn.setAttribute('data-listener', 'true');
+            btn.addEventListener('click', function() {
+                const postId = this.dataset.postId;
+                const commentsSection = document.getElementById(`comments-${postId}`);
+                const commentsList = document.getElementById(`comments-list-${postId}`);
+                
+                commentsSection.classList.toggle('hidden');
+                
+                if (!commentsSection.classList.contains('hidden') && commentsList.dataset.loaded !== 'true') {
+                    loadComments(postId);
+                    commentsList.dataset.loaded = 'true';
+                }
+            });
+        });
+        
+        // Re-attach share button listeners
+        document.querySelectorAll('.share-btn:not([data-listener])').forEach(btn => {
+            btn.setAttribute('data-listener', 'true');
+            btn.addEventListener('click', function() {
+                @auth
+                const postId = this.dataset.postId;
+                currentSharePostId = postId;
+                currentShareBtn = this;
+                
+                if (this.classList.contains('text-green-500')) {
+                    unsharePost(postId, this);
+                    return;
+                }
+                
+                const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+                const userName = postCard.querySelector('a.font-semibold')?.textContent || 'User';
+                const postContent = postCard.querySelector('.whitespace-pre-line')?.textContent || '';
+                const postImage = postCard.querySelector('img[alt="Post image"]')?.src || '';
+                
+                let previewHTML = `<div class="flex items-center gap-2 mb-2"><span class="font-semibold text-sm text-gray-800">${userName}</span></div>`;
+                if (postContent) {
+                    previewHTML += `<p class="text-gray-700 text-sm line-clamp-3">${postContent}</p>`;
+                }
+                if (postImage) {
+                    previewHTML += `<img src="${postImage}" class="mt-2 rounded max-h-32 object-cover" alt="Preview">`;
+                }
+                
+                document.getElementById('sharePostPreview').innerHTML = previewHTML;
+                document.getElementById('shareContent').value = '';
+                document.getElementById('shareModal').classList.remove('hidden');
+                @else
+                openLoginModal();
+                @endauth
+            });
+        });
+        
+        // Re-attach comment form listeners
+        document.querySelectorAll('.comment-form:not([data-listener])').forEach(form => {
+            form.setAttribute('data-listener', 'true');
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const postId = this.dataset.postId;
+                const input = this.querySelector('input[name="content"]');
+                const content = input.value.trim();
+                
+                if (!content) return;
+                
+                try {
+                    const response = await fetch(`/posts/${postId}/comments`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({ content })
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        input.value = '';
+                        
+                        const commentsList = document.getElementById(`comments-list-${postId}`);
+                        const commentHtml = createCommentHTML(data.comment);
+                        commentsList.insertAdjacentHTML('afterbegin', commentHtml);
+                        
+                        const commentCount = document.querySelector(`[data-post-id="${postId}"] .comment-count`);
+                        if (commentCount) {
+                            commentCount.textContent = parseInt(commentCount.textContent) + 1;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error posting comment:', error);
+                }
+            });
+        });
+    }
+    
+    // Mark existing buttons as having listeners
+    document.querySelectorAll('.like-btn, .comment-toggle-btn, .share-btn, .comment-form').forEach(el => {
+        el.setAttribute('data-listener', 'true');
     });
 </script>
 @endpush

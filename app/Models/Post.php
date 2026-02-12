@@ -102,6 +102,14 @@ class Post extends Model
     }
 
     /**
+     * Get all shares for the post.
+     */
+    public function shares(): HasMany
+    {
+        return $this->hasMany(Share::class);
+    }
+
+    /**
      * Get the number of likes for this post.
      */
     public function getLikesCountAttribute(): int
@@ -115,6 +123,22 @@ class Post extends Model
     public function getCommentsCountAttribute(): int
     {
         return $this->comments()->count();
+    }
+
+    /**
+     * Get the number of shares for this post.
+     */
+    public function getSharesCountAttribute(): int
+    {
+        return $this->shares()->count();
+    }
+
+    /**
+     * Check if a user has shared this post.
+     */
+    public function isSharedBy(User $user): bool
+    {
+        return $this->shares()->where('user_id', $user->id)->exists();
     }
 
     /**

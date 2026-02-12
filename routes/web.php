@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Web\PageController;
 use App\Http\Controllers\Web\PostController;
+use App\Http\Controllers\Web\CommentController;
+use App\Http\Controllers\Web\FriendController;
+use App\Http\Controllers\Web\ProfileController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,18 +28,47 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 // Public pages
 Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/explore', [PageController::class, 'explore'])->name('explore');
+Route::get('/posts/feed', [PageController::class, 'fetchPosts'])->name('posts.feed');
 
 // Profile routes
 Route::get('/profile', [PageController::class, 'profile'])->name('profile');
 Route::get('/profile/{user}', [PageController::class, 'showProfile'])->name('profile.show');
+
+// Public: Get comments for a post
+Route::get('/posts/{post}/comments', [CommentController::class, 'index'])->name('comments.index');
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {
     // Posts
     Route::post('/posts', [PostController::class, 'store'])->name('posts.store');
     Route::post('/posts/{post}/like', [PostController::class, 'toggleLike'])->name('posts.like');
+    Route::post('/posts/{post}/share', [PostController::class, 'share'])->name('posts.share');
+    
+    // Comments
+    Route::post('/posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
+    Route::post('/comments/{comment}/like', [CommentController::class, 'toggleLike'])->name('comments.like');
     
     // Pages
     Route::get('/friends', [PageController::class, 'friends'])->name('friends');
     Route::get('/settings', [PageController::class, 'settings'])->name('settings');
+    
+    // Friendship actions
+    Route::post('/friends/{user}/send', [FriendController::class, 'send'])->name('friends.send');
+    Route::post('/friends/{friendship}/accept', [FriendController::class, 'accept'])->name('friends.accept');
+    Route::post('/friends/{friendship}/reject', [FriendController::class, 'reject'])->name('friends.reject');
+    Route::post('/friends/{friendship}/cancel', [FriendController::class, 'cancel'])->name('friends.cancel');
+    Route::post('/friends/{user}/remove', [FriendController::class, 'remove'])->name('friends.remove');
+    
+    // Profile settings
+    Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
+    Route::put('/profile/email', [ProfileController::class, 'updateEmail'])->name('profile.email.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    Route::delete('/profile', [ProfileController::class, 'deleteAccount'])->name('profile.delete');
+    
+    // Profile image uploads
+    Route::post('/profile/picture', [ProfileController::class, 'updateProfilePicture'])->name('profile.picture.update');
+    Route::post('/profile/cover', [ProfileController::class, 'updateCoverPhoto'])->name('profile.cover.update');
+    Route::delete('/profile/picture', [ProfileController::class, 'removeProfilePicture'])->name('profile.picture.remove');
+    Route::delete('/profile/cover', [ProfileController::class, 'removeCoverPhoto'])->name('profile.cover.remove');
 });

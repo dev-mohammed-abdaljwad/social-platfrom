@@ -77,4 +77,41 @@ class PostController extends Controller
 
         return response()->json(['success' => true, 'liked' => $liked]);
     }
+
+    /**
+     * Share a post.
+     */
+    public function share(Request $request, Post $post)
+    {
+        $user = auth()->user();
+
+        // Check if user already shared this post
+        $existingShare = $post->shares()->where('user_id', $user->id)->first();
+
+        if ($existingShare) {
+            // Toggle: unshare
+            $existingShare->delete();
+            return response()->json([
+                'success' => true,
+                'shared' => false,
+                'shares_count' => $post->shares()->count(),
+            ]);
+        }
+
+        // Create share
+        $validated = $request->validate([
+            'content' => 'nullable|string|max:1000',
+        ]);
+
+        $post->shares()->create([
+            'user_id' => $user->id,
+            'content' => $validated['content'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'shared' => true,
+            'shares_count' => $post->shares()->count(),
+        ]);
+    }
 }

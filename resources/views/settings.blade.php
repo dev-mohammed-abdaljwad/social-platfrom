@@ -21,16 +21,21 @@
                 <div class="flex items-center gap-4">
                     <img 
                         id="profilePreview"
-                        src="https://ui-avatars.com/api/?name=User&size=100" 
+                        src="{{ auth()->user()->avatar_url }}" 
                         alt="Profile" 
                         class="w-20 h-20 rounded-full object-cover"
                     >
                     <div>
-                        <label class="cursor-pointer px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors">
+                        <label class="cursor-pointer px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium text-gray-700 transition-colors inline-block">
                             Change Photo
-                            <input type="file" id="profilePicture" accept="image/*" class="hidden" onchange="previewImage(this)">
+                            <input type="file" id="profilePicture" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp" class="hidden" onchange="uploadProfilePicture(this)">
                         </label>
-                        <p class="text-xs text-gray-500 mt-1">JPG, PNG. Max 2MB</p>
+                        @if(auth()->user()->profile_picture)
+                        <button type="button" onclick="removeProfilePicture()" class="ml-2 px-3 py-2 bg-red-100 hover:bg-red-200 rounded-lg text-sm font-medium text-red-700 transition-colors">
+                            Remove
+                        </button>
+                        @endif
+                        <p class="text-xs text-gray-500 mt-1">JPG, PNG, GIF, WebP. Max 5MB</p>
                     </div>
                 </div>
 
@@ -41,8 +46,10 @@
                         type="text" 
                         id="name" 
                         name="name"
+                        value="{{ auth()->user()->name }}"
                         class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Your name"
+                        required
                     >
                 </div>
 
@@ -55,10 +62,25 @@
                             type="text" 
                             id="username" 
                             name="username"
+                            value="{{ auth()->user()->username }}"
                             class="flex-1 px-4 py-2 rounded-r-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                             placeholder="username"
+                            required
                         >
                     </div>
+                </div>
+
+                <!-- Phone -->
+                <div>
+                    <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                    <input 
+                        type="tel" 
+                        id="phone" 
+                        name="phone"
+                        value="{{ auth()->user()->phone }}"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="+1 (555) 123-4567"
+                    >
                 </div>
 
                 <!-- Bio -->
@@ -68,10 +90,11 @@
                         id="bio" 
                         name="bio"
                         rows="3"
+                        maxlength="500"
                         class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                         placeholder="Tell us about yourself..."
-                    ></textarea>
-                    <p class="text-xs text-gray-500 mt-1"><span id="bioCount">0</span>/200 characters</p>
+                    >{{ auth()->user()->bio }}</textarea>
+                    <p class="text-xs text-gray-500 mt-1"><span id="bioCount">{{ strlen(auth()->user()->bio ?? '') }}</span>/500 characters</p>
                 </div>
 
                 <button type="submit" class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
@@ -82,9 +105,9 @@
 
         <!-- Account Settings -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-            <h2 class="text-lg font-semibold text-gray-800 mb-4">Account Settings</h2>
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Email Address</h2>
             
-            <form id="accountForm" class="space-y-4">
+            <form id="emailForm" class="space-y-4">
                 <!-- Email -->
                 <div>
                     <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
@@ -92,9 +115,25 @@
                         type="email" 
                         id="email" 
                         name="email"
+                        value="{{ auth()->user()->email }}"
                         class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="email@example.com"
+                        required
                     >
+                </div>
+
+                <!-- Password for verification -->
+                <div>
+                    <label for="email_password" class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                    <input 
+                        type="password" 
+                        id="email_password" 
+                        name="password"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Enter password to confirm"
+                        required
+                    >
+                    <p class="text-xs text-gray-500 mt-1">Enter your password to confirm email change</p>
                 </div>
 
                 <button type="submit" class="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
@@ -117,31 +156,34 @@
                         name="current_password"
                         class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Enter current password"
+                        required
                     >
                 </div>
 
                 <!-- New Password -->
                 <div>
-                    <label for="new_password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
                     <input 
                         type="password" 
-                        id="new_password" 
-                        name="new_password"
+                        id="password" 
+                        name="password"
                         minlength="8"
                         class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Enter new password"
+                        placeholder="Enter new password (min 8 characters)"
+                        required
                     >
                 </div>
 
                 <!-- Confirm New Password -->
                 <div>
-                    <label for="confirm_password" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                    <label for="password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
                     <input 
                         type="password" 
-                        id="confirm_password" 
-                        name="confirm_password"
+                        id="password_confirmation" 
+                        name="password_confirmation"
                         class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Confirm new password"
+                        required
                     >
                 </div>
 
@@ -190,98 +232,75 @@
                         <h3 class="font-medium text-gray-800">Delete Account</h3>
                         <p class="text-sm text-gray-500">Permanently delete your account and all data</p>
                     </div>
-                    <button onclick="confirmDelete()" class="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors">
+                    <button onclick="showDeleteModal()" class="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors">
                         Delete Account
                     </button>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Delete Account Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 p-6">
+            <h3 class="text-xl font-bold text-red-600 mb-4">Delete Account</h3>
+            <p class="text-gray-600 mb-4">This action is <strong>permanent</strong> and cannot be undone. All your data including posts, comments, and friendships will be deleted.</p>
+            
+            <form id="deleteForm" class="space-y-4">
+                <div>
+                    <label for="delete_password" class="block text-sm font-medium text-gray-700 mb-1">Enter your password to confirm</label>
+                    <input 
+                        type="password" 
+                        id="delete_password" 
+                        name="password"
+                        class="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        placeholder="Your password"
+                        required
+                    >
+                </div>
+                
+                <div class="flex gap-3">
+                    <button type="button" onclick="hideDeleteModal()" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors">
+                        Delete My Account
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
 <script>
-    // Load user data
-    async function loadUserData() {
-        const token = localStorage.getItem('auth_token');
-        if (!token) return;
-        
-        try {
-            const response = await fetch('/api/v1/auth/user', {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Accept': 'application/json'
-                }
-            });
-            const data = await response.json();
-            
-            if (data.success && data.data) {
-                const user = data.data;
-                document.getElementById('name').value = user.name || '';
-                document.getElementById('username').value = user.username || '';
-                document.getElementById('bio').value = user.bio || '';
-                document.getElementById('email').value = user.email || '';
-                
-                if (user.profile_picture) {
-                    document.getElementById('profilePreview').src = `/storage/${user.profile_picture}`;
-                } else {
-                    document.getElementById('profilePreview').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&size=100`;
-                }
-                
-                updateBioCount();
-            }
-        } catch (error) {
-            console.error('Error loading user:', error);
-        }
-    }
-
-    // Preview image
-    function previewImage(input) {
-        if (input.files && input.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                document.getElementById('profilePreview').src = e.target.result;
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-    }
-
     // Bio character count
     function updateBioCount() {
         const bio = document.getElementById('bio');
         const count = document.getElementById('bioCount');
         count.textContent = bio.value.length;
     }
-
     document.getElementById('bio').addEventListener('input', updateBioCount);
 
-    // Profile form submit
-    document.getElementById('profileForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
+    // Upload Profile Picture
+    async function uploadProfilePicture(input) {
+        if (!input.files || !input.files[0]) return;
         
-        const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
+        const file = input.files[0];
+        if (file.size > 5 * 1024 * 1024) {
+            showError('Profile picture must be less than 5MB');
             return;
         }
         
         const formData = new FormData();
-        formData.append('name', document.getElementById('name').value);
-        formData.append('username', document.getElementById('username').value);
-        formData.append('bio', document.getElementById('bio').value);
-        
-        const profilePicture = document.getElementById('profilePicture').files[0];
-        if (profilePicture) {
-            formData.append('profile_picture', profilePicture);
-        }
+        formData.append('profile_picture', file);
         
         try {
-            const response = await fetch('/api/v1/users/profile', {
+            const response = await fetch('/profile/picture', {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
-                    'X-HTTP-Method-Override': 'PUT'
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: formData
             });
@@ -289,12 +308,107 @@
             const data = await response.json();
             
             if (data.success) {
-                showSuccess('Profile updated successfully!');
+                document.getElementById('profilePreview').src = data.profile_picture_url;
+                showSuccess('Profile picture updated!');
+                // Reload to show remove button if first upload
+                setTimeout(() => location.reload(), 1000);
             } else {
-                showError(data.message || 'Failed to update profile.');
+                showError(data.message || 'Failed to upload profile picture');
             }
         } catch (error) {
-            showError('Something went wrong.');
+            showError('Failed to upload profile picture');
+        }
+        
+        input.value = '';
+    }
+
+    // Remove Profile Picture
+    async function removeProfilePicture() {
+        if (!confirm('Remove your profile picture?')) return;
+        
+        try {
+            const response = await fetch('/profile/picture', {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById('profilePreview').src = data.profile_picture_url;
+                showSuccess('Profile picture removed!');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                showError(data.message || 'Failed to remove profile picture');
+            }
+        } catch (error) {
+            showError('Failed to remove profile picture');
+        }
+    }
+
+    // Profile form submit
+    document.getElementById('profileForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const response = await fetch('/profile', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    name: document.getElementById('name').value,
+                    username: document.getElementById('username').value,
+                    bio: document.getElementById('bio').value,
+                    phone: document.getElementById('phone').value
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showSuccess('Profile updated successfully!');
+            } else {
+                showError(data.message || 'Failed to update profile');
+            }
+        } catch (error) {
+            showError('Something went wrong');
+        }
+    });
+
+    // Email form submit
+    document.getElementById('emailForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const response = await fetch('/profile/email', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('email_password').value
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showSuccess('Email updated successfully!');
+                document.getElementById('email_password').value = '';
+            } else {
+                showError(data.message || 'Failed to update email');
+            }
+        } catch (error) {
+            showError('Something went wrong');
         }
     });
 
@@ -302,32 +416,26 @@
     document.getElementById('passwordForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        const newPass = document.getElementById('new_password').value;
-        const confirmPass = document.getElementById('confirm_password').value;
+        const password = document.getElementById('password').value;
+        const confirmation = document.getElementById('password_confirmation').value;
         
-        if (newPass !== confirmPass) {
-            showError('Passwords do not match.');
-            return;
-        }
-        
-        const token = localStorage.getItem('auth_token');
-        if (!token) {
-            window.location.href = '/login';
+        if (password !== confirmation) {
+            showError('Passwords do not match');
             return;
         }
         
         try {
-            const response = await fetch('/api/v1/users/password', {
+            const response = await fetch('/profile/password', {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json',
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 },
                 body: JSON.stringify({
                     current_password: document.getElementById('current_password').value,
-                    password: newPass,
-                    password_confirmation: confirmPass
+                    password: password,
+                    password_confirmation: confirmation
                 })
             });
             
@@ -337,19 +445,62 @@
                 showSuccess('Password updated successfully!');
                 document.getElementById('passwordForm').reset();
             } else {
-                showError(data.message || 'Failed to update password.');
+                showError(data.message || 'Failed to update password');
             }
         } catch (error) {
-            showError('Something went wrong.');
+            showError('Something went wrong');
         }
     });
 
+    // Delete Account Modal
+    function showDeleteModal() {
+        document.getElementById('deleteModal').classList.remove('hidden');
+        document.getElementById('deleteModal').classList.add('flex');
+    }
+
+    function hideDeleteModal() {
+        document.getElementById('deleteModal').classList.add('hidden');
+        document.getElementById('deleteModal').classList.remove('flex');
+        document.getElementById('delete_password').value = '';
+    }
+
+    // Delete form submit
+    document.getElementById('deleteForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        try {
+            const response = await fetch('/profile', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    password: document.getElementById('delete_password').value
+                })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                window.location.href = data.redirect || '/';
+            } else {
+                showError(data.message || 'Failed to delete account');
+            }
+        } catch (error) {
+            showError('Something went wrong');
+        }
+    });
+
+    // Alert helpers
     function showSuccess(message) {
         const alert = document.getElementById('successAlert');
         alert.textContent = message;
         alert.classList.remove('hidden');
         document.getElementById('errorAlert').classList.add('hidden');
         setTimeout(() => alert.classList.add('hidden'), 5000);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function showError(message) {
@@ -357,16 +508,14 @@
         alert.textContent = message;
         alert.classList.remove('hidden');
         document.getElementById('successAlert').classList.add('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    function confirmDelete() {
-        if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
-            // Call delete endpoint
-            alert('Account deletion is disabled in demo mode.');
+    // Close modal on outside click
+    document.getElementById('deleteModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            hideDeleteModal();
         }
-    }
-
-    // Initialize
-    document.addEventListener('DOMContentLoaded', loadUserData);
+    });
 </script>
 @endpush
