@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Models\Share;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -137,6 +138,128 @@ class PostController extends Controller
         return response()->json([
             'success' => true,
             'saved' => $saved,
+        ]);
+    }
+
+    /**
+     * Get likes for a post.
+     */
+    public function getLikes(Post $post)
+    {
+        $likes = $post->likes()->with('user')->get();
+
+        return response()->json([
+            'success' => true,
+            'likes' => $likes->map(fn($like) => [
+                'id' => $like->id,
+                'user' => [
+                    'id' => $like->user->id,
+                    'name' => $like->user->name,
+                    'username' => $like->user->username,
+                    'avatar_url' => $like->user->avatar_url,
+                ],
+                'created_at' => $like->created_at->toISOString(),
+            ]),
+        ]);
+    }
+
+    /**
+     * Update a post.
+     */
+    public function update(Request $request, Post $post)
+    {
+        // Only post owner can update
+        if ($post->user_id !== auth()->id()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'content' => 'nullable|string|max:5000',
+            'location' => 'nullable|string|max:255',
+            'privacy' => 'nullable|in:public,friends,private',
+        ]);
+
+        $post->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Post updated successfully',
+            'post' => [
+                'id' => $post->id,
+                'content' => $post->content,
+                'location' => $post->location,
+                'privacy' => $post->privacy,
+            ],
+        ]);
+    }
+
+    /**
+     * Delete a post.
+     */
+    public function destroy(Post $post)
+    {
+        // Only post owner can delete
+        if ($post->user_id !== auth()->id()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        // Delete associated media files
+        if ($post->image) {
+            Storage::disk('public')->delete($post->image);
+        }
+        if ($post->video) {
+            Storage::disk('public')->delete($post->video);
+        }
+
+        $post->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Post deleted successfully',
+        ]);
+    }
+
+    /**
+     * Update a share.
+     */
+    public function updateShare(Request $request, Share $share)
+    {
+        // Only share owner can update
+        if ($share->user_id !== auth()->id()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $validated = $request->validate([
+            'content' => 'nullable|string|max:1000',
+        ]);
+
+        $share->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Share updated successfully',
+            'share' => [
+                'id' => $share->id,
+                'content' => $share->content,
+            ],
+        ]);
+    }
+
+    /**
+     * Delete a share.
+     */
+    public function destroyShare(Share $share)
+    {
+        // Only share owner can delete
+        if ($share->user_id !== auth()->id()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $share->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Share deleted successfully',
         ]);
     }
 }

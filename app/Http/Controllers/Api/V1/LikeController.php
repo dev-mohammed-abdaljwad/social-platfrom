@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Models\Post;
 use App\Services\Like\LikeService;
+use App\Transformers\Like\LikeTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -11,6 +13,15 @@ class LikeController extends Controller
     public function __construct(
         protected LikeService $likeService
     ) {}
+
+    public function getPostLikes(int $postId): JsonResponse
+    {
+        $likes = $this->likeService->findByLikeable(Post::class, $postId);
+
+        return response()->json([
+            'data' => LikeTransformer::collection($likes),
+        ]);
+    }
 
     public function togglePostLike(Request $request, int $postId): JsonResponse
     {

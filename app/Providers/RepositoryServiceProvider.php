@@ -15,6 +15,8 @@ use App\Repositories\Like\LikeRepository;
 use App\Repositories\Like\Eloquent\EloquentLikeRepository;
 use App\Repositories\Friendship\FriendshipRepository;
 use App\Repositories\Friendship\Eloquent\EloquentFriendshipRepository;
+use App\Repositories\Share\ShareRepository;
+use App\Repositories\Share\Eloquent\EloquentShareRepository;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -29,6 +31,7 @@ class RepositoryServiceProvider extends ServiceProvider
         CommentRepository::class => EloquentCommentRepository::class,
         LikeRepository::class => EloquentLikeRepository::class,
         FriendshipRepository::class => EloquentFriendshipRepository::class,
+        ShareRepository::class => EloquentShareRepository::class,
     ];
 
     /**

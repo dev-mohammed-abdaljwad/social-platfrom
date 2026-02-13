@@ -144,10 +144,41 @@
                             <a href="{{ route('profile.show', $post->user) }}" class="font-semibold text-gray-800 hover:text-blue-600">{{ $post->user->name }}</a>
                             <p class="text-sm text-gray-500">{{ $post->created_at->diffForHumans() }}</p>
                         </div>
+                        @if(auth()->check() && auth()->id() === $post->user_id)
+                        <div class="relative">
+                            <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors post-menu-btn" data-post-id="{{ $post->id }}">
+                                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                                </svg>
+                            </button>
+                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 hidden z-10 post-menu" data-post-id="{{ $post->id }}">
+                                <button class="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-t-lg edit-post-btn" 
+                                        data-post-id="{{ $post->id }}" 
+                                        data-content="{{ $post->content }}"
+                                        data-location="{{ $post->location }}"
+                                        data-privacy="{{ $post->privacy?->value }}">
+                                    <span class="flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                        </svg>
+                                        Edit Post
+                                    </span>
+                                </button>
+                                <button class="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 rounded-b-lg delete-post-btn" data-post-id="{{ $post->id }}">
+                                    <span class="flex items-center gap-2">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                        </svg>
+                                        Delete Post
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                        @endif
                     </div>
                     
                     @if($post->content)
-                    <p class="mt-3 text-gray-700 whitespace-pre-line">{{ $post->content }}</p>
+                    <p class="mt-3 text-gray-700 whitespace-pre-line post-content">{{ $post->content }}</p>
                     @endif
                     
                     @if($post->image_url)
@@ -160,24 +191,57 @@
                     
                     <!-- Post Actions -->
                     <div class="flex items-center gap-6 mt-4 pt-4 border-t border-gray-100">
-                        <button class="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors like-btn {{ auth()->check() && $post->isLikedBy(auth()->user()) ? 'text-red-500' : '' }}" data-post-id="{{ $post->id }}">
-                            <svg class="w-5 h-5" fill="{{ auth()->check() && $post->isLikedBy(auth()->user()) ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                            </svg>
-                            <span>{{ $post->likes->count() }}</span>
-                        </button>
-                        <span class="flex items-center gap-2 text-gray-600">
+                        <div class="flex items-center gap-1">
+                            <button class="flex items-center gap-2 text-gray-600 hover:text-red-500 transition-colors like-btn {{ auth()->check() && $post->isLikedBy(auth()->user()) ? 'text-red-500' : '' }}" data-post-id="{{ $post->id }}">
+                                <svg class="w-5 h-5" fill="{{ auth()->check() && $post->isLikedBy(auth()->user()) ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                </svg>
+                            </button>
+                            <button class="text-gray-600 hover:text-red-500 hover:underline text-sm view-likes-btn" data-post-id="{{ $post->id }}">
+                                <span class="likes-count">{{ $post->likes->count() }}</span>
+                            </button>
+                        </div>
+                        <button class="flex items-center gap-2 text-gray-600 hover:text-blue-500 transition-colors comment-toggle-btn" data-post-id="{{ $post->id }}">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                             </svg>
-                            <span>{{ $post->comments->count() }}</span>
-                        </span>
+                            <span class="comment-count">{{ $post->comments->count() }}</span>
+                        </button>
                         <button class="flex items-center gap-2 text-gray-600 hover:text-green-500 transition-colors share-btn {{ auth()->check() && $post->isSharedBy(auth()->user()) ? 'text-green-500' : '' }}" data-post-id="{{ $post->id }}">
                             <svg class="w-5 h-5" fill="{{ auth()->check() && $post->isSharedBy(auth()->user()) ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
                             </svg>
                             <span class="shares-count">{{ $post->shares->count() }}</span>
                         </button>
+                    </div>
+                    
+                    <!-- Comments Section -->
+                    <div class="comments-section hidden mt-4 pt-4 border-t border-gray-100" id="comments-{{ $post->id }}">
+                        @auth
+                        <form class="comment-form flex gap-3 mb-4" data-post-id="{{ $post->id }}">
+                            <img src="{{ auth()->user()->avatar_url }}" alt="Profile" class="w-8 h-8 rounded-full object-cover">
+                            <div class="flex-1 flex gap-2">
+                                <input type="text" 
+                                       name="content" 
+                                       placeholder="Write a comment..." 
+                                       class="flex-1 px-4 py-2 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                       required>
+                                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors text-sm font-medium">
+                                    Post
+                                </button>
+                            </div>
+                        </form>
+                        @else
+                        <p class="text-gray-500 text-sm mb-4">
+                            <a href="{{ route('login') }}" class="text-blue-600 hover:underline">Log in</a> to comment
+                        </p>
+                        @endauth
+                        
+                        <div class="comments-list space-y-3" id="comments-list-{{ $post->id }}">
+                            <div class="text-center py-2">
+                                <span class="text-gray-400 text-sm">Loading comments...</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -194,18 +258,49 @@
 
     <div id="sharesTab" class="tab-content hidden space-y-6">
         @forelse($sharedPosts as $share)
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4" data-share-id="{{ $share->id }}">
             <!-- Share Header -->
-            <div class="flex items-center gap-2 mb-3 pb-3 border-b border-gray-100">
-                <svg class="w-4 h-4 text-green-500" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
-                </svg>
-                <span class="text-sm text-gray-500">{{ $user->name }} shared this post</span>
-                <span class="text-sm text-gray-400">{{ $share->created_at->diffForHumans() }}</span>
+            <div class="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
+                <div class="flex items-center gap-2">
+                    <svg class="w-4 h-4 text-green-500" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                    </svg>
+                    <span class="text-sm text-gray-500">{{ $user->name }} shared this post</span>
+                    <span class="text-sm text-gray-400">{{ $share->created_at->diffForHumans() }}</span>
+                </div>
+                @if(auth()->check() && auth()->id() === $share->user_id)
+                <div class="relative">
+                    <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors share-menu-btn" data-share-id="{{ $share->id }}">
+                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                        </svg>
+                    </button>
+                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 hidden z-10 share-menu" data-share-id="{{ $share->id }}">
+                        <button class="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-t-lg edit-share-btn" 
+                                data-share-id="{{ $share->id }}" 
+                                data-content="{{ $share->content }}">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                </svg>
+                                Edit Share
+                            </span>
+                        </button>
+                        <button class="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 rounded-b-lg delete-share-btn" data-share-id="{{ $share->id }}">
+                            <span class="flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                </svg>
+                                Delete Share
+                            </span>
+                        </button>
+                    </div>
+                </div>
+                @endif
             </div>
             
             @if($share->content)
-            <p class="text-gray-700 mb-3">{{ $share->content }}</p>
+            <p class="text-gray-700 mb-3 share-content">{{ $share->content }}</p>
             @endif
 
             <!-- Original Post -->
@@ -334,6 +429,116 @@
                 <button onclick="confirmShare()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
                     Share
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Likes Modal -->
+    <div id="likesModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 overflow-hidden max-h-[80vh] flex flex-col">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">Likes</h3>
+                <button onclick="closeLikesModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1" id="likesModalContent">
+                <div class="text-center py-4 text-gray-500">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Post Modal -->
+    <div id="editPostModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">Edit Post</h3>
+                <button onclick="closeEditPostModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6">
+                <input type="hidden" id="editPostId">
+                <textarea 
+                    id="editPostContent" 
+                    placeholder="What's on your mind?" 
+                    class="w-full px-4 py-3 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    rows="4"
+                ></textarea>
+                <div class="mt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Privacy</label>
+                    <select id="editPostPrivacy" class="w-full px-4 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="public">Public</option>
+                        <option value="friends">Friends Only</option>
+                        <option value="private">Only Me</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <button onclick="closeEditPostModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium">
+                    Cancel
+                </button>
+                <button onclick="saveEditPost()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Share Modal -->
+    <div id="editShareModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">Edit Share</h3>
+                <button onclick="closeEditShareModal()" class="text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div class="p-6">
+                <input type="hidden" id="editShareId">
+                <textarea 
+                    id="editShareContent" 
+                    placeholder="Add a comment to your share (optional)..." 
+                    class="w-full px-4 py-3 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                    rows="3"
+                ></textarea>
+            </div>
+            <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200">
+                <button onclick="closeEditShareModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium">
+                    Cancel
+                </button>
+                <button onclick="saveEditShare()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    Save Changes
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 overflow-hidden">
+            <div class="p-6 text-center">
+                <svg class="w-16 h-16 mx-auto text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                </svg>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2" id="deleteConfirmTitle">Delete Post?</h3>
+                <p class="text-gray-600 mb-6" id="deleteConfirmMessage">This action cannot be undone. Are you sure you want to delete this post?</p>
+                <input type="hidden" id="deleteItemId">
+                <input type="hidden" id="deleteItemType">
+                <div class="flex justify-center gap-3">
+                    <button onclick="closeDeleteConfirmModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium">
+                        Cancel
+                    </button>
+                    <button onclick="confirmDelete()" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                        Delete
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -485,7 +690,8 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    const countSpan = btn.querySelector('span');
+                    const postCard = btn.closest('[data-post-id]');
+                    const countSpan = postCard.querySelector('.likes-count');
                     const svg = btn.querySelector('svg');
                     let count = parseInt(countSpan.textContent);
                     
@@ -503,8 +709,152 @@
                 console.error('Error liking post:', error);
             }
             @else
-            openLoginModal();
+            window.location.href = '{{ route("login") }}';
             @endauth
+        });
+    });
+
+    // View likes modal functionality
+    document.querySelectorAll('.view-likes-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            openLikesModal(postId);
+        });
+    });
+
+    function openLikesModal(postId) {
+        document.getElementById('likesModal').classList.remove('hidden');
+        document.getElementById('likesModalContent').innerHTML = '<div class="text-center py-4 text-gray-500">Loading...</div>';
+        
+        fetch(`/posts/${postId}/likes`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.likes && data.likes.length > 0) {
+                    let html = '<div class="space-y-3">';
+                    data.likes.forEach(like => {
+                        html += `
+                            <a href="/profile/${like.user.id}" class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                                <img src="${like.user.avatar_url || '/images/default-avatar.png'}" 
+                                     alt="${like.user.name}" 
+                                     class="w-10 h-10 rounded-full object-cover">
+                                <div>
+                                    <p class="font-semibold text-gray-800">${like.user.name}</p>
+                                    <p class="text-sm text-gray-500">@${like.user.username || like.user.name.toLowerCase().replace(/\\s+/g, '')}</p>
+                                </div>
+                            </a>
+                        `;
+                    });
+                    html += '</div>';
+                    document.getElementById('likesModalContent').innerHTML = html;
+                } else {
+                    document.getElementById('likesModalContent').innerHTML = '<div class="text-center py-4 text-gray-500">No likes yet</div>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching likes:', error);
+                document.getElementById('likesModalContent').innerHTML = '<div class="text-center py-4 text-red-500">Error loading likes</div>';
+            });
+    }
+
+    function closeLikesModal() {
+        document.getElementById('likesModal').classList.add('hidden');
+    }
+
+    document.getElementById('likesModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeLikesModal();
+        }
+    });
+
+    // Comment toggle functionality
+    document.querySelectorAll('.comment-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            const commentsSection = document.getElementById(`comments-${postId}`);
+            
+            if (commentsSection.classList.contains('hidden')) {
+                commentsSection.classList.remove('hidden');
+                loadComments(postId);
+            } else {
+                commentsSection.classList.add('hidden');
+            }
+        });
+    });
+
+    // Load comments for a post
+    async function loadComments(postId) {
+        const commentsList = document.getElementById(`comments-list-${postId}`);
+        
+        try {
+            const response = await fetch(`/posts/${postId}/comments`);
+            const data = await response.json();
+            
+            if (data.comments && data.comments.length > 0) {
+                let html = '';
+                data.comments.forEach(comment => {
+                    html += `
+                        <div class="flex gap-3">
+                            <a href="/profile/${comment.user.id}">
+                                <img src="${comment.user.avatar_url || '/images/default-avatar.png'}" 
+                                     alt="${comment.user.name}" 
+                                     class="w-8 h-8 rounded-full object-cover">
+                            </a>
+                            <div class="flex-1">
+                                <div class="bg-gray-100 rounded-2xl px-4 py-2">
+                                    <a href="/profile/${comment.user.id}" class="font-semibold text-gray-800 text-sm hover:underline">${comment.user.name}</a>
+                                    <p class="text-gray-700 text-sm">${comment.content}</p>
+                                </div>
+                                <p class="text-xs text-gray-400 mt-1 ml-4">${comment.created_at}</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                commentsList.innerHTML = html;
+            } else {
+                commentsList.innerHTML = '<p class="text-center text-gray-400 text-sm py-2">No comments yet. Be the first to comment!</p>';
+            }
+        } catch (error) {
+            console.error('Error loading comments:', error);
+            commentsList.innerHTML = '<p class="text-center text-red-500 text-sm py-2">Error loading comments</p>';
+        }
+    }
+
+    // Comment form submission
+    document.querySelectorAll('.comment-form').forEach(form => {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const postId = this.dataset.postId;
+            const input = this.querySelector('input[name="content"]');
+            const content = input.value.trim();
+            
+            if (!content) return;
+            
+            try {
+                const response = await fetch(`/posts/${postId}/comments`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ content })
+                });
+                
+                if (response.ok) {
+                    input.value = '';
+                    loadComments(postId);
+                    
+                    // Update comment count
+                    const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+                    const countSpan = postCard.querySelector('.comment-count');
+                    if (countSpan) {
+                        countSpan.textContent = parseInt(countSpan.textContent) + 1;
+                    }
+                }
+            } catch (error) {
+                console.error('Error posting comment:', error);
+            }
         });
     });
 
@@ -624,5 +974,261 @@
             console.error('Error unsharing post:', error);
         }
     }
+
+    // Post menu toggle
+    document.querySelectorAll('.post-menu-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const postId = this.dataset.postId;
+            const menu = document.querySelector(`.post-menu[data-post-id="${postId}"]`);
+            
+            // Close all other menus
+            document.querySelectorAll('.post-menu, .share-menu').forEach(m => {
+                if (m !== menu) m.classList.add('hidden');
+            });
+            
+            menu.classList.toggle('hidden');
+        });
+    });
+
+    // Share menu toggle
+    document.querySelectorAll('.share-menu-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const shareId = this.dataset.shareId;
+            const menu = document.querySelector(`.share-menu[data-share-id="${shareId}"]`);
+            
+            // Close all other menus
+            document.querySelectorAll('.post-menu, .share-menu').forEach(m => {
+                if (m !== menu) m.classList.add('hidden');
+            });
+            
+            menu.classList.toggle('hidden');
+        });
+    });
+
+    // Close menus when clicking outside
+    document.addEventListener('click', function() {
+        document.querySelectorAll('.post-menu, .share-menu').forEach(m => m.classList.add('hidden'));
+    });
+
+    // Edit post button
+    document.querySelectorAll('.edit-post-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            const content = this.dataset.content || '';
+            const privacy = this.dataset.privacy || 'public';
+            
+            document.getElementById('editPostId').value = postId;
+            document.getElementById('editPostContent').value = content;
+            document.getElementById('editPostPrivacy').value = privacy;
+            document.getElementById('editPostModal').classList.remove('hidden');
+            
+            // Close menu
+            document.querySelector(`.post-menu[data-post-id="${postId}"]`).classList.add('hidden');
+        });
+    });
+
+    // Delete post button
+    document.querySelectorAll('.delete-post-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            
+            document.getElementById('deleteItemId').value = postId;
+            document.getElementById('deleteItemType').value = 'post';
+            document.getElementById('deleteConfirmTitle').textContent = 'Delete Post?';
+            document.getElementById('deleteConfirmMessage').textContent = 'This action cannot be undone. Are you sure you want to delete this post?';
+            document.getElementById('deleteConfirmModal').classList.remove('hidden');
+            
+            // Close menu
+            document.querySelector(`.post-menu[data-post-id="${postId}"]`).classList.add('hidden');
+        });
+    });
+
+    // Edit share button
+    document.querySelectorAll('.edit-share-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const shareId = this.dataset.shareId;
+            const content = this.dataset.content || '';
+            
+            document.getElementById('editShareId').value = shareId;
+            document.getElementById('editShareContent').value = content;
+            document.getElementById('editShareModal').classList.remove('hidden');
+            
+            // Close menu
+            document.querySelector(`.share-menu[data-share-id="${shareId}"]`).classList.add('hidden');
+        });
+    });
+
+    // Delete share button
+    document.querySelectorAll('.delete-share-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const shareId = this.dataset.shareId;
+            
+            document.getElementById('deleteItemId').value = shareId;
+            document.getElementById('deleteItemType').value = 'share';
+            document.getElementById('deleteConfirmTitle').textContent = 'Delete Share?';
+            document.getElementById('deleteConfirmMessage').textContent = 'This action cannot be undone. Are you sure you want to delete this share?';
+            document.getElementById('deleteConfirmModal').classList.remove('hidden');
+            
+            // Close menu
+            document.querySelector(`.share-menu[data-share-id="${shareId}"]`).classList.add('hidden');
+        });
+    });
+
+    // Modal functions
+    function closeEditPostModal() {
+        document.getElementById('editPostModal').classList.add('hidden');
+    }
+
+    function closeEditShareModal() {
+        document.getElementById('editShareModal').classList.add('hidden');
+    }
+
+    function closeDeleteConfirmModal() {
+        document.getElementById('deleteConfirmModal').classList.add('hidden');
+    }
+
+    // Save edit post
+    async function saveEditPost() {
+        const postId = document.getElementById('editPostId').value;
+        const content = document.getElementById('editPostContent').value;
+        const privacy = document.getElementById('editPostPrivacy').value;
+        
+        try {
+            const response = await fetch(`/posts/${postId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ content, privacy })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Update post content in the DOM
+                const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+                if (postCard) {
+                    const contentEl = postCard.querySelector('.post-content');
+                    if (contentEl) {
+                        contentEl.textContent = content;
+                    }
+                    // Update the edit button data attribute
+                    const editBtn = postCard.querySelector('.edit-post-btn');
+                    if (editBtn) {
+                        editBtn.dataset.content = content;
+                        editBtn.dataset.privacy = privacy;
+                    }
+                }
+                closeEditPostModal();
+            } else {
+                const error = await response.json();
+                alert(error.message || 'Failed to update post');
+            }
+        } catch (error) {
+            console.error('Error updating post:', error);
+            alert('Failed to update post');
+        }
+    }
+
+    // Save edit share
+    async function saveEditShare() {
+        const shareId = document.getElementById('editShareId').value;
+        const content = document.getElementById('editShareContent').value;
+        
+        try {
+            const response = await fetch(`/shares/${shareId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ content })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                // Update share content in the DOM
+                const shareCard = document.querySelector(`[data-share-id="${shareId}"]`);
+                if (shareCard) {
+                    let contentEl = shareCard.querySelector('.share-content');
+                    if (content) {
+                        if (contentEl) {
+                            contentEl.textContent = content;
+                        } else {
+                            // Create content element if it doesn't exist
+                            const headerDiv = shareCard.querySelector('.border-b');
+                            const newContentEl = document.createElement('p');
+                            newContentEl.className = 'text-gray-700 mb-3 share-content';
+                            newContentEl.textContent = content;
+                            headerDiv.after(newContentEl);
+                        }
+                    } else if (contentEl) {
+                        contentEl.remove();
+                    }
+                    // Update the edit button data attribute
+                    const editBtn = shareCard.querySelector('.edit-share-btn');
+                    if (editBtn) {
+                        editBtn.dataset.content = content;
+                    }
+                }
+                closeEditShareModal();
+            } else {
+                const error = await response.json();
+                alert(error.message || 'Failed to update share');
+            }
+        } catch (error) {
+            console.error('Error updating share:', error);
+            alert('Failed to update share');
+        }
+    }
+
+    // Confirm delete
+    async function confirmDelete() {
+        const itemId = document.getElementById('deleteItemId').value;
+        const itemType = document.getElementById('deleteItemType').value;
+        
+        const url = itemType === 'post' ? `/posts/${itemId}` : `/shares/${itemId}`;
+        
+        try {
+            const response = await fetch(url, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+
+            if (response.ok) {
+                // Remove the item from the DOM
+                const selector = itemType === 'post' ? `[data-post-id="${itemId}"]` : `[data-share-id="${itemId}"]`;
+                const element = document.querySelector(selector);
+                if (element) {
+                    element.remove();
+                }
+                closeDeleteConfirmModal();
+            } else {
+                const error = await response.json();
+                alert(error.message || `Failed to delete ${itemType}`);
+            }
+        } catch (error) {
+            console.error(`Error deleting ${itemType}:`, error);
+            alert(`Failed to delete ${itemType}`);
+        }
+    }
+
+    // Close modals on outside click
+    document.getElementById('editPostModal').addEventListener('click', function(e) {
+        if (e.target === this) closeEditPostModal();
+    });
+    document.getElementById('editShareModal').addEventListener('click', function(e) {
+        if (e.target === this) closeEditShareModal();
+    });
+    document.getElementById('deleteConfirmModal').addEventListener('click', function(e) {
+        if (e.target === this) closeDeleteConfirmModal();
+    });
 </script>
 @endpush

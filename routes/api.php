@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\PostController;
 use App\Http\Controllers\Api\V1\CommentController;
 use App\Http\Controllers\Api\V1\LikeController;
 use App\Http\Controllers\Api\V1\FriendshipController;
+use App\Http\Controllers\Api\V1\ShareController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -68,6 +69,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{id}', [PostController::class, 'destroy']);
             
             // Post likes
+            Route::get('/{postId}/likes', [LikeController::class, 'getPostLikes']);
             Route::post('/{postId}/like', [LikeController::class, 'togglePostLike']);
             Route::get('/{postId}/liked', [LikeController::class, 'hasLikedPost']);
             
@@ -78,6 +80,18 @@ Route::prefix('v1')->group(function () {
             Route::put('/{postId}/comments/{commentId}', [CommentController::class, 'update']);
             Route::delete('/{postId}/comments/{commentId}', [CommentController::class, 'destroy']);
             Route::get('/{postId}/comments/{commentId}/replies', [CommentController::class, 'replies']);
+
+            // Post shares
+            Route::get('/{postId}/shares', [ShareController::class, 'index']);
+            Route::post('/{postId}/shares', [ShareController::class, 'store']);
+        });
+
+        // Share routes
+        Route::prefix('shares')->group(function () {
+            Route::get('/my', [ShareController::class, 'myShares']);
+            Route::get('/{id}', [ShareController::class, 'show']);
+            Route::put('/{id}', [ShareController::class, 'update']);
+            Route::delete('/{id}', [ShareController::class, 'destroy']);
         });
 
         // Comment likes
