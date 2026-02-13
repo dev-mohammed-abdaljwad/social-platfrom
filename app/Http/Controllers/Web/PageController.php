@@ -106,12 +106,50 @@ class PageController extends Controller
 
         $friends = $user->friends()->get();
 
+        // Friendship status for non-own profiles
+        $friendshipStatus = null;
+        $friendship = null;
+        
+        if (auth()->check() && auth()->id() !== $user->id) {
+            $currentUser = auth()->user();
+            
+            // Check if they are friends
+            if ($currentUser->isFriendWith($user)) {
+                $friendshipStatus = 'friends';
+                $friendship = \App\Models\Friendship::where(function ($q) use ($currentUser, $user) {
+                    $q->where('sender_id', $currentUser->id)->where('receiver_id', $user->id);
+                })->orWhere(function ($q) use ($currentUser, $user) {
+                    $q->where('sender_id', $user->id)->where('receiver_id', $currentUser->id);
+                })->first();
+            }
+            // Check if current user sent a pending request
+            elseif ($currentUser->hasSentFriendRequestTo($user)) {
+                $friendshipStatus = 'pending_sent';
+                $friendship = \App\Models\Friendship::where('sender_id', $currentUser->id)
+                    ->where('receiver_id', $user->id)
+                    ->first();
+            }
+            // Check if current user received a pending request
+            elseif ($currentUser->hasPendingFriendRequestFrom($user)) {
+                $friendshipStatus = 'pending_received';
+                $friendship = \App\Models\Friendship::where('sender_id', $user->id)
+                    ->where('receiver_id', $currentUser->id)
+                    ->first();
+            }
+            // No relationship
+            else {
+                $friendshipStatus = 'none';
+            }
+        }
+
         return view('profile', [
             'user' => $user,
             'posts' => $posts,
             'sharedPosts' => $sharedPosts,
             'friends' => $friends,
             'isOwnProfile' => auth()->check() && auth()->id() === $user->id,
+            'friendshipStatus' => $friendshipStatus,
+            'friendship' => $friendship,
         ]);
     }
 

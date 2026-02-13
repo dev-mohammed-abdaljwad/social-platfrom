@@ -71,12 +71,65 @@
                                 Edit Profile
                             </a>
                             @else
-                            <button id="friendBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                            {{-- Friend Button with different states --}}
+                            @if($friendshipStatus === 'friends')
+                            <div class="relative" id="friendDropdownContainer">
+                                <button id="friendDropdownBtn" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                    </svg>
+                                    Friends
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </button>
+                                <div id="friendDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
+                                    <button onclick="unfriend({{ $user->id }})" class="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 text-gray-700">
+                                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"></path>
+                                        </svg>
+                                        Unfriend
+                                    </button>
+                                    <button onclick="blockUser({{ $user->id }})" class="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 text-red-600">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                        </svg>
+                                        Block
+                                    </button>
+                                    <div class="border-t border-gray-100"></div>
+                                    <a href="{{ route('friends') }}" class="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 text-gray-700">
+                                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                        </svg>
+                                        See All Friends
+                                    </a>
+                                </div>
+                            </div>
+                            @elseif($friendshipStatus === 'pending_sent')
+                            <button id="cancelRequestBtn" onclick="cancelFriendRequest({{ $friendship->id }})" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium flex items-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Request Sent
+                            </button>
+                            @elseif($friendshipStatus === 'pending_received')
+                            <div class="flex gap-2">
+                                <button onclick="acceptFriendRequest({{ $friendship->id }})" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                    Accept
+                                </button>
+                                <button onclick="rejectFriendRequest({{ $friendship->id }})" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                                    Decline
+                                </button>
+                            </div>
+                            @else
+                            <button id="addFriendBtn" onclick="sendFriendRequest({{ $user->id }})" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
                                 <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
                                 </svg>
                                 Add Friend
                             </button>
+                            @endif
+                            
                             <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
                                 <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
@@ -1230,5 +1283,183 @@
     document.getElementById('deleteConfirmModal').addEventListener('click', function(e) {
         if (e.target === this) closeDeleteConfirmModal();
     });
+
+    // Friend Dropdown Toggle
+    const friendDropdownBtn = document.getElementById('friendDropdownBtn');
+    const friendDropdown = document.getElementById('friendDropdown');
+    
+    if (friendDropdownBtn && friendDropdown) {
+        friendDropdownBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            friendDropdown.classList.toggle('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!friendDropdown.contains(e.target) && !friendDropdownBtn.contains(e.target)) {
+                friendDropdown.classList.add('hidden');
+            }
+        });
+    }
+
+    // Send Friend Request
+    async function sendFriendRequest(userId) {
+        try {
+            const response = await fetch(`/friends/${userId}/send`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                // Replace button with "Request Sent"
+                const btn = document.getElementById('addFriendBtn');
+                if (btn) {
+                    btn.outerHTML = `
+                        <button id="cancelRequestBtn" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Request Sent
+                        </button>
+                    `;
+                }
+            } else {
+                alert(data.message || 'Failed to send friend request');
+            }
+        } catch (error) {
+            console.error('Error sending friend request:', error);
+            alert('Failed to send friend request');
+        }
+    }
+
+    // Cancel Friend Request
+    async function cancelFriendRequest(friendshipId) {
+        try {
+            const response = await fetch(`/friends/${friendshipId}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Failed to cancel request');
+            }
+        } catch (error) {
+            console.error('Error cancelling request:', error);
+            alert('Failed to cancel request');
+        }
+    }
+
+    // Accept Friend Request
+    async function acceptFriendRequest(friendshipId) {
+        try {
+            const response = await fetch(`/friends/${friendshipId}/accept`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Failed to accept request');
+            }
+        } catch (error) {
+            console.error('Error accepting request:', error);
+            alert('Failed to accept request');
+        }
+    }
+
+    // Reject Friend Request
+    async function rejectFriendRequest(friendshipId) {
+        try {
+            const response = await fetch(`/friends/${friendshipId}/reject`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Failed to reject request');
+            }
+        } catch (error) {
+            console.error('Error rejecting request:', error);
+            alert('Failed to reject request');
+        }
+    }
+
+    // Unfriend
+    async function unfriend(userId) {
+        if (!confirm('Are you sure you want to unfriend this person?')) return;
+        
+        try {
+            const response = await fetch(`/friends/${userId}/remove`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message || 'Failed to unfriend');
+            }
+        } catch (error) {
+            console.error('Error unfriending:', error);
+            alert('Failed to unfriend');
+        }
+    }
+
+    // Block User (placeholder - needs backend implementation)
+    async function blockUser(userId) {
+        if (!confirm('Are you sure you want to block this person? They won\'t be able to see your profile or contact you.')) return;
+        
+        try {
+            const response = await fetch(`/users/${userId}/block`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('User blocked successfully');
+                window.location.href = '/';
+            } else {
+                alert(data.message || 'Failed to block user');
+            }
+        } catch (error) {
+            console.error('Error blocking user:', error);
+            alert('Block feature coming soon');
+        }
+    }
 </script>
 @endpush
