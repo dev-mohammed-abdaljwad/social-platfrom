@@ -6,10 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Friendship;
 use App\Models\User;
 use App\Enums\FriendshipStatusEnum;
+use App\Services\Notification\NotificationService;
 use Illuminate\Http\Request;
 
 class FriendController extends Controller
 {
+    public function __construct(
+        protected NotificationService $notificationService
+    ) {}
+
     /**
      * Send a friend request.
      */
@@ -33,11 +38,14 @@ class FriendController extends Controller
             return response()->json(['success' => false, 'message' => 'Request already exists'], 400);
         }
 
-        Friendship::create([
+        $friendship = Friendship::create([
             'sender_id' => $currentUser->id,
             'receiver_id' => $user->id,
             'status' => FriendshipStatusEnum::Pending,
         ]);
+
+        // Send notification
+        $this->notificationService->friendRequest($user, $currentUser, $friendship);
 
         return response()->json(['success' => true, 'message' => 'Friend request sent']);
     }
@@ -52,6 +60,13 @@ class FriendController extends Controller
         }
 
         $friendship->update(['status' => FriendshipStatusEnum::Accepted]);
+
+        // Send notification to the sender
+        $this->notificationService->friendAccepted(
+            $friendship->sender,
+            auth()->user(),
+            $friendship
+        );
 
         return response()->json(['success' => true, 'message' => 'Friend request accepted']);
     }

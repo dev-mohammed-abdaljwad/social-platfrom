@@ -5,10 +5,15 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use App\Models\Post;
+use App\Services\Notification\NotificationService;
 use Illuminate\Http\Request;
 
 class CommentController extends Controller
 {
+    public function __construct(
+        protected NotificationService $notificationService
+    ) {}
+
     /**
      * Store a new comment.
      */
@@ -24,6 +29,16 @@ class CommentController extends Controller
             'content' => $validated['content'],
             'parent_id' => $validated['parent_id'] ?? null,
         ]);
+
+        // Send notification to post owner (if not self)
+        if ($post->user_id !== auth()->id()) {
+            $this->notificationService->postCommented(
+                $post->user,
+                auth()->user(),
+                $post,
+                $comment
+            );
+        }
 
         if ($request->expectsJson()) {
             $comment->load('user');

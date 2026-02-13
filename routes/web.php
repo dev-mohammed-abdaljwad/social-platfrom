@@ -7,6 +7,7 @@ use App\Http\Controllers\Web\PostController;
 use App\Http\Controllers\Web\CommentController;
 use App\Http\Controllers\Web\FriendController;
 use App\Http\Controllers\Web\ProfileController;
+use App\Http\Controllers\Web\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -84,6 +85,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/profile/cover', [ProfileController::class, 'updateCoverPhoto'])->name('profile.cover.update');
     Route::delete('/profile/picture', [ProfileController::class, 'removeProfilePicture'])->name('profile.picture.remove');
     Route::delete('/profile/cover', [ProfileController::class, 'removeCoverPhoto'])->name('profile.cover.remove');
+    
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
 });
 
 

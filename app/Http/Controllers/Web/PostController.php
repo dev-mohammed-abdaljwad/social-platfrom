@@ -5,11 +5,15 @@ namespace App\Http\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Models\Post;
 use App\Models\Share;
+use App\Services\Notification\NotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class PostController extends Controller
 {
+    public function __construct(
+        protected NotificationService $notificationService
+    ) {}
     /**
      * Store a new post.
      */
@@ -72,8 +76,18 @@ class PostController extends Controller
             $like->delete();
             $liked = false;
         } else {
-            $post->likes()->create(['user_id' => auth()->id()]);
+            $like = $post->likes()->create(['user_id' => auth()->id()]);
             $liked = true;
+            
+            // Send notification to post owner (if not self)
+            if ($post->user_id !== auth()->id()) {
+                $this->notificationService->postLiked(
+                    $post->user,
+                    auth()->user(),
+                    $post,
+                    $like
+                );
+            }
         }
 
         return response()->json([

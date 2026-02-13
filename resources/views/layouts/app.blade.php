@@ -59,12 +59,25 @@
                 <div class="flex items-center gap-4">
                     @auth
                     <!-- Notifications -->
-                    <button class="relative p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
-                        </svg>
-                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                    </button>
+                    <div class="relative">
+                        <button onclick="toggleNotifications()" class="relative p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors" id="notificationBtn">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                            <span id="notificationBadge" class="hidden absolute top-0 right-0 min-w-[18px] h-[18px] bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-medium">0</span>
+                        </button>
+                        
+                        <!-- Notifications Dropdown -->
+                        <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-gray-200 max-h-[80vh] overflow-hidden z-50">
+                            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                                <h3 class="font-semibold text-gray-800">Notifications</h3>
+                                <button onclick="markAllNotificationsRead()" class="text-sm text-blue-600 hover:text-blue-700">Mark all read</button>
+                            </div>
+                            <div id="notificationList" class="overflow-y-auto max-h-[400px]">
+                                <div class="p-4 text-center text-gray-500">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Messages -->
                     <button class="p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
@@ -178,7 +191,7 @@
 
         <!-- Main Content -->
         <main class="flex-1 lg:ml-64 min-h-[calc(100vh-64px)]">
-            <div class="max-w-4xl mx-auto px-4 py-6">
+            <div class="max-w-4xl mx-auto px-2 sm:px-4 py-3 sm:py-6">
                 @yield('content')
             </div>
         </main>
@@ -604,7 +617,302 @@
                 closeRegisterModal();
             }
         });
+
+        // ========== NOTIFICATIONS ==========
+        let notificationsOpen = false;
+        
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            notificationsOpen = !notificationsOpen;
+            
+            if (notificationsOpen) {
+                dropdown.classList.remove('hidden');
+                loadNotifications();
+            } else {
+                dropdown.classList.add('hidden');
+            }
+        }
+        
+        function loadNotifications() {
+            fetch('/notifications')
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success) {
+                        renderNotifications(data.notifications);
+                        updateBadge(data.unread_count);
+                    }
+                })
+                .catch(err => console.error('Error loading notifications:', err));
+        }
+        
+        function renderNotifications(notifications) {
+            const list = document.getElementById('notificationList');
+            
+            if (!notifications || notifications.length === 0) {
+                list.innerHTML = '<div class="p-8 text-center text-gray-500">No notifications yet</div>';
+                return;
+            }
+            
+            list.innerHTML = notifications.map(n => `
+                <div class="flex items-start gap-3 p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-100 ${!n.read_at ? 'bg-blue-50' : ''}" 
+                     onclick="handleNotificationClick(${n.id}, '${n.url || '/'}')">
+                    <img src="${n.from_user.avatar_url}" alt="${n.from_user.name}" class="w-10 h-10 rounded-full object-cover flex-shrink-0">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm text-gray-800">${n.message}</p>
+                        <p class="text-xs text-gray-500 mt-1">${n.created_at}</p>
+                    </div>
+                    ${!n.read_at ? '<div class="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>' : ''}
+                </div>
+            `).join('');
+        }
+        
+        function updateBadge(count) {
+            const badge = document.getElementById('notificationBadge');
+            if (count > 0) {
+                badge.textContent = count > 99 ? '99+' : count;
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+            } else {
+                badge.classList.add('hidden');
+                badge.classList.remove('flex');
+            }
+        }
+        
+        function handleNotificationClick(id, url) {
+            // Mark as read
+            fetch(`/notifications/${id}/read`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            }).then(res => res.json()).then(response => {
+                if (response.success) {
+                    updateBadge(response.unread_count);
+                }
+            });
+            
+            // Navigate to the notification URL
+            toggleNotifications();
+            window.location.href = url;
+        }
+        
+        function markAllNotificationsRead() {
+            fetch('/notifications/read-all', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            }).then(res => res.json()).then(response => {
+                if (response.success) {
+                    updateBadge(0);
+                    loadNotifications();
+                }
+            });
+        }
+        
+        // Close notification dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('notificationDropdown');
+            const btn = document.getElementById('notificationBtn');
+            if (notificationsOpen && !dropdown?.contains(e.target) && !btn?.contains(e.target)) {
+                dropdown?.classList.add('hidden');
+                notificationsOpen = false;
+            }
+        });
+        
+        // Load initial unread count
+        @auth
+        fetch('/notifications/unread-count')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    updateBadge(data.count);
+                }
+            });
+        @endauth
     </script>
+    
+    @auth
+    <!-- Pusher/Echo Real-time Notifications -->
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script>
+        // Initialize Pusher for real-time notifications
+        const pusherKey = '{{ env("PUSHER_APP_KEY") }}';
+        const pusherCluster = '{{ env("PUSHER_APP_CLUSTER", "mt1") }}';
+        
+        if (pusherKey && pusherKey !== '') {
+            const pusher = new Pusher(pusherKey, {
+                cluster: pusherCluster,
+                forceTLS: true,
+                authEndpoint: '/broadcasting/auth',
+                auth: {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                }
+            });
+            
+            // Notification sound - using base64 encoded audio
+            const notificationSoundData = 'data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU' + 'tvT19' + 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+            
+            // Create audio element for notification sound
+            let audioContext = null;
+            let audioUnlocked = false;
+            
+            // Unlock audio on first user interaction
+            document.addEventListener('click', function unlockAudio() {
+                if (!audioUnlocked) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
+                    audioUnlocked = true;
+                    console.log('Audio unlocked');
+                }
+            }, { once: false });
+            
+            function playNotificationSound() {
+                try {
+                    // Use Web Audio API if unlocked
+                    if (audioUnlocked && audioContext) {
+                        const now = audioContext.currentTime;
+                        
+                        // Classic bell/chime notification sound
+                        const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5 - major chord
+                        
+                        frequencies.forEach((freq, i) => {
+                            const oscillator = audioContext.createOscillator();
+                            const gainNode = audioContext.createGain();
+                            
+                            oscillator.connect(gainNode);
+                            gainNode.connect(audioContext.destination);
+                            
+                            oscillator.frequency.value = freq;
+                            oscillator.type = 'sine';
+                            
+                            // Staggered start for chime effect
+                            const startTime = now + (i * 0.08);
+                            gainNode.gain.setValueAtTime(0, startTime);
+                            gainNode.gain.linearRampToValueAtTime(0.3, startTime + 0.02);
+                            gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + 0.5);
+                            
+                            oscillator.start(startTime);
+                            oscillator.stop(startTime + 0.5);
+                        });
+                        return;
+                    }
+                    
+                    // Fallback - create simple beep
+                    const tempContext = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = tempContext.createOscillator();
+                    const gain = tempContext.createGain();
+                    osc.connect(gain);
+                    gain.connect(tempContext.destination);
+                    osc.frequency.value = 660;
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.3, tempContext.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, tempContext.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(tempContext.currentTime + 0.3);
+                } catch (e) {
+                    console.log('Could not play notification sound:', e);
+                }
+            }
+            
+            // Make function globally accessible for testing
+            window.playNotificationSound = playNotificationSound;
+            
+            // Subscribe to private notifications channel
+            const channel = pusher.subscribe('private-notifications.{{ auth()->id() }}');
+            
+            channel.bind('notification.new', function(data) {
+                console.log('New notification received:', data);
+                
+                // Play notification sound
+                playNotificationSound();
+                
+                // Update badge count
+                const badge = document.getElementById('notificationBadge');
+                let currentCount = parseInt(badge.textContent) || 0;
+                updateBadge(currentCount + 1);
+                
+                // Show toast notification
+                showNotificationToast(data);
+                
+                // Reload notifications list if dropdown is open
+                if (notificationsOpen) {
+                    loadNotifications();
+                }
+            });
+            
+            channel.bind('pusher:subscription_error', function(status) {
+                console.error('Pusher subscription error:', status);
+            });
+        }
+        
+        // Toast notification
+        function showNotificationToast(data) {
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-4 right-4 bg-white rounded-lg shadow-xl border border-gray-200 p-4 max-w-sm z-50 animate-slide-in cursor-pointer hover:bg-gray-50 transition-colors';
+            toast.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <img src="${data.from_user.avatar_url}" alt="${data.from_user.name}" class="w-10 h-10 rounded-full object-cover">
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-800">${data.from_user.name}</p>
+                        <p class="text-sm text-gray-600">${data.message}</p>
+                        <p class="text-xs text-blue-500 mt-1">Click to view</p>
+                    </div>
+                    <button class="toast-close text-gray-400 hover:text-gray-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            // Click to navigate to notification URL
+            toast.addEventListener('click', function(e) {
+                if (!e.target.closest('.toast-close')) {
+                    // Mark as read and navigate
+                    fetch(`/notifications/${data.id}/read`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    });
+                    window.location.href = data.url || '/';
+                }
+            });
+            
+            // Close button
+            toast.querySelector('.toast-close').addEventListener('click', function(e) {
+                e.stopPropagation();
+                toast.remove();
+            });
+            
+            document.body.appendChild(toast);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                toast.classList.add('animate-fade-out');
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+    </script>
+    <style>
+        @keyframes slide-in {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes fade-out {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        .animate-slide-in { animation: slide-in 0.3s ease-out; }
+        .animate-fade-out { animation: fade-out 0.3s ease-out; }
+    </style>
+    @endauth
+    
     @stack('scripts')
 </body>
 </html>
