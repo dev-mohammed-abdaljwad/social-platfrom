@@ -726,12 +726,30 @@
         });
     });
 
-    // Like button functionality
+    // Like button functionality with optimistic updates
     document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.setAttribute('data-listener', 'true');
         btn.addEventListener('click', async function() {
             @auth
             const postId = this.dataset.postId;
             const btn = this;
+            const postCard = document.querySelector(`.bg-white[data-post-id="${postId}"]`);
+            const countSpan = postCard.querySelector('.likes-count');
+            const svg = btn.querySelector('svg');
+            const isLiked = btn.classList.contains('text-red-500');
+            const currentCount = parseInt(countSpan.textContent) || 0;
+            
+            // Optimistic update - instant UI change
+            if (isLiked) {
+                btn.classList.remove('text-red-500');
+                svg.setAttribute('fill', 'none');
+                countSpan.textContent = Math.max(0, currentCount - 1);
+            } else {
+                btn.classList.add('text-red-500');
+                svg.setAttribute('fill', 'currentColor');
+                countSpan.textContent = currentCount + 1;
+            }
+            
             try {
                 const response = await fetch(`/posts/${postId}/like`, {
                     method: 'POST',
@@ -743,23 +761,19 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    const postCard = btn.closest('[data-post-id]');
-                    const countSpan = postCard.querySelector('.likes-count');
-                    const svg = btn.querySelector('svg');
-                    let count = parseInt(countSpan.textContent);
-                    
-                    if (data.liked) {
-                        countSpan.textContent = count + 1;
-                        btn.classList.add('text-red-500');
-                        svg.setAttribute('fill', 'currentColor');
-                    } else {
-                        countSpan.textContent = count - 1;
-                        btn.classList.remove('text-red-500');
-                        svg.setAttribute('fill', 'none');
-                    }
+                    countSpan.textContent = data.likes_count;
+                } else {
+                    // Revert on error
+                    btn.classList.toggle('text-red-500');
+                    svg.setAttribute('fill', isLiked ? 'currentColor' : 'none');
+                    countSpan.textContent = currentCount;
                 }
             } catch (error) {
                 console.error('Error liking post:', error);
+                // Revert on error
+                btn.classList.toggle('text-red-500');
+                svg.setAttribute('fill', isLiked ? 'currentColor' : 'none');
+                countSpan.textContent = currentCount;
             }
             @else
             window.location.href = '{{ route("login") }}';
@@ -845,8 +859,10 @@
             if (data.comments && data.comments.length > 0) {
                 let html = '';
                 data.comments.forEach(comment => {
+                    const likedClass = comment.is_liked ? 'text-red-500' : 'text-gray-400';
+                    const heartFill = comment.is_liked ? 'fill-current' : '';
                     html += `
-                        <div class="flex gap-3">
+                        <div class="flex gap-3 comment-item" id="comment-${comment.id}">
                             <a href="/profile/${comment.user.id}">
                                 <img src="${comment.user.avatar_url || '/images/default-avatar.png'}" 
                                      alt="${comment.user.name}" 
@@ -857,7 +873,15 @@
                                     <a href="/profile/${comment.user.id}" class="font-semibold text-gray-800 text-sm hover:underline">${comment.user.name}</a>
                                     <p class="text-gray-700 text-sm">${comment.content}</p>
                                 </div>
-                                <p class="text-xs text-gray-400 mt-1 ml-4">${comment.created_at}</p>
+                                <div class="flex items-center gap-4 mt-1 ml-4">
+                                    <span class="text-xs text-gray-400">${comment.created_at}</span>
+                                    <button onclick="likeComment(${comment.id})" class="comment-like-btn flex items-center gap-1 text-xs ${likedClass} hover:text-red-500 transition-colors" data-comment-id="${comment.id}">
+                                        <svg class="w-4 h-4 ${heartFill}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                        </svg>
+                                        <span class="comment-likes-count">${comment.likes_count || 0}</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -870,6 +894,62 @@
             console.error('Error loading comments:', error);
             commentsList.innerHTML = '<p class="text-center text-red-500 text-sm py-2">Error loading comments</p>';
         }
+    }
+
+    // Like comment function with optimistic update
+    async function likeComment(commentId) {
+        @auth
+        const commentEl = document.getElementById(`comment-${commentId}`);
+        const likeBtn = commentEl.querySelector('.comment-like-btn');
+        const countSpan = likeBtn.querySelector('.comment-likes-count');
+        const svg = likeBtn.querySelector('svg');
+        const isLiked = likeBtn.classList.contains('text-red-500');
+        const currentCount = parseInt(countSpan.textContent) || 0;
+        
+        // Optimistic update
+        if (isLiked) {
+            likeBtn.classList.remove('text-red-500');
+            likeBtn.classList.add('text-gray-400');
+            svg.classList.remove('fill-current');
+            countSpan.textContent = Math.max(0, currentCount - 1);
+        } else {
+            likeBtn.classList.remove('text-gray-400');
+            likeBtn.classList.add('text-red-500');
+            svg.classList.add('fill-current');
+            countSpan.textContent = currentCount + 1;
+        }
+        
+        try {
+            const response = await fetch(`/comments/${commentId}/like`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                countSpan.textContent = data.likes_count;
+            } else {
+                // Revert on error
+                likeBtn.classList.toggle('text-red-500');
+                likeBtn.classList.toggle('text-gray-400');
+                svg.classList.toggle('fill-current');
+                countSpan.textContent = currentCount;
+            }
+        } catch (error) {
+            console.error('Error liking comment:', error);
+            // Revert on error
+            likeBtn.classList.toggle('text-red-500');
+            likeBtn.classList.toggle('text-gray-400');
+            svg.classList.toggle('fill-current');
+            countSpan.textContent = currentCount;
+        }
+        @else
+        window.location.href = '{{ route("login") }}';
+        @endauth
     }
 
     // Comment form submission

@@ -695,9 +695,29 @@
         }
     }
 
-    // Like comment function
+    // Like comment function with optimistic update
     async function likeComment(commentId) {
         @auth
+        const commentEl = document.getElementById(`comment-${commentId}`);
+        const likeBtn = commentEl.querySelector('.comment-like-btn');
+        const countSpan = likeBtn.querySelector('.comment-likes-count');
+        const svg = likeBtn.querySelector('svg');
+        const isLiked = likeBtn.classList.contains('text-red-500');
+        const currentCount = parseInt(countSpan.textContent) || 0;
+        
+        // Optimistic update - instant UI change
+        if (isLiked) {
+            likeBtn.classList.remove('text-red-500');
+            likeBtn.classList.add('text-gray-400');
+            svg.classList.remove('fill-current');
+            countSpan.textContent = Math.max(0, currentCount - 1);
+        } else {
+            likeBtn.classList.remove('text-gray-400');
+            likeBtn.classList.add('text-red-500');
+            svg.classList.add('fill-current');
+            countSpan.textContent = currentCount + 1;
+        }
+        
         try {
             const response = await fetch(`/comments/${commentId}/like`, {
                 method: 'POST',
@@ -710,25 +730,21 @@
             const data = await response.json();
             
             if (data.success) {
-                const commentEl = document.getElementById(`comment-${commentId}`);
-                const likeBtn = commentEl.querySelector('.comment-like-btn');
-                const countSpan = likeBtn.querySelector('.comment-likes-count');
-                const svg = likeBtn.querySelector('svg');
-                
                 countSpan.textContent = data.likes_count;
-                
-                if (data.liked) {
-                    likeBtn.classList.remove('text-gray-400');
-                    likeBtn.classList.add('text-red-500');
-                    svg.classList.add('fill-current');
-                } else {
-                    likeBtn.classList.remove('text-red-500');
-                    likeBtn.classList.add('text-gray-400');
-                    svg.classList.remove('fill-current');
-                }
+            } else {
+                // Revert on error
+                likeBtn.classList.toggle('text-red-500');
+                likeBtn.classList.toggle('text-gray-400');
+                svg.classList.toggle('fill-current');
+                countSpan.textContent = currentCount;
             }
         } catch (error) {
             console.error('Error liking comment:', error);
+            // Revert on error
+            likeBtn.classList.toggle('text-red-500');
+            likeBtn.classList.toggle('text-gray-400');
+            svg.classList.toggle('fill-current');
+            countSpan.textContent = currentCount;
         }
         @else
         openLoginModal();
