@@ -19,9 +19,13 @@ use App\Http\Controllers\Web\SearchController;
 // Auth routes (guest only)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
+
+    // Login & Register POST routes with rate limiting (5 attempts/min per IP)
+    Route::middleware('throttle:auth')->group(function () {
+        Route::post('/login', [AuthController::class, 'login']);
+        Route::post('/register', [AuthController::class, 'register']);
+    });
 });
 
 // Logout route
@@ -55,42 +59,46 @@ Route::middleware('auth')->group(function () {
     Route::post('/posts/{post}/like', [PostController::class, 'toggleLike'])->name('posts.like');
     Route::post('/posts/{post}/share', [PostController::class, 'share'])->name('posts.share');
     Route::post('/posts/{post}/save', [PostController::class, 'toggleSave'])->name('posts.save');
-    
+
     // Shares
     Route::put('/shares/{share}', [PostController::class, 'updateShare'])->name('shares.update');
     Route::delete('/shares/{share}', [PostController::class, 'destroyShare'])->name('shares.destroy');
-    
+
     // Saved Posts Page
     Route::get('/saved', [PageController::class, 'saved'])->name('saved');
-    
+
     // Comments
     Route::post('/posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
     Route::post('/comments/{comment}/like', [CommentController::class, 'toggleLike'])->name('comments.like');
-    
+
     // Pages
     Route::get('/friends', [PageController::class, 'friends'])->name('friends');
     Route::get('/settings', [PageController::class, 'settings'])->name('settings');
-    
+
     // Friendship actions
-    Route::post('/friends/{user}/send', [FriendController::class, 'send'])->name('friends.send');
     Route::post('/friends/{friendship}/accept', [FriendController::class, 'accept'])->name('friends.accept');
     Route::post('/friends/{friendship}/reject', [FriendController::class, 'reject'])->name('friends.reject');
     Route::post('/friends/{friendship}/cancel', [FriendController::class, 'cancel'])->name('friends.cancel');
     Route::post('/friends/{user}/remove', [FriendController::class, 'remove'])->name('friends.remove');
-    
+
+    // Send friend request with rate limiting (20/min per user)
+    Route::middleware('throttle:friend-request')->group(function () {
+        Route::post('/friends/{user}/send', [FriendController::class, 'send'])->name('friends.send');
+    });
+
     // Profile settings
     Route::put('/profile', [ProfileController::class, 'updateProfile'])->name('profile.update');
     Route::put('/profile/email', [ProfileController::class, 'updateEmail'])->name('profile.email.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
     Route::delete('/profile', [ProfileController::class, 'deleteAccount'])->name('profile.delete');
-    
+
     // Profile image uploads
     Route::post('/profile/picture', [ProfileController::class, 'updateProfilePicture'])->name('profile.picture.update');
     Route::post('/profile/cover', [ProfileController::class, 'updateCoverPhoto'])->name('profile.cover.update');
     Route::delete('/profile/picture', [ProfileController::class, 'removeProfilePicture'])->name('profile.picture.remove');
     Route::delete('/profile/cover', [ProfileController::class, 'removeCoverPhoto'])->name('profile.cover.remove');
-    
+
     // Notifications
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
@@ -101,4 +109,4 @@ Route::middleware('auth')->group(function () {
 
 Route::get('/logo', function () {
     return view('welcome');
-}); 
+});

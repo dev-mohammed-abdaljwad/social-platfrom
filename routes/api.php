@@ -21,24 +21,26 @@ use Illuminate\Support\Facades\Route;
 
 // API Version 1
 Route::prefix('v1')->group(function () {
-    
+
     /*
     |--------------------------------------------------------------------------
     | Authentication Routes (Public)
     |--------------------------------------------------------------------------
     */
-    Route::prefix('auth')->group(function () {
-        Route::post('/register', [AuthController::class, 'register']);
-        Route::post('/login', [AuthController::class, 'login']);
+    // Auth routes with strict rate limiting (5 attempts/min per IP)
+    Route::middleware('throttle:auth')->group(function () {
+        Route::prefix('auth')->group(function () {
+            Route::post('/register', [AuthController::class, 'register']);
+            Route::post('/login', [AuthController::class, 'login']);
+        });
     });
-
     /*
     |--------------------------------------------------------------------------
     | Protected Routes (Require Authentication)
     |--------------------------------------------------------------------------
     */
     Route::middleware('auth:sanctum')->group(function () {
-        
+
         // Auth routes
         Route::prefix('auth')->group(function () {
             Route::post('/logout', [AuthController::class, 'logout']);
@@ -67,12 +69,12 @@ Route::prefix('v1')->group(function () {
             Route::get('/{id}', [PostController::class, 'show']);
             Route::put('/{id}', [PostController::class, 'update']);
             Route::delete('/{id}', [PostController::class, 'destroy']);
-            
+
             // Post likes
             Route::get('/{postId}/likes', [LikeController::class, 'getPostLikes']);
             Route::post('/{postId}/like', [LikeController::class, 'togglePostLike']);
             Route::get('/{postId}/liked', [LikeController::class, 'hasLikedPost']);
-            
+
             // Post comments
             Route::get('/{postId}/comments', [CommentController::class, 'index']);
             Route::post('/{postId}/comments', [CommentController::class, 'store']);
@@ -103,11 +105,15 @@ Route::prefix('v1')->group(function () {
             Route::get('/friends', [FriendshipController::class, 'friends']);
             Route::get('/pending', [FriendshipController::class, 'pendingRequests']);
             Route::get('/sent', [FriendshipController::class, 'sentRequests']);
-            Route::post('/send/{userId}', [FriendshipController::class, 'sendRequest']);
             Route::post('/{friendshipId}/accept', [FriendshipController::class, 'acceptRequest']);
             Route::post('/{friendshipId}/reject', [FriendshipController::class, 'rejectRequest']);
             Route::delete('/remove/{userId}', [FriendshipController::class, 'removeFriend']);
             Route::get('/status/{userId}', [FriendshipController::class, 'status']);
+
+            // Send friend request with rate limiting (20/min per user)
+            Route::middleware('throttle:friend-request')->group(function () {
+                Route::post('/send/{userId}', [FriendshipController::class, 'sendRequest']);
+            });
         });
     });
 });
