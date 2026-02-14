@@ -22,18 +22,3 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
-.ai/
-.ai-agent/
-.agent/
-.copilot/
-.cursor/
-.cursorignore
-.windsurf/
-# ----------------------
-# AI Agents & LLM Tools
-# ----------------------
-.agent/
-.ai/
-.copilot/
-.cursor/
-.windsurf/
