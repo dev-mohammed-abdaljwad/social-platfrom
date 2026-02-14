@@ -1,60 +1,179 @@
-# social-platfrom
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SocialTime - Social Platform
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A full-featured social media platform built with Laravel 12, featuring real-time notifications, posts, comments, friendships, and more.
 
-## About Laravel
+## Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Core Features
+- **User Authentication** - Register, login, logout with session and API token support
+- **User Profiles** - Customizable profiles with pictures, cover photos, and bio
+- **Posts** - Create, edit, delete posts with text, images, or videos
+- **Comments** - Nested comments with replies support
+- **Likes** - Like/unlike posts and comments
+- **Shares** - Share posts with optional commentary
+- **Saved Posts** - Save posts for later viewing
+- **Friendships** - Send, accept, reject, and cancel friend requests
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### User Discovery
+- **User Search** - Search users by name or username with live autocomplete
+- **Friend Suggestions** - Discover people you may know
+- **Explore Page** - Browse public posts from all users
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Real-time Features
+- **Push Notifications** - Real-time notifications via Pusher
+- **Notification Types** - Friend requests, likes, comments, shares
 
-## Learning Laravel
+## Tech Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+- **Backend**: Laravel 12 (PHP 8.2+)
+- **Frontend**: Blade Templates, Tailwind CSS v4, Vite 7
+- **Database**: SQLite (default), MySQL/PostgreSQL supported
+- **Real-time**: Pusher for WebSocket notifications
+- **API**: RESTful API with Laravel Sanctum authentication
+- **Testing**: Pest PHP
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Architecture
 
-## Laravel Sponsors
+The project follows a clean architecture pattern:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```
+app/
+├── Http/
+│   ├── Controllers/
+│   │   ├── Api/V1/       # API Controllers (versioned)
+│   │   └── Web/          # Web Controllers
+│   └── Requests/         # Form Request validation
+├── Models/               # Eloquent models
+├── Repositories/         # Data access layer (interfaces + Eloquent implementations)
+├── Services/             # Business logic layer
+├── Transformers/         # API response transformers (JSON Resources)
+└── Enums/                # PHP Enums for types
+```
 
-### Premium Partners
+### Design Patterns
+- **Repository Pattern** - Abstracted data access with interfaces
+- **Service Layer** - Business logic separated from controllers
+- **Controller as Orchestrator** - Controllers only coordinate between services
+- **Form Requests** - Validation logic separated from controllers
+- **Transformers** - Consistent API response formatting
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+## Installation
 
-## Contributing
+```bash
+# Clone the repository
+git clone <repository-url>
+cd social-platfrom
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# Install dependencies
+composer install
+npm install
 
-## Code of Conduct
+# Setup environment
+cp .env.example .env
+php artisan key:generate
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# Run migrations
+php artisan migrate
 
-## Security Vulnerabilities
+# Build assets
+npm run build
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# Start development server
+composer dev
+```
+
+## Development Commands
+
+```bash
+# Full project setup
+composer setup
+
+# Start dev server with Vite hot reload
+composer dev
+
+# Run tests
+composer test
+
+# Code style fixes
+./vendor/bin/pint
+
+# Generate API documentation
+php artisan l5-swagger:generate
+```
+
+## API Endpoints
+
+### Authentication
+- `POST /api/v1/register` - Register new user
+- `POST /api/v1/login` - Login
+- `POST /api/v1/logout` - Logout
+- `GET /api/v1/me` - Get authenticated user
+
+### Posts
+- `GET /api/v1/posts` - List all posts
+- `GET /api/v1/posts/feed` - Get personalized feed
+- `POST /api/v1/posts` - Create post
+- `GET /api/v1/posts/{id}` - Get post
+- `PUT /api/v1/posts/{id}` - Update post
+- `DELETE /api/v1/posts/{id}` - Delete post
+
+### Comments
+- `GET /api/v1/posts/{postId}/comments` - List comments
+- `POST /api/v1/posts/{postId}/comments` - Create comment
+- `PUT /api/v1/posts/{postId}/comments/{id}` - Update comment
+- `DELETE /api/v1/posts/{postId}/comments/{id}` - Delete comment
+
+### Likes
+- `POST /api/v1/posts/{id}/like` - Toggle post like
+- `POST /api/v1/comments/{id}/like` - Toggle comment like
+- `GET /api/v1/posts/{id}/likes` - Get post likes
+
+### Friendships
+- `GET /api/v1/friends` - List friends
+- `POST /api/v1/friends/{userId}/request` - Send friend request
+- `POST /api/v1/friends/{id}/accept` - Accept request
+- `POST /api/v1/friends/{id}/reject` - Reject request
+- `DELETE /api/v1/friends/{userId}` - Remove friend
+
+### Users
+- `GET /api/v1/users` - List/search users
+- `GET /api/v1/users/{id}` - Get user profile
+- `PUT /api/v1/profile` - Update profile
+
+### Shares
+- `GET /api/v1/posts/{postId}/shares` - List shares
+- `POST /api/v1/posts/{postId}/shares` - Share post
+- `PUT /api/v1/shares/{id}` - Update share
+- `DELETE /api/v1/shares/{id}` - Delete share
+
+## Web Routes
+
+- `/` - Home (feed)
+- `/explore` - Explore public posts
+- `/search` - Search users
+- `/friends` - Friends management
+- `/profile` - User profile
+- `/profile/{user}` - View other profiles
+- `/saved` - Saved posts
+- `/settings` - Account settings
+
+## Environment Variables
+
+```env
+# Pusher (for real-time notifications)
+PUSHER_APP_ID=
+PUSHER_APP_KEY=
+PUSHER_APP_SECRET=
+PUSHER_APP_CLUSTER=
+
+# Database
+DB_CONNECTION=sqlite
+```
+
+## API Documentation
+
+Swagger/OpenAPI documentation is available at `/api/documentation` when running locally.
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
