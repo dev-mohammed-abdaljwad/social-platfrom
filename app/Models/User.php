@@ -149,19 +149,31 @@ class User extends Authenticatable
     }
 
     /**
-     * Get all friends of the user.
+     * Get the IDs of all friends (single query instead of 3).
+     *
+     * @return \Illuminate\Support\Collection<int, int>
+     */
+    public function friendIds(): \Illuminate\Support\Collection
+    {
+        return Friendship::where('status', FriendshipStatusEnum::Accepted)
+            ->where(function ($query) {
+                $query->where('sender_id', $this->id)
+                    ->orWhere('receiver_id', $this->id);
+            })
+            ->get()
+            ->map(function ($friendship) {
+                return $friendship->sender_id === $this->id
+                    ? $friendship->receiver_id
+                    : $friendship->sender_id;
+            });
+    }
+
+    /**
+     * Get all friends of the user (single query).
      */
     public function friends()
     {
-        $sentAccepted = $this->sentFriendRequests()
-            ->where('status', FriendshipStatusEnum::Accepted)
-            ->pluck('receiver_id');
-
-        $receivedAccepted = $this->receivedFriendRequests()
-            ->where('status', FriendshipStatusEnum::Accepted)
-            ->pluck('sender_id');
-
-        return User::whereIn('id', $sentAccepted->merge($receivedAccepted));
+        return User::whereIn('id', $this->friendIds());
     }
 
     /**

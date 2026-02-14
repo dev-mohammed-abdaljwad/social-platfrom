@@ -182,7 +182,7 @@ class Post extends Model
      */
     public function isPrivate(): bool
     {
-        return $this->privacy === PrivacyTypeEnum::Privet;
+        return $this->privacy === PrivacyTypeEnum::Private;
     }
 
     /**
@@ -206,7 +206,7 @@ class Post extends Model
      */
     public function scopeVisibleTo($query, User $user)
     {
-        $friendIds = $user->friends()->pluck('id')->toArray();
+        $friendIds = $user->friendIds()->toArray();
 
         return $query->where(function ($q) use ($user, $friendIds) {
             $q->where('user_id', $user->id)

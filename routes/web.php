@@ -21,8 +21,8 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
 
-    // Login & Register POST routes with rate limiting (5 attempts/min per IP)
-    Route::middleware('throttle:auth')->group(function () {
+    // Login & Register POST routes with rate limiting + honeypot protection
+    Route::middleware(['throttle:auth', \App\Http\Middleware\HoneypotMiddleware::class])->group(function () {
         Route::post('/login', [AuthController::class, 'login']);
         Route::post('/register', [AuthController::class, 'register']);
     });

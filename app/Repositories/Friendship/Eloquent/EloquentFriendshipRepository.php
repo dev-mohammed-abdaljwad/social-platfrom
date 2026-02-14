@@ -52,15 +52,21 @@ class EloquentFriendshipRepository implements FriendshipRepository
 
     public function getFriendsOf(User $user)
     {
-        $sentAccepted = $this->model->where('sender_id', $user->id)
+        // Single query to get all accepted friendships where user is sender OR receiver
+        $friendIds = $this->model
             ->where('status', FriendshipStatusEnum::Accepted)
-            ->pluck('receiver_id');
+            ->where(function ($query) use ($user) {
+                $query->where('sender_id', $user->id)
+                    ->orWhere('receiver_id', $user->id);
+            })
+            ->get()
+            ->map(function ($friendship) use ($user) {
+                return $friendship->sender_id === $user->id
+                    ? $friendship->receiver_id
+                    : $friendship->sender_id;
+            });
 
-        $receivedAccepted = $this->model->where('receiver_id', $user->id)
-            ->where('status', FriendshipStatusEnum::Accepted)
-            ->pluck('sender_id');
-
-        return User::whereIn('id', $sentAccepted->merge($receivedAccepted))->get();
+        return User::whereIn('id', $friendIds)->get();
     }
 
     public function create(array $data)
@@ -83,7 +89,7 @@ class EloquentFriendshipRepository implements FriendshipRepository
     {
         // Check if friendship already exists
         $existing = $this->findBetween($sender, $receiver);
-        
+
         if ($existing) {
             return ['success' => false, 'message' => 'Friendship request already exists', 'friendship' => $existing];
         }

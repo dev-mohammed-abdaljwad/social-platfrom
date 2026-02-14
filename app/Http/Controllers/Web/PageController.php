@@ -34,14 +34,14 @@ class PageController extends Controller
     {
         $lastId = $request->query('last_id');
         $limit = (int) $request->query('limit', 10);
-        
-        $posts = $this->postService->getPublicPostsPaginated($lastId, $limit);
-        
+
+        $posts = $this->postService->getPublicPosts($limit, $lastId);
+
         $postsHtml = '';
         foreach ($posts as $post) {
             $postsHtml .= view('partials.post-card', compact('post'))->render();
         }
-        
+
         return response()->json([
             'success' => true,
             'html' => $postsHtml,
@@ -56,7 +56,7 @@ class PageController extends Controller
     public function profile()
     {
         $user = auth()->user();
-        
+
         if (!$user) {
             return redirect()->route('login');
         }
@@ -89,7 +89,7 @@ class PageController extends Controller
         // Friendship status for non-own profiles
         $friendshipStatus = null;
         $friendship = null;
-        
+
         if (auth()->check() && !$isOwnProfile) {
             $currentUser = auth()->user();
             $result = $this->friendshipService->getProfileFriendshipStatus($currentUser, $user);
@@ -114,7 +114,7 @@ class PageController extends Controller
     public function friends()
     {
         $user = auth()->user();
-        
+
         if (!$user) {
             return redirect()->route('login');
         }
@@ -122,13 +122,13 @@ class PageController extends Controller
         $friends = $this->friendshipService->getFriendsOf($user);
         $pendingRequests = $this->friendshipService->getPendingRequestsFor($user);
         $sentRequests = $this->friendshipService->getSentRequestsBy($user);
-        
+
         // Suggestions: users who are not friends and not in pending requests
         $friendIds = $friends->pluck('id')->toArray();
         $pendingIds = $pendingRequests->pluck('sender_id')->toArray();
         $sentIds = $sentRequests->pluck('receiver_id')->toArray();
         $excludeIds = array_merge($friendIds, $pendingIds, $sentIds, [$user->id]);
-        
+
         $suggestions = $this->userService->getSuggestions($user, $excludeIds, 6);
 
         return view('friends', [
@@ -161,7 +161,7 @@ class PageController extends Controller
     public function saved()
     {
         $user = auth()->user();
-        
+
         $savedPosts = $this->postService->getSavedPostsForUser($user);
 
         return view('saved', compact('savedPosts'));

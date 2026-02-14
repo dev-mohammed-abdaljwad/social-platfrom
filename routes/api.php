@@ -27,8 +27,8 @@ Route::prefix('v1')->group(function () {
     | Authentication Routes (Public)
     |--------------------------------------------------------------------------
     */
-    // Auth routes with strict rate limiting (5 attempts/min per IP)
-    Route::middleware('throttle:auth')->group(function () {
+    // Auth routes with rate limiting + honeypot protection
+    Route::middleware(['throttle:auth', \App\Http\Middleware\HoneypotMiddleware::class])->group(function () {
         Route::prefix('auth')->group(function () {
             Route::post('/register', [AuthController::class, 'register']);
             Route::post('/login', [AuthController::class, 'login']);

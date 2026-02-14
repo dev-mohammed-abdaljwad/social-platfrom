@@ -2,7 +2,9 @@
 
 namespace App\Repositories\Post\Eloquent;
 
+use App\Enums\FriendshipStatusEnum;
 use App\Enums\PrivacyTypeEnum;
+use App\Models\Friendship;
 use App\Models\Post;
 use App\Models\User;
 use App\Repositories\Post\PostRepository;
@@ -18,7 +20,7 @@ class EloquentPostRepository implements PostRepository
     protected function withListRelations($query)
     {
         $query = $query->with(['user'])->withCount(['likes', 'comments', 'shares']);
-        
+
         // Add user-specific interaction checks if authenticated
         if ($userId = Auth::id()) {
             $query->withExists([
@@ -27,7 +29,7 @@ class EloquentPostRepository implements PostRepository
                 'savedBy as is_saved' => fn($q) => $q->where('user_id', $userId),
             ]);
         }
-        
+
         return $query;
     }
 
@@ -53,42 +55,42 @@ class EloquentPostRepository implements PostRepository
             ->findOrFail($id);
     }
 
+    // use Cursor pagination
     public function findByUser($userId)
     {
         return $this->withListRelations($this->model->where('user_id', $userId))
             ->latest()
-            ->get();
+            ->cursorPaginate(20);
     }
 
-    public function getFeed(User $user, int $limit = 20)
+    public function getFeed(User $user, ?int $lastId = null, int $limit = 20)
     {
-        $friendIds = $user->friends()->pluck('id')->toArray();
+        $friendIdsSubquery = Friendship::selectRaw('CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END', [$user->id])
+            ->where('status', FriendshipStatusEnum::Accepted)
+            ->where(function ($q) use ($user) {
+                $q->where('sender_id', $user->id)
+                    ->orWhere('receiver_id', $user->id);
+            });
 
-        return $this->withListRelations(
-            $this->model->where(function ($query) use ($user, $friendIds) {
-                $query->where('user_id', $user->id)
+        $query = $this->withListRelations(
+            $this->model->where(function ($q) use ($user, $friendIdsSubquery) {
+                $q->where('user_id', $user->id)
                     ->orWhere('privacy', PrivacyTypeEnum::Public)
-                    ->orWhere(function ($q) use ($friendIds) {
-                        $q->whereIn('user_id', $friendIds)
+                    ->orWhere(function ($q2) use ($friendIdsSubquery) {
+                        $q2->whereIn('user_id', $friendIdsSubquery)
                             ->whereIn('privacy', [PrivacyTypeEnum::Public, PrivacyTypeEnum::Friends]);
                     });
             })
-        )
-            ->latest()
-            ->limit($limit)
-            ->get();
+        )->orderBy('id', 'desc');
+
+        if ($lastId) {
+            $query->where('id', '<', $lastId); // optional, still works as cursor
+        }
+
+        return $query->cursorPaginate($limit);
     }
 
-    public function getPublicPosts(int $limit = 10)
-    {
-        return $this->withListRelations($this->model->query())
-            ->where('privacy', 'public')
-            ->orderBy('id', 'desc')
-            ->take($limit)
-            ->get();
-    }
-
-    public function getPublicPostsPaginated(?int $lastId = null, int $limit = 10)
+    public function getPublicPosts(int $limit = 10, ?int $lastId = null)
     {
         $query = $this->withListRelations($this->model->query())
             ->where('privacy', 'public')
@@ -98,8 +100,9 @@ class EloquentPostRepository implements PostRepository
             $query->where('id', '<', $lastId);
         }
 
-        return $query->take($limit)->get();
+        return $query->cursorPaginate($limit);
     }
+
 
     public function getUserPostsWithRelations(User $user, bool $publicOnly = false)
     {

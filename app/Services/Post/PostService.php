@@ -29,19 +29,14 @@ class PostService
         return $this->repository->findByUser($userId);
     }
 
-    public function getFeed(User $user, int $limit = 20)
+    public function getFeed(User $user, ?int $lastId = null, int $limit = 20)
     {
-        return $this->repository->getFeed($user, $limit);
+        return $this->repository->getFeed($user, $lastId, $limit);
     }
 
-    public function getPublicPosts(int $limit = 10)
+    public function getPublicPosts(int $limit = 10, ?int $lastId = null)
     {
-        return $this->repository->getPublicPosts($limit);
-    }
-
-    public function getPublicPostsPaginated(?int $lastId = null, int $limit = 10)
-    {
-        return $this->repository->getPublicPostsPaginated($lastId, $limit);
+        return $this->repository->getPublicPosts($limit, $lastId);
     }
 
     public function getUserPostsWithRelations(User $user, bool $publicOnly = false)

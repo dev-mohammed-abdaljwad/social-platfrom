@@ -1,10 +1,11 @@
-<?php 
+<?php
+
 namespace App\Enums;
 
-enum PrivacyTypeEnum: string 
+enum PrivacyTypeEnum: string
 {
-    case Privet = 'private'; 
-    case Public = 'public'; 
+    case Private = 'private';
+    case Public = 'public';
     case Friends = 'friends';
 
     public static function getValues(): array
