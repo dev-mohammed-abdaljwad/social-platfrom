@@ -167,7 +167,7 @@ PUSHER_APP_SECRET=
 PUSHER_APP_CLUSTER=
 
 # Database
-DB_CONNECTION=sqlite
+DB_CONNECTION=mysql
 ```
 
 ## API Documentation
