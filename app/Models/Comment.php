@@ -72,6 +72,6 @@ class Comment extends Model
      */
     public function getLikesCountAttribute(): int
     {
-        return $this->likes()->count();
+        return $this->attributes['likes_count'] ?? $this->likes()->count();
     }
 }

@@ -112,26 +112,29 @@ class Post extends Model
 
     /**
      * Get the number of likes for this post.
+     * Uses withCount if loaded, otherwise queries.
      */
     public function getLikesCountAttribute(): int
     {
-        return $this->likes()->count();
+        return $this->attributes['likes_count'] ?? $this->likes()->count();
     }
 
     /**
      * Get the number of comments for this post.
+     * Uses withCount if loaded, otherwise queries.
      */
     public function getCommentsCountAttribute(): int
     {
-        return $this->comments()->count();
+        return $this->attributes['comments_count'] ?? $this->comments()->count();
     }
 
     /**
      * Get the number of shares for this post.
+     * Uses withCount if loaded, otherwise queries.
      */
     public function getSharesCountAttribute(): int
     {
-        return $this->shares()->count();
+        return $this->attributes['shares_count'] ?? $this->shares()->count();
     }
 
     /**

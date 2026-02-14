@@ -93,7 +93,13 @@ class PostController extends Controller
      */
     public function toggleSave(int $postId)
     {
-        $result = $this->postService->toggleSave(auth()->user(), $postId);
+        $post = $this->postService->find($postId);
+
+        if (!$post) {
+            return response()->json(['success' => false, 'message' => 'Post not found'], 404);
+        }
+
+        $result = $this->postService->toggleSave(auth()->user(), $post);
 
         return response()->json([
             'success' => true,
@@ -106,7 +112,13 @@ class PostController extends Controller
      */
     public function getLikes(int $postId)
     {
-        $likes = $this->postService->getFormattedLikes($postId);
+        $post = $this->postService->find($postId);
+
+        if (!$post) {
+            return response()->json(['success' => false, 'message' => 'Post not found'], 404);
+        }
+
+        $likes = $this->postService->getFormattedLikes($post);
 
         return response()->json([
             'success' => true,

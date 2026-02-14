@@ -4,6 +4,7 @@ namespace App\Repositories\Comment\Eloquent;
 
 use App\Models\Comment;
 use App\Repositories\Comment\CommentRepository;
+use Illuminate\Support\Facades\Auth;
 
 class EloquentCommentRepository implements CommentRepository
 {
@@ -29,21 +30,44 @@ class EloquentCommentRepository implements CommentRepository
 
     public function findRootCommentsByPost($postId)
     {
-        return $this->model->where('post_id', $postId)
+        $userId = Auth::id();
+
+        $query = $this->model->where('post_id', $postId)
             ->whereNull('parent_id')
-            ->with(['user', 'replies.user', 'likes'])
+            ->with([
+                'user',
+                'replies' => function ($query) use ($userId) {
+                    $query->with('user')
+                        ->withCount('likes');
+                    if ($userId) {
+                        $query->withExists(['likes as is_liked' => fn($q) => $q->where('user_id', $userId)]);
+                    }
+                }
+            ])
             ->withCount('likes', 'replies')
-            ->latest()
-            ->get();
+            ->latest();
+
+        if ($userId) {
+            $query->withExists(['likes as is_liked' => fn($q) => $q->where('user_id', $userId)]);
+        }
+
+        return $query->get();
     }
 
     public function findReplies($commentId)
     {
-        return $this->model->where('parent_id', $commentId)
-            ->with(['user', 'likes'])
+        $userId = Auth::id();
+
+        $query = $this->model->where('parent_id', $commentId)
+            ->with('user')
             ->withCount('likes')
-            ->latest()
-            ->get();
+            ->latest();
+
+        if ($userId) {
+            $query->withExists(['likes as is_liked' => fn($q) => $q->where('user_id', $userId)]);
+        }
+
+        return $query->get();
     }
 
     public function create(array $data)

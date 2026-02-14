@@ -134,7 +134,7 @@ class CommentService
         $result = $this->likeService->toggleCommentLike($user, $commentId);
 
         return [
-            'liked' => $result['action'] === 'liked',
+            'liked' => $result['liked'],
             'likes_count' => $this->repository->getLikesCount($commentId),
         ];
     }
