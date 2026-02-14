@@ -28,7 +28,7 @@ class EloquentCommentRepository implements CommentRepository
             ->get();
     }
 
-    public function findRootCommentsByPost($postId)
+    public function findRootCommentsByPost($postId, int $limit = 20)
     {
         $userId = Auth::id();
 
@@ -38,14 +38,17 @@ class EloquentCommentRepository implements CommentRepository
                 'user',
                 'replies' => function ($query) use ($userId) {
                     $query->with('user')
-                        ->withCount('likes');
+                        ->withCount('likes')
+                        ->latest()
+                        ->limit(3); // Only load first 3 replies, load more on demand
                     if ($userId) {
                         $query->withExists(['likes as is_liked' => fn($q) => $q->where('user_id', $userId)]);
                     }
                 }
             ])
             ->withCount('likes', 'replies')
-            ->latest();
+            ->latest()
+            ->limit($limit);
 
         if ($userId) {
             $query->withExists(['likes as is_liked' => fn($q) => $q->where('user_id', $userId)]);
@@ -54,14 +57,15 @@ class EloquentCommentRepository implements CommentRepository
         return $query->get();
     }
 
-    public function findReplies($commentId)
+    public function findReplies($commentId, int $limit = 10)
     {
         $userId = Auth::id();
 
         $query = $this->model->where('parent_id', $commentId)
             ->with('user')
             ->withCount('likes')
-            ->latest();
+            ->latest()
+            ->limit($limit);
 
         if ($userId) {
             $query->withExists(['likes as is_liked' => fn($q) => $q->where('user_id', $userId)]);

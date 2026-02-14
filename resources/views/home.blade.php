@@ -326,10 +326,28 @@
 
     // Like button functionality
     document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.setAttribute('data-listener', 'true');
         btn.addEventListener('click', async function() {
             @auth
             const postId = this.dataset.postId;
             const btn = this;
+            const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+            const countSpan = postCard.querySelector('.likes-count');
+            const svg = btn.querySelector('svg');
+            const isLiked = btn.classList.contains('text-red-500');
+            const currentCount = parseInt(countSpan.textContent) || 0;
+            
+            // Optimistic update - instant UI change
+            if (isLiked) {
+                btn.classList.remove('text-red-500');
+                svg.setAttribute('fill', 'none');
+                countSpan.textContent = Math.max(0, currentCount - 1);
+            } else {
+                btn.classList.add('text-red-500');
+                svg.setAttribute('fill', 'currentColor');
+                countSpan.textContent = currentCount + 1;
+            }
+            
             try {
                 const response = await fetch(`/posts/${postId}/like`, {
                     method: 'POST',
@@ -341,23 +359,20 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    const postCard = document.querySelector(`[data-post-id="${postId}"]`);
-                    const countSpan = postCard.querySelector('.likes-count');
-                    const svg = btn.querySelector('svg');
-                    let count = parseInt(countSpan.textContent);
-                    
-                    if (data.liked) {
-                        countSpan.textContent = count + 1;
-                        btn.classList.add('text-red-500');
-                        svg.setAttribute('fill', 'currentColor');
-                    } else {
-                        countSpan.textContent = count - 1;
-                        btn.classList.remove('text-red-500');
-                        svg.setAttribute('fill', 'none');
-                    }
+                    // Sync with server count
+                    countSpan.textContent = data.likes_count;
+                } else {
+                    // Revert on error
+                    btn.classList.toggle('text-red-500');
+                    svg.setAttribute('fill', isLiked ? 'currentColor' : 'none');
+                    countSpan.textContent = currentCount;
                 }
             } catch (error) {
                 console.error('Error liking post:', error);
+                // Revert on error
+                btn.classList.toggle('text-red-500');
+                svg.setAttribute('fill', isLiked ? 'currentColor' : 'none');
+                countSpan.textContent = currentCount;
             }
             @else
             openLoginModal();
@@ -803,6 +818,23 @@
                 @auth
                 const postId = this.dataset.postId;
                 const btn = this;
+                const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+                const countSpan = postCard.querySelector('.likes-count');
+                const svg = btn.querySelector('svg');
+                const isLiked = btn.classList.contains('text-red-500');
+                const currentCount = parseInt(countSpan.textContent) || 0;
+                
+                // Optimistic update - instant UI change
+                if (isLiked) {
+                    btn.classList.remove('text-red-500');
+                    svg.setAttribute('fill', 'none');
+                    countSpan.textContent = Math.max(0, currentCount - 1);
+                } else {
+                    btn.classList.add('text-red-500');
+                    svg.setAttribute('fill', 'currentColor');
+                    countSpan.textContent = currentCount + 1;
+                }
+                
                 try {
                     const response = await fetch(`/posts/${postId}/like`, {
                         method: 'POST',
@@ -814,21 +846,19 @@
 
                     if (response.ok) {
                         const data = await response.json();
-                        const countSpan = btn.querySelector('span');
-                        const svg = btn.querySelector('svg');
-                        
                         countSpan.textContent = data.likes_count;
-                        
-                        if (data.liked) {
-                            btn.classList.add('text-red-500');
-                            svg.setAttribute('fill', 'currentColor');
-                        } else {
-                            btn.classList.remove('text-red-500');
-                            svg.setAttribute('fill', 'none');
-                        }
+                    } else {
+                        // Revert on error
+                        btn.classList.toggle('text-red-500');
+                        svg.setAttribute('fill', isLiked ? 'currentColor' : 'none');
+                        countSpan.textContent = currentCount;
                     }
                 } catch (error) {
                     console.error('Error liking post:', error);
+                    // Revert on error
+                    btn.classList.toggle('text-red-500');
+                    svg.setAttribute('fill', isLiked ? 'currentColor' : 'none');
+                    countSpan.textContent = currentCount;
                 }
                 @else
                 openLoginModal();
@@ -847,7 +877,7 @@
                 commentsSection.classList.toggle('hidden');
                 
                 if (!commentsSection.classList.contains('hidden') && commentsList.dataset.loaded !== 'true') {
-                    loadComments(postId);
+                    loadComments(postId, commentsList);
                     commentsList.dataset.loaded = 'true';
                 }
             });
