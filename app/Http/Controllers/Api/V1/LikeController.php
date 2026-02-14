@@ -27,20 +27,34 @@ class LikeController extends Controller
     {
         $result = $this->likeService->togglePostLike($request->user(), $postId);
 
-        return response()->json([
-            'message' => $result['action'] === 'liked' ? 'Post liked' : 'Post unliked',
-            'action' => $result['action'],
-        ]);
+        $response = [
+            'message' => $result['liked'] ? 'Post liked' : 'Post unliked',
+            'liked' => $result['liked'],
+            'likes_count' => $result['likes_count'],
+        ];
+
+        if ($result['liked'] && $result['like']) {
+            $response['data'] = new LikeTransformer($result['like']->load('user'));
+        }
+
+        return response()->json($response);
     }
 
     public function toggleCommentLike(Request $request, int $commentId): JsonResponse
     {
         $result = $this->likeService->toggleCommentLike($request->user(), $commentId);
 
-        return response()->json([
-            'message' => $result['action'] === 'liked' ? 'Comment liked' : 'Comment unliked',
-            'action' => $result['action'],
-        ]);
+        $response = [
+            'message' => $result['liked'] ? 'Comment liked' : 'Comment unliked',
+            'liked' => $result['liked'],
+            'likes_count' => $result['likes_count'],
+        ];
+
+        if ($result['liked'] && $result['like']) {
+            $response['data'] = new LikeTransformer($result['like']->load('user'));
+        }
+
+        return response()->json($response);
     }
 
     public function hasLikedPost(Request $request, int $postId): JsonResponse

@@ -8,6 +8,7 @@ use App\Http\Controllers\Web\CommentController;
 use App\Http\Controllers\Web\FriendController;
 use App\Http\Controllers\Web\ProfileController;
 use App\Http\Controllers\Web\NotificationController;
+use App\Http\Controllers\Web\SearchController;
 
 /*
 |--------------------------------------------------------------------------
@@ -30,6 +31,10 @@ Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->n
 Route::get('/', [PageController::class, 'home'])->name('home');
 Route::get('/explore', [PageController::class, 'explore'])->name('explore');
 Route::get('/posts/feed', [PageController::class, 'fetchPosts'])->name('posts.feed');
+
+// Search routes
+Route::get('/search', [SearchController::class, 'index'])->name('search');
+Route::get('/search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');
 
 // Profile routes
 Route::get('/profile', [PageController::class, 'profile'])->name('profile');

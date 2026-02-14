@@ -54,6 +54,11 @@ class UserService
         return $this->repository->search($query, $limit);
     }
 
+    public function searchPaginated(string $query, int $perPage = 15, ?int $excludeUserId = null)
+    {
+        return $this->repository->searchPaginated($query, $perPage, $excludeUserId);
+    }
+
     public function updateProfile($user, array $data)
     {
         $allowedFields = ['name', 'bio', 'phone', 'profile_picture'];

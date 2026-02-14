@@ -42,16 +42,23 @@
 
                 <!-- Search Bar (Desktop) -->
                 <div class="hidden md:flex flex-1 max-w-xs mx-4">
-                    <div class="w-full relative">
-                        <input 
-                            type="text" 
-                            placeholder="Search..." 
-                            class="w-full px-4 py-2 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            id="searchInput"
-                        >
-                        <svg class="absolute right-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-full relative" id="searchContainer">
+                        <form action="{{ route('search') }}" method="GET" id="searchForm">
+                            <input 
+                                type="text" 
+                                name="q"
+                                placeholder="Search users..." 
+                                class="w-full px-4 py-2 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                id="searchInput"
+                                autocomplete="off"
+                            >
+                        </form>
+                        <svg class="absolute right-3 top-2.5 w-5 h-5 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
+                        <!-- Search Suggestions Dropdown -->
+                        <div id="searchSuggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-white rounded-lg shadow-xl border border-gray-200 max-h-80 overflow-y-auto z-50">
+                        </div>
                     </div>
                 </div>
 
@@ -149,6 +156,14 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                     </svg>
                     <span>Friends</span>
+                </a>
+
+                <!-- Find People -->
+                <a href="{{ url('/search') }}" class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg transition-colors font-semibold {{ request()->is('search*') ? 'bg-blue-50 text-blue-600' : '' }}">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                    </svg>
+                    <span>Find People</span>
                 </a>
 
                 <!-- Profile -->
@@ -443,6 +458,77 @@
 
         // Menu toggle button
         document.getElementById('menuToggle').addEventListener('click', toggleSidebar);
+
+        // ==================== SEARCH FUNCTIONALITY ====================
+        const searchInput = document.getElementById('searchInput');
+        const searchSuggestions = document.getElementById('searchSuggestions');
+        let searchTimeout = null;
+
+        if (searchInput && searchSuggestions) {
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                const query = this.value.trim();
+
+                if (query.length < 2) {
+                    searchSuggestions.classList.add('hidden');
+                    return;
+                }
+
+                searchTimeout = setTimeout(async () => {
+                    try {
+                        const response = await fetch(`/search/suggestions?q=${encodeURIComponent(query)}`, {
+                            headers: { 'Accept': 'application/json' }
+                        });
+                        const data = await response.json();
+                        
+                        if (data.users && data.users.length > 0) {
+                            searchSuggestions.innerHTML = data.users.map(user => `
+                                <a href="${user.profile_url}" class="flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors">
+                                    <img src="${user.avatar_url}" alt="${user.name}" class="w-10 h-10 rounded-full object-cover">
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium text-gray-800 truncate">${user.name}</p>
+                                        <p class="text-sm text-gray-500 truncate">@${user.username}</p>
+                                    </div>
+                                </a>
+                            `).join('');
+                            searchSuggestions.innerHTML += `
+                                <a href="/search?q=${encodeURIComponent(query)}" class="block p-3 text-center text-blue-600 hover:bg-blue-50 border-t border-gray-100 font-medium">
+                                    See all results for "${query}"
+                                </a>
+                            `;
+                            searchSuggestions.classList.remove('hidden');
+                        } else {
+                            searchSuggestions.innerHTML = `
+                                <div class="p-4 text-center text-gray-500">
+                                    No users found for "${query}"
+                                </div>
+                                <a href="/search?q=${encodeURIComponent(query)}" class="block p-3 text-center text-blue-600 hover:bg-blue-50 border-t border-gray-100 font-medium">
+                                    Search for "${query}"
+                                </a>
+                            `;
+                            searchSuggestions.classList.remove('hidden');
+                        }
+                    } catch (error) {
+                        console.error('Search error:', error);
+                    }
+                }, 300);
+            });
+
+            // Close suggestions when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('#searchContainer')) {
+                    searchSuggestions.classList.add('hidden');
+                }
+            });
+
+            // Handle keyboard navigation
+            searchInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    searchSuggestions.classList.add('hidden');
+                }
+            });
+        }
+        // ==================== END SEARCH FUNCTIONALITY ====================
 
         // Toggle profile menu
         function toggleProfileMenu() {

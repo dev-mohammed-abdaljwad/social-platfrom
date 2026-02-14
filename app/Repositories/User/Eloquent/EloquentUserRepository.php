@@ -57,6 +57,18 @@ class EloquentUserRepository implements UserRepository
             ->get();
     }
 
+    public function searchPaginated(string $query, int $perPage = 15, ?int $excludeUserId = null)
+    {
+        return $this->model->where('is_active', true)
+            ->when($excludeUserId, fn($q) => $q->where('id', '!=', $excludeUserId))
+            ->where(function ($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                    ->orWhere('username', 'like', "%{$query}%");
+            })
+            ->orderBy('name')
+            ->paginate($perPage);
+    }
+
     public function getSuggestions(User $user, array $excludeIds, int $limit = 6)
     {
         return $this->model
