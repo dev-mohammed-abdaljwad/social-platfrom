@@ -48,7 +48,10 @@ class PostController extends Controller
         $post = $this->postService->find($postId);
 
         if (!$post) {
-            return response()->json(['success' => false, 'message' => 'Post not found'], 404);
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Post not found'], 404);
+            }
+            return redirect()->back()->with('error', 'Post not found');
         }
 
         $result = $this->likeService->togglePostLike(auth()->user(), $postId);
@@ -63,11 +66,15 @@ class PostController extends Controller
             );
         }
 
-        return response()->json([
-            'success' => true,
-            'liked' => $result['liked'],
-            'likes_count' => $result['likes_count'],
-        ]);
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'liked' => $result['liked'],
+                'likes_count' => $result['likes_count'],
+            ]);
+        }
+
+        return redirect()->back()->with('success', $result['liked'] ? 'Post liked!' : 'Post unliked!');
     }
 
     /**
@@ -81,11 +88,15 @@ class PostController extends Controller
             $request->validated()['content'] ?? null
         );
 
-        return response()->json([
-            'success' => true,
-            'shared' => $result['shared'],
-            'shares_count' => $result['shares_count'],
-        ]);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'shared' => $result['shared'],
+                'shares_count' => $result['shares_count'],
+            ]);
+        }
+
+        return redirect()->back()->with('success', $result['shared'] ? 'Post shared!' : 'Share removed!');
     }
 
     /**
@@ -96,15 +107,22 @@ class PostController extends Controller
         $post = $this->postService->find($postId);
 
         if (!$post) {
-            return response()->json(['success' => false, 'message' => 'Post not found'], 404);
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Post not found'], 404);
+            }
+            return redirect()->back()->with('error', 'Post not found');
         }
 
         $result = $this->postService->toggleSave(auth()->user(), $post);
 
-        return response()->json([
-            'success' => true,
-            'saved' => $result['saved'],
-        ]);
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'saved' => $result['saved'],
+            ]);
+        }
+
+        return redirect()->back()->with('success', $result['saved'] ? 'Post saved!' : 'Post unsaved!');
     }
 
     /**
@@ -134,20 +152,30 @@ class PostController extends Controller
         $post = $this->postService->find($postId);
 
         if (!$post) {
-            return response()->json(['success' => false, 'message' => 'Post not found'], 404);
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Post not found'], 404);
+            }
+            return redirect()->back()->with('error', 'Post not found');
         }
 
         if (!$this->postService->canModify($post->user_id, auth()->id())) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+            return redirect()->back()->with('error', 'Unauthorized');
         }
 
         $this->postService->update($post, $request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Post updated successfully',
-            'post' => $this->postService->formatPost($post->fresh()),
-        ]);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Post updated successfully',
+                'post' => $this->postService->formatPost($post->fresh()),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Post updated successfully!');
     }
 
     /**
@@ -158,19 +186,29 @@ class PostController extends Controller
         $post = $this->postService->find($postId);
 
         if (!$post) {
-            return response()->json(['success' => false, 'message' => 'Post not found'], 404);
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Post not found'], 404);
+            }
+            return redirect()->back()->with('error', 'Post not found');
         }
 
         if (!$this->postService->canModify($post->user_id, auth()->id())) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+            return redirect()->back()->with('error', 'Unauthorized');
         }
 
         $this->postService->deleteWithMedia($post);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Post deleted successfully',
-        ]);
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Post deleted successfully',
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Post deleted successfully!');
     }
 
     /**
@@ -181,20 +219,30 @@ class PostController extends Controller
         $share = $this->shareService->find($shareId);
 
         if (!$share) {
-            return response()->json(['success' => false, 'message' => 'Share not found'], 404);
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Share not found'], 404);
+            }
+            return redirect()->back()->with('error', 'Share not found');
         }
 
         if (!$this->shareService->canModify($share->user_id, auth()->id())) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            if ($request->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+            return redirect()->back()->with('error', 'Unauthorized');
         }
 
         $this->shareService->update($share, $request->validated());
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Share updated successfully',
-            'share' => $this->shareService->formatShare($share->fresh()),
-        ]);
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Share updated successfully',
+                'share' => $this->shareService->formatShare($share->fresh()),
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Share updated successfully!');
     }
 
     /**
@@ -205,18 +253,28 @@ class PostController extends Controller
         $share = $this->shareService->find($shareId);
 
         if (!$share) {
-            return response()->json(['success' => false, 'message' => 'Share not found'], 404);
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Share not found'], 404);
+            }
+            return redirect()->back()->with('error', 'Share not found');
         }
 
         if (!$this->shareService->canModify($share->user_id, auth()->id())) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+            return redirect()->back()->with('error', 'Unauthorized');
         }
 
         $this->shareService->delete($share);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Share deleted successfully',
-        ]);
+        if (request()->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Share deleted successfully',
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Share deleted successfully!');
     }
 }

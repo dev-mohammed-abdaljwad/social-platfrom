@@ -26,13 +26,20 @@ class FriendController extends Controller
         $result = $this->friendshipService->sendRequest($currentUser, $receiver);
 
         if (!$result['success']) {
-            return response()->json(['success' => false, 'message' => $result['message']], 400);
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $result['message']], 400);
+            }
+            return redirect()->back()->with('error', $result['message']);
         }
 
         // Send notification
         $this->notificationService->friendRequest($receiver, $currentUser, $result['friendship']);
 
-        return response()->json(['success' => true, 'message' => $result['message']]);
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => $result['message']]);
+        }
+
+        return redirect()->back()->with('success', $result['message']);
     }
 
     /**
@@ -44,8 +51,11 @@ class FriendController extends Controller
         $result = $this->friendshipService->acceptRequest($friendshipId, $currentUser);
 
         if (!$result['success']) {
-            $statusCode = $result['message'] === 'Unauthorized to accept this request' ? 403 : 400;
-            return response()->json(['success' => false, 'message' => $result['message']], $statusCode);
+            if (request()->expectsJson()) {
+                $statusCode = $result['message'] === 'Unauthorized to accept this request' ? 403 : 400;
+                return response()->json(['success' => false, 'message' => $result['message']], $statusCode);
+            }
+            return redirect()->back()->with('error', $result['message']);
         }
 
         // Send notification to the sender
@@ -56,7 +66,11 @@ class FriendController extends Controller
             $friendship
         );
 
-        return response()->json(['success' => true, 'message' => $result['message']]);
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => $result['message']]);
+        }
+
+        return redirect()->back()->with('success', $result['message']);
     }
 
     /**
@@ -68,11 +82,18 @@ class FriendController extends Controller
         $result = $this->friendshipService->rejectRequest($friendshipId, $currentUser);
 
         if (!$result['success']) {
-            $statusCode = $result['message'] === 'Unauthorized to reject this request' ? 403 : 400;
-            return response()->json(['success' => false, 'message' => $result['message']], $statusCode);
+            if (request()->expectsJson()) {
+                $statusCode = $result['message'] === 'Unauthorized to reject this request' ? 403 : 400;
+                return response()->json(['success' => false, 'message' => $result['message']], $statusCode);
+            }
+            return redirect()->back()->with('error', $result['message']);
         }
 
-        return response()->json(['success' => true, 'message' => $result['message']]);
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => $result['message']]);
+        }
+
+        return redirect()->back()->with('success', $result['message']);
     }
 
     /**
@@ -84,11 +105,18 @@ class FriendController extends Controller
         $result = $this->friendshipService->cancelRequest($friendshipId, $currentUser);
 
         if (!$result['success']) {
-            $statusCode = $result['message'] === 'Unauthorized to cancel this request' ? 403 : 400;
-            return response()->json(['success' => false, 'message' => $result['message']], $statusCode);
+            if (request()->expectsJson()) {
+                $statusCode = $result['message'] === 'Unauthorized to cancel this request' ? 403 : 400;
+                return response()->json(['success' => false, 'message' => $result['message']], $statusCode);
+            }
+            return redirect()->back()->with('error', $result['message']);
         }
 
-        return response()->json(['success' => true, 'message' => $result['message']]);
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => $result['message']]);
+        }
+
+        return redirect()->back()->with('success', $result['message']);
     }
 
     /**
@@ -102,9 +130,16 @@ class FriendController extends Controller
         $result = $this->friendshipService->removeFriend($currentUser, $friend);
 
         if (!$result['success']) {
-            return response()->json(['success' => false, 'message' => $result['message']], 404);
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => $result['message']], 404);
+            }
+            return redirect()->back()->with('error', $result['message']);
         }
 
-        return response()->json(['success' => true, 'message' => $result['message']]);
+        if (request()->expectsJson()) {
+            return response()->json(['success' => true, 'message' => $result['message']]);
+        }
+
+        return redirect()->back()->with('success', $result['message']);
     }
 }

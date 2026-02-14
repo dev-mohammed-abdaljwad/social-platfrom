@@ -61,7 +61,10 @@ class CommentController extends Controller
 
         // Authorization check via service
         if (!$this->commentService->canDelete($comment->user_id, $user->id)) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            if (request()->expectsJson()) {
+                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+            }
+            return redirect()->back()->with('error', 'Unauthorized');
         }
 
         $this->commentService->delete($comment);
