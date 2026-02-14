@@ -61,4 +61,9 @@ class EloquentCommentRepository implements CommentRepository
     {
         return $model->delete();
     }
+
+    public function getLikesCount($commentId): int
+    {
+        return $this->model->findOrFail($commentId)->likes()->count();
+    }
 }

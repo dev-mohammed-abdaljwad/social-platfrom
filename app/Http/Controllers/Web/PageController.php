@@ -3,24 +3,26 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use App\Models\Post;
-use App\Models\User;
-use App\Models\Share;
+use App\Services\Friendship\FriendshipService;
+use App\Services\Post\PostService;
+use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class PageController extends Controller
 {
+    public function __construct(
+        protected PostService $postService,
+        protected UserService $userService,
+        protected FriendshipService $friendshipService
+    ) {}
+
     /**
      * Home page with posts feed.
      */
     public function home()
     {
-        $posts = Post::with(['user', 'comments', 'likes', 'shares'])
-            ->where('privacy', 'public')
-            ->orderBy('id', 'desc')
-            ->take(10)
-            ->get();
+        $posts = $this->postService->getPublicPosts(10);
 
         return view('home', compact('posts'));
     }
@@ -33,15 +35,7 @@ class PageController extends Controller
         $lastId = $request->query('last_id');
         $limit = (int) $request->query('limit', 10);
         
-        $query = Post::with(['user', 'comments', 'likes', 'shares'])
-            ->where('privacy', 'public')
-            ->orderBy('id', 'desc');
-        
-        if ($lastId) {
-            $query->where('id', '<', $lastId);
-        }
-        
-        $posts = $query->take($limit)->get();
+        $posts = $this->postService->getPublicPostsPaginated($lastId, $limit);
         
         $postsHtml = '';
         foreach ($posts as $post) {
@@ -67,17 +61,9 @@ class PageController extends Controller
             return redirect()->route('login');
         }
 
-        $posts = $user->posts()
-            ->with(['user', 'comments', 'likes', 'shares'])
-            ->latest()
-            ->get();
-
-        $sharedPosts = $user->shares()
-            ->with(['post.user', 'post.comments', 'post.likes', 'post.shares'])
-            ->latest()
-            ->get();
-
-        $friends = $user->friends()->get();
+        $posts = $this->postService->getUserPostsWithRelations($user);
+        $sharedPosts = $this->postService->getUserSharedPosts($user);
+        $friends = $this->friendshipService->getFriendsOf($user);
 
         return view('profile', [
             'user' => $user,
@@ -91,55 +77,24 @@ class PageController extends Controller
     /**
      * Show a specific user's profile.
      */
-    public function showProfile(User $user)
+    public function showProfile(int $userId)
     {
-        $posts = $user->posts()
-            ->with(['user', 'comments', 'likes', 'shares'])
-            ->where('privacy', 'public')
-            ->latest()
-            ->get();
+        $user = $this->userService->find($userId);
+        $isOwnProfile = auth()->check() && auth()->id() === $user->id;
 
-        $sharedPosts = $user->shares()
-            ->with(['post.user', 'post.comments', 'post.likes', 'post.shares'])
-            ->latest()
-            ->get();
-
-        $friends = $user->friends()->get();
+        $posts = $this->postService->getUserPostsWithRelations($user, !$isOwnProfile);
+        $sharedPosts = $this->postService->getUserSharedPosts($user);
+        $friends = $this->friendshipService->getFriendsOf($user);
 
         // Friendship status for non-own profiles
         $friendshipStatus = null;
         $friendship = null;
         
-        if (auth()->check() && auth()->id() !== $user->id) {
+        if (auth()->check() && !$isOwnProfile) {
             $currentUser = auth()->user();
-            
-            // Check if they are friends
-            if ($currentUser->isFriendWith($user)) {
-                $friendshipStatus = 'friends';
-                $friendship = \App\Models\Friendship::where(function ($q) use ($currentUser, $user) {
-                    $q->where('sender_id', $currentUser->id)->where('receiver_id', $user->id);
-                })->orWhere(function ($q) use ($currentUser, $user) {
-                    $q->where('sender_id', $user->id)->where('receiver_id', $currentUser->id);
-                })->first();
-            }
-            // Check if current user sent a pending request
-            elseif ($currentUser->hasSentFriendRequestTo($user)) {
-                $friendshipStatus = 'pending_sent';
-                $friendship = \App\Models\Friendship::where('sender_id', $currentUser->id)
-                    ->where('receiver_id', $user->id)
-                    ->first();
-            }
-            // Check if current user received a pending request
-            elseif ($currentUser->hasPendingFriendRequestFrom($user)) {
-                $friendshipStatus = 'pending_received';
-                $friendship = \App\Models\Friendship::where('sender_id', $user->id)
-                    ->where('receiver_id', $currentUser->id)
-                    ->first();
-            }
-            // No relationship
-            else {
-                $friendshipStatus = 'none';
-            }
+            $result = $this->friendshipService->getProfileFriendshipStatus($currentUser, $user);
+            $friendshipStatus = $result['status'];
+            $friendship = $result['friendship'];
         }
 
         return view('profile', [
@@ -147,7 +102,7 @@ class PageController extends Controller
             'posts' => $posts,
             'sharedPosts' => $sharedPosts,
             'friends' => $friends,
-            'isOwnProfile' => auth()->check() && auth()->id() === $user->id,
+            'isOwnProfile' => $isOwnProfile,
             'friendshipStatus' => $friendshipStatus,
             'friendship' => $friendship,
         ]);
@@ -164,12 +119,9 @@ class PageController extends Controller
             return redirect()->route('login');
         }
 
-        $friends = $user->friends()->get();
-        $pendingRequests = $user->pendingFriendRequests()->with('sender')->get();
-        $sentRequests = $user->sentFriendRequests()
-            ->where('status', \App\Enums\FriendshipStatusEnum::Pending)
-            ->with('receiver')
-            ->get();
+        $friends = $this->friendshipService->getFriendsOf($user);
+        $pendingRequests = $this->friendshipService->getPendingRequestsFor($user);
+        $sentRequests = $this->friendshipService->getSentRequestsBy($user);
         
         // Suggestions: users who are not friends and not in pending requests
         $friendIds = $friends->pluck('id')->toArray();
@@ -177,10 +129,7 @@ class PageController extends Controller
         $sentIds = $sentRequests->pluck('receiver_id')->toArray();
         $excludeIds = array_merge($friendIds, $pendingIds, $sentIds, [$user->id]);
         
-        $suggestions = User::whereNotIn('id', $excludeIds)
-            ->inRandomOrder()
-            ->limit(6)
-            ->get();
+        $suggestions = $this->userService->getSuggestions($user, $excludeIds, 6);
 
         return view('friends', [
             'friends' => $friends,
@@ -213,10 +162,7 @@ class PageController extends Controller
     {
         $user = auth()->user();
         
-        $savedPosts = $user->savedPosts()
-            ->with(['user', 'comments', 'likes', 'shares'])
-            ->orderByPivot('created_at', 'desc')
-            ->get();
+        $savedPosts = $this->postService->getSavedPostsForUser($user);
 
         return view('saved', compact('savedPosts'));
     }

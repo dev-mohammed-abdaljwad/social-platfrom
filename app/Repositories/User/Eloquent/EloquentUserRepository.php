@@ -56,4 +56,14 @@ class EloquentUserRepository implements UserRepository
             ->limit($limit)
             ->get();
     }
+
+    public function getSuggestions(User $user, array $excludeIds, int $limit = 6)
+    {
+        return $this->model
+            ->whereNotIn('id', $excludeIds)
+            ->where('is_active', true)
+            ->inRandomOrder()
+            ->limit($limit)
+            ->get();
+    }
 }

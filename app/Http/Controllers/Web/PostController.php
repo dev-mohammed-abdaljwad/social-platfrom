@@ -3,60 +3,35 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use App\Models\Post;
-use App\Models\Share;
+use App\Http\Requests\Web\Post\SharePostRequest;
+use App\Http\Requests\Web\Post\StorePostRequest;
+use App\Http\Requests\Web\Post\UpdatePostRequest;
+use App\Http\Requests\Web\Post\UpdateShareRequest;
+use App\Services\Like\LikeService;
 use App\Services\Notification\NotificationService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
+use App\Services\Post\PostService;
+use App\Services\Share\ShareService;
 
 class PostController extends Controller
 {
     public function __construct(
+        protected PostService $postService,
+        protected LikeService $likeService,
+        protected ShareService $shareService,
         protected NotificationService $notificationService
     ) {}
+
     /**
      * Store a new post.
      */
-    public function store(Request $request)
+    public function store(StorePostRequest $request)
     {
-        $validated = $request->validate([
-            'content' => 'nullable|string|max:5000',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:10240', // 10MB max
-            'video' => 'nullable|mimetypes:video/mp4,video/mpeg,video/quicktime,video/webm|max:102400', // 100MB max
-            'location' => 'nullable|string|max:255',
-            'privacy' => 'nullable|in:public,friends,private',
-        ]);
-
-        // At least one of content, image, or video is required
-        if (empty($validated['content']) && !$request->hasFile('image') && !$request->hasFile('video')) {
-            return back()->withErrors(['content' => 'Please provide text, image, or video for your post.']);
-        }
-
-        // Only allow one media type per post (video takes priority)
-        $type = 'text';
-        $imagePath = null;
-        $videoPath = null;
-
-        // Handle video upload (priority over image)
-        if ($request->hasFile('video')) {
-            $videoPath = $request->file('video')->store('posts/videos', 'public');
-            $type = 'video';
-        }
-        // Handle image upload (only if no video)
-        elseif ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('posts/images', 'public');
-            $type = 'image';
-        }
-
-        Post::create([
-            'user_id' => auth()->id(),
-            'content' => $validated['content'] ?? null,
-            'image' => $imagePath,
-            'video' => $videoPath,
-            'location' => $validated['location'] ?? null,
-            'privacy' => $validated['privacy'] ?? 'public',
-            'type' => $type,
-        ]);
+        $this->postService->createWithMedia(
+            auth()->user(),
+            $request->validated(),
+            $request->file('image'),
+            $request->file('video')
+        );
 
         if ($request->expectsJson()) {
             return response()->json(['success' => true]);
@@ -68,164 +43,117 @@ class PostController extends Controller
     /**
      * Toggle like on a post.
      */
-    public function toggleLike(Post $post)
+    public function toggleLike(int $postId)
     {
-        $like = $post->likes()->where('user_id', auth()->id())->first();
+        $post = $this->postService->find($postId);
 
-        if ($like) {
-            $like->delete();
-            $liked = false;
-        } else {
-            $like = $post->likes()->create(['user_id' => auth()->id()]);
-            $liked = true;
-            
-            // Send notification to post owner (if not self)
-            if ($post->user_id !== auth()->id()) {
-                $this->notificationService->postLiked(
-                    $post->user,
-                    auth()->user(),
-                    $post,
-                    $like
-                );
-            }
+        if (!$post) {
+            return response()->json(['success' => false, 'message' => 'Post not found'], 404);
+        }
+
+        $result = $this->likeService->togglePostLike(auth()->user(), $postId);
+
+        // Send notification to post owner (if not self and liked)
+        if ($result['liked'] && $post->user_id !== auth()->id()) {
+            $this->notificationService->postLiked(
+                $post->user,
+                auth()->user(),
+                $post,
+                $result['like']
+            );
         }
 
         return response()->json([
             'success' => true,
-            'liked' => $liked,
-            'likes_count' => $post->likes()->count(),
+            'liked' => $result['liked'],
+            'likes_count' => $result['likes_count'],
         ]);
     }
 
     /**
      * Share a post.
      */
-    public function share(Request $request, Post $post)
+    public function share(SharePostRequest $request, int $postId)
     {
-        $user = auth()->user();
-
-        // Check if user already shared this post
-        $existingShare = $post->shares()->where('user_id', $user->id)->first();
-
-        if ($existingShare) {
-            // Toggle: unshare
-            $existingShare->delete();
-            return response()->json([
-                'success' => true,
-                'shared' => false,
-                'shares_count' => $post->shares()->count(),
-            ]);
-        }
-
-        // Create share
-        $validated = $request->validate([
-            'content' => 'nullable|string|max:1000',
-        ]);
-
-        $post->shares()->create([
-            'user_id' => $user->id,
-            'content' => $validated['content'] ?? null,
-        ]);
+        $result = $this->shareService->toggleShare(
+            auth()->user(),
+            $postId,
+            $request->validated()['content'] ?? null
+        );
 
         return response()->json([
             'success' => true,
-            'shared' => true,
-            'shares_count' => $post->shares()->count(),
+            'shared' => $result['shared'],
+            'shares_count' => $result['shares_count'],
         ]);
     }
 
     /**
      * Toggle save on a post.
      */
-    public function toggleSave(Post $post)
+    public function toggleSave(int $postId)
     {
-        $user = auth()->user();
-        
-        if ($post->isSavedBy($user)) {
-            $user->savedPosts()->detach($post->id);
-            $saved = false;
-        } else {
-            $user->savedPosts()->attach($post->id);
-            $saved = true;
-        }
+        $result = $this->postService->toggleSave(auth()->user(), $postId);
 
         return response()->json([
             'success' => true,
-            'saved' => $saved,
+            'saved' => $result['saved'],
         ]);
     }
 
     /**
      * Get likes for a post.
      */
-    public function getLikes(Post $post)
+    public function getLikes(int $postId)
     {
-        $likes = $post->likes()->with('user')->get();
+        $likes = $this->postService->getFormattedLikes($postId);
 
         return response()->json([
             'success' => true,
-            'likes' => $likes->map(fn($like) => [
-                'id' => $like->id,
-                'user' => [
-                    'id' => $like->user->id,
-                    'name' => $like->user->name,
-                    'username' => $like->user->username,
-                    'avatar_url' => $like->user->avatar_url,
-                ],
-                'created_at' => $like->created_at->toISOString(),
-            ]),
+            'likes' => $likes,
         ]);
     }
 
     /**
      * Update a post.
      */
-    public function update(Request $request, Post $post)
+    public function update(UpdatePostRequest $request, int $postId)
     {
-        // Only post owner can update
-        if ($post->user_id !== auth()->id()) {
+        $post = $this->postService->find($postId);
+
+        if (!$post) {
+            return response()->json(['success' => false, 'message' => 'Post not found'], 404);
+        }
+
+        if (!$this->postService->canModify($post->user_id, auth()->id())) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $validated = $request->validate([
-            'content' => 'nullable|string|max:5000',
-            'location' => 'nullable|string|max:255',
-            'privacy' => 'nullable|in:public,friends,private',
-        ]);
-
-        $post->update($validated);
+        $this->postService->update($post, $request->validated());
 
         return response()->json([
             'success' => true,
             'message' => 'Post updated successfully',
-            'post' => [
-                'id' => $post->id,
-                'content' => $post->content,
-                'location' => $post->location,
-                'privacy' => $post->privacy,
-            ],
+            'post' => $this->postService->formatPost($post->fresh()),
         ]);
     }
 
     /**
      * Delete a post.
      */
-    public function destroy(Post $post)
+    public function destroy(int $postId)
     {
-        // Only post owner can delete
-        if ($post->user_id !== auth()->id()) {
+        $post = $this->postService->find($postId);
+
+        if (!$post) {
+            return response()->json(['success' => false, 'message' => 'Post not found'], 404);
+        }
+
+        if (!$this->postService->canModify($post->user_id, auth()->id())) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        // Delete associated media files
-        if ($post->image) {
-            Storage::disk('public')->delete($post->image);
-        }
-        if ($post->video) {
-            Storage::disk('public')->delete($post->video);
-        }
-
-        $post->delete();
+        $this->postService->deleteWithMedia($post);
 
         return response()->json([
             'success' => true,
@@ -236,40 +164,43 @@ class PostController extends Controller
     /**
      * Update a share.
      */
-    public function updateShare(Request $request, Share $share)
+    public function updateShare(UpdateShareRequest $request, int $shareId)
     {
-        // Only share owner can update
-        if ($share->user_id !== auth()->id()) {
+        $share = $this->shareService->find($shareId);
+
+        if (!$share) {
+            return response()->json(['success' => false, 'message' => 'Share not found'], 404);
+        }
+
+        if (!$this->shareService->canModify($share->user_id, auth()->id())) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $validated = $request->validate([
-            'content' => 'nullable|string|max:1000',
-        ]);
-
-        $share->update($validated);
+        $this->shareService->update($share, $request->validated());
 
         return response()->json([
             'success' => true,
             'message' => 'Share updated successfully',
-            'share' => [
-                'id' => $share->id,
-                'content' => $share->content,
-            ],
+            'share' => $this->shareService->formatShare($share->fresh()),
         ]);
     }
 
     /**
      * Delete a share.
      */
-    public function destroyShare(Share $share)
+    public function destroyShare(int $shareId)
     {
-        // Only share owner can delete
-        if ($share->user_id !== auth()->id()) {
+        $share = $this->shareService->find($shareId);
+
+        if (!$share) {
+            return response()->json(['success' => false, 'message' => 'Share not found'], 404);
+        }
+
+        if (!$this->shareService->canModify($share->user_id, auth()->id())) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $share->delete();
+        $this->shareService->delete($share);
 
         return response()->json([
             'success' => true,

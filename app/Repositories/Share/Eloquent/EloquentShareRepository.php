@@ -40,6 +40,18 @@ class EloquentShareRepository implements ShareRepository
             ->get();
     }
 
+    public function findByUserAndPost($userId, $postId)
+    {
+        return $this->model->where('user_id', $userId)
+            ->where('post_id', $postId)
+            ->first();
+    }
+
+    public function getSharesCount($postId): int
+    {
+        return $this->model->where('post_id', $postId)->count();
+    }
+
     public function create(array $data)
     {
         return $this->model->create($data);

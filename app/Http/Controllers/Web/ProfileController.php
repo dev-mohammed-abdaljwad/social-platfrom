@@ -3,128 +3,108 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Web\Profile\DeleteAccountRequest;
+use App\Http\Requests\Web\Profile\UpdateCoverPhotoRequest;
+use App\Http\Requests\Web\Profile\UpdateEmailRequest;
+use App\Http\Requests\Web\Profile\UpdatePasswordRequest;
+use App\Http\Requests\Web\Profile\UpdateProfilePictureRequest;
+use App\Http\Requests\Web\Profile\UpdateProfileRequest;
+use App\Services\User\UserService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rules\Password;
 
 class ProfileController extends Controller
 {
+    public function __construct(
+        protected UserService $userService
+    ) {}
+
     /**
      * Update the user's profile information.
      */
-    public function updateProfile(Request $request): JsonResponse
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
     {
         $user = $request->user();
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'username' => 'required|string|max:50|alpha_dash|unique:users,username,' . $user->id,
-            'bio' => 'nullable|string|max:500',
-            'phone' => 'nullable|string|max:20',
-        ]);
-
-        $user->update($validated);
+        $updatedUser = $this->userService->updateProfileInfo($user, $request->validated());
 
         return response()->json([
             'success' => true,
             'message' => 'Profile updated successfully',
-            'user' => $user->fresh(),
+            'user' => $updatedUser,
         ]);
     }
 
     /**
      * Update the user's email address.
      */
-    public function updateEmail(Request $request): JsonResponse
+    public function updateEmail(UpdateEmailRequest $request): JsonResponse
     {
         $user = $request->user();
+        $validated = $request->validated();
 
-        $validated = $request->validate([
-            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
-            'password' => 'required|string',
-        ]);
+        $result = $this->userService->updateEmail(
+            $user,
+            $validated['email'],
+            $validated['password']
+        );
 
-        // Verify password
-        if (!Hash::check($validated['password'], $user->password)) {
+        if (!$result['success']) {
             return response()->json([
                 'success' => false,
-                'message' => 'The provided password is incorrect.',
+                'message' => $result['message'],
             ], 422);
         }
 
-        $user->update(['email' => $validated['email']]);
-
         return response()->json([
             'success' => true,
-            'message' => 'Email updated successfully',
+            'message' => $result['message'],
         ]);
     }
 
     /**
      * Update the user's password.
      */
-    public function updatePassword(Request $request): JsonResponse
+    public function updatePassword(UpdatePasswordRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'current_password' => 'required|string',
-            'password' => ['required', 'confirmed', Password::min(8)],
-        ]);
-
         $user = $request->user();
+        $validated = $request->validated();
 
-        // Verify current password
-        if (!Hash::check($validated['current_password'], $user->password)) {
+        $result = $this->userService->updatePassword(
+            $user,
+            $validated['current_password'],
+            $validated['password']
+        );
+
+        if (!$result['success']) {
             return response()->json([
                 'success' => false,
-                'message' => 'The current password is incorrect.',
+                'message' => $result['message'],
             ], 422);
         }
 
-        $user->update(['password' => $validated['password']]);
-
         return response()->json([
             'success' => true,
-            'message' => 'Password updated successfully',
+            'message' => $result['message'],
         ]);
     }
 
     /**
      * Delete the user's account.
      */
-    public function deleteAccount(Request $request): JsonResponse
+    public function deleteAccount(DeleteAccountRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'password' => 'required|string',
-        ]);
-
         $user = $request->user();
+        $validated = $request->validated();
 
-        // Verify password
-        if (!Hash::check($validated['password'], $user->password)) {
+        $result = $this->userService->deleteAccount($user, $validated['password']);
+
+        if (!$result['success']) {
             return response()->json([
                 'success' => false,
-                'message' => 'The provided password is incorrect.',
+                'message' => $result['message'],
             ], 422);
         }
-
-        // Delete profile picture
-        if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
-            Storage::disk('public')->delete($user->profile_picture);
-        }
-
-        // Delete cover photo
-        if ($user->cover_photo && Storage::disk('public')->exists($user->cover_photo)) {
-            Storage::disk('public')->delete($user->cover_photo);
-        }
-
-        // Delete all user tokens
-        $user->tokens()->delete();
-
-        // Delete user
-        $user->delete();
 
         // Logout from web session
         Auth::logout();
@@ -133,7 +113,7 @@ class ProfileController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Account deleted successfully',
+            'message' => $result['message'],
             'redirect' => '/',
         ]);
     }
@@ -141,57 +121,23 @@ class ProfileController extends Controller
     /**
      * Update the user's profile picture.
      */
-    public function updateProfilePicture(Request $request): JsonResponse
+    public function updateProfilePicture(UpdateProfilePictureRequest $request): JsonResponse
     {
-        $request->validate([
-            'profile_picture' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120', // 5MB max
-        ]);
-
         $user = $request->user();
+        $result = $this->userService->updateProfilePicture($user, $request->file('profile_picture'));
 
-        // Delete old profile picture if exists
-        if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
-            Storage::disk('public')->delete($user->profile_picture);
-        }
-
-        // Store new profile picture
-        $path = $request->file('profile_picture')->store('profile-pictures', 'public');
-
-        $user->update(['profile_picture' => $path]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Profile picture updated successfully',
-            'profile_picture_url' => $user->avatar_url,
-        ]);
+        return response()->json($result);
     }
 
     /**
      * Update the user's cover photo.
      */
-    public function updateCoverPhoto(Request $request): JsonResponse
+    public function updateCoverPhoto(UpdateCoverPhotoRequest $request): JsonResponse
     {
-        $request->validate([
-            'cover_photo' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:10240', // 10MB max
-        ]);
-
         $user = $request->user();
+        $result = $this->userService->updateCoverPhoto($user, $request->file('cover_photo'));
 
-        // Delete old cover photo if exists
-        if ($user->cover_photo && Storage::disk('public')->exists($user->cover_photo)) {
-            Storage::disk('public')->delete($user->cover_photo);
-        }
-
-        // Store new cover photo
-        $path = $request->file('cover_photo')->store('cover-photos', 'public');
-
-        $user->update(['cover_photo' => $path]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Cover photo updated successfully',
-            'cover_photo_url' => $user->cover_url,
-        ]);
+        return response()->json($result);
     }
 
     /**
@@ -200,18 +146,9 @@ class ProfileController extends Controller
     public function removeProfilePicture(Request $request): JsonResponse
     {
         $user = $request->user();
+        $result = $this->userService->removeProfilePicture($user);
 
-        if ($user->profile_picture && Storage::disk('public')->exists($user->profile_picture)) {
-            Storage::disk('public')->delete($user->profile_picture);
-        }
-
-        $user->update(['profile_picture' => null]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Profile picture removed',
-            'profile_picture_url' => $user->avatar_url,
-        ]);
+        return response()->json($result);
     }
 
     /**
@@ -220,17 +157,8 @@ class ProfileController extends Controller
     public function removeCoverPhoto(Request $request): JsonResponse
     {
         $user = $request->user();
+        $result = $this->userService->removeCoverPhoto($user);
 
-        if ($user->cover_photo && Storage::disk('public')->exists($user->cover_photo)) {
-            Storage::disk('public')->delete($user->cover_photo);
-        }
-
-        $user->update(['cover_photo' => null]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Cover photo removed',
-            'cover_photo_url' => null,
-        ]);
+        return response()->json($result);
     }
 }

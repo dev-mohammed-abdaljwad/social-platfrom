@@ -3,58 +3,48 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use App\Models\Comment;
-use App\Models\Post;
+use App\Http\Requests\Web\Comment\StoreCommentRequest;
+use App\Services\Comment\CommentService;
 use App\Services\Notification\NotificationService;
-use Illuminate\Http\Request;
+use App\Services\Post\PostService;
 
 class CommentController extends Controller
 {
     public function __construct(
+        protected CommentService $commentService,
+        protected PostService $postService,
         protected NotificationService $notificationService
     ) {}
 
     /**
      * Store a new comment.
      */
-    public function store(Request $request, Post $post)
+    public function store(StoreCommentRequest $request, int $postId)
     {
-        $validated = $request->validate([
-            'content' => 'required|string|max:1000',
-            'parent_id' => 'nullable|exists:comments,id',
-        ]);
+        $post = $this->postService->find($postId);
+        $user = auth()->user();
 
-        $comment = $post->comments()->create([
-            'user_id' => auth()->id(),
-            'content' => $validated['content'],
-            'parent_id' => $validated['parent_id'] ?? null,
-        ]);
+        $comment = $this->commentService->createForPost(
+            $post->id,
+            $user->id,
+            $request->validated('content'),
+            $request->validated('parent_id')
+        );
 
         // Send notification to post owner (if not self)
-        if ($post->user_id !== auth()->id()) {
+        if ($post->user_id !== $user->id) {
             $this->notificationService->postCommented(
                 $post->user,
-                auth()->user(),
+                $user,
                 $post,
                 $comment
             );
         }
 
         if ($request->expectsJson()) {
-            $comment->load('user');
             return response()->json([
                 'success' => true,
-                'comment' => [
-                    'id' => $comment->id,
-                    'content' => $comment->content,
-                    'created_at' => $comment->created_at->diffForHumans(),
-                    'user' => [
-                        'name' => $comment->user->name,
-                        'avatar_url' => $comment->user->avatar_url,
-                    ],
-                    'likes_count' => 0,
-                    'is_liked' => false,
-                ],
+                'comment' => $this->commentService->formatNewComment($comment),
             ]);
         }
 
@@ -64,14 +54,17 @@ class CommentController extends Controller
     /**
      * Delete a comment.
      */
-    public function destroy(Comment $comment)
+    public function destroy(int $commentId)
     {
-        // Only comment owner can delete
-        if ($comment->user_id !== auth()->id()) {
+        $comment = $this->commentService->find($commentId);
+        $user = auth()->user();
+
+        // Authorization check via service
+        if (!$this->commentService->canDelete($comment->user_id, $user->id)) {
             return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
         }
 
-        $comment->delete();
+        $this->commentService->delete($comment);
 
         if (request()->expectsJson()) {
             return response()->json(['success' => true]);
@@ -83,29 +76,10 @@ class CommentController extends Controller
     /**
      * Get comments for a post (AJAX).
      */
-    public function index(Post $post)
+    public function index(int $postId)
     {
-        $comments = $post->comments()
-            ->with('user')
-            ->withCount('likes')
-            ->whereNull('parent_id')
-            ->latest()
-            ->get()
-            ->map(function ($comment) {
-                return [
-                    'id' => $comment->id,
-                    'content' => $comment->content,
-                    'created_at' => $comment->created_at->diffForHumans(),
-                    'user' => [
-                        'id' => $comment->user->id,
-                        'name' => $comment->user->name,
-                        'avatar_url' => $comment->user->avatar_url,
-                    ],
-                    'is_owner' => auth()->check() && auth()->id() === $comment->user_id,
-                    'likes_count' => $comment->likes_count,
-                    'is_liked' => auth()->check() && $comment->likes()->where('user_id', auth()->id())->exists(),
-                ];
-            });
+        $user = auth()->user();
+        $comments = $this->commentService->getCommentsForPost($postId, $user);
 
         return response()->json(['success' => true, 'comments' => $comments]);
     }
@@ -113,23 +87,15 @@ class CommentController extends Controller
     /**
      * Toggle like on a comment.
      */
-    public function toggleLike(Comment $comment)
+    public function toggleLike(int $commentId)
     {
         $user = auth()->user();
-        $existingLike = $comment->likes()->where('user_id', $user->id)->first();
-
-        if ($existingLike) {
-            $existingLike->delete();
-            $liked = false;
-        } else {
-            $comment->likes()->create(['user_id' => $user->id]);
-            $liked = true;
-        }
+        $result = $this->commentService->toggleLike($user, $commentId);
 
         return response()->json([
             'success' => true,
-            'liked' => $liked,
-            'likes_count' => $comment->likes()->count(),
+            'liked' => $result['liked'],
+            'likes_count' => $result['likes_count'],
         ]);
     }
 }

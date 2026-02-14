@@ -35,12 +35,34 @@ class LikeService
 
     public function togglePostLike(User $user, int $postId)
     {
-        return $this->repository->toggle($user, Post::class, $postId);
+        $result = $this->repository->toggle($user, Post::class, $postId);
+
+        return [
+            'liked' => $result['action'] === 'liked',
+            'likes_count' => $this->getPostLikesCount($postId),
+            'like' => $result['like'],
+        ];
     }
 
     public function toggleCommentLike(User $user, int $commentId)
     {
-        return $this->repository->toggle($user, Comment::class, $commentId);
+        $result = $this->repository->toggle($user, Comment::class, $commentId);
+
+        return [
+            'liked' => $result['action'] === 'liked',
+            'likes_count' => $this->getCommentLikesCount($commentId),
+            'like' => $result['like'],
+        ];
+    }
+
+    public function findByUserAndPost($userId, $postId)
+    {
+        return $this->repository->findByUserAndLikeable($userId, Post::class, $postId);
+    }
+
+    public function findByUserAndComment($userId, $commentId)
+    {
+        return $this->repository->findByUserAndLikeable($userId, Comment::class, $commentId);
     }
 
     public function hasLikedPost(User $user, int $postId): bool
@@ -51,5 +73,21 @@ class LikeService
     public function hasLikedComment(User $user, int $commentId): bool
     {
         return $this->repository->hasLiked($user, Comment::class, $commentId);
+    }
+
+    /**
+     * Get likes count for a post.
+     */
+    public function getPostLikesCount(int $postId): int
+    {
+        return count($this->repository->findByLikeable(Post::class, $postId));
+    }
+
+    /**
+     * Get likes count for a comment.
+     */
+    public function getCommentLikesCount(int $commentId): int
+    {
+        return count($this->repository->findByLikeable(Comment::class, $commentId));
     }
 }

@@ -4,6 +4,7 @@ namespace App\Services\Auth;
 
 use App\Models\User;
 use App\Repositories\User\UserRepository;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -37,6 +38,23 @@ class AuthService
     }
 
     /**
+     * Register a new user for web (session-based).
+     */
+    public function registerWeb(array $data): User
+    {
+        $user = $this->userRepository->create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'username' => $data['username'],
+            'password' => $data['password'],
+        ]);
+
+        Auth::login($user);
+
+        return $user;
+    }
+
+    /**
      * Login user and create API token.
      */
     public function login(string $email, string $password): array
@@ -62,6 +80,28 @@ class AuthService
             'token' => $token,
             'token_type' => 'Bearer',
         ];
+    }
+
+    /**
+     * Login user for web (session-based).
+     */
+    public function loginWeb(string $email, string $password, bool $remember = false): array
+    {
+        $credentials = ['email' => $email, 'password' => $password];
+
+        if (Auth::attempt($credentials, $remember)) {
+            return ['success' => true, 'message' => 'Login successful'];
+        }
+
+        return ['success' => false, 'message' => 'The provided credentials do not match our records.'];
+    }
+
+    /**
+     * Logout user from web session.
+     */
+    public function logoutWeb(): void
+    {
+        Auth::logout();
     }
 
     /**

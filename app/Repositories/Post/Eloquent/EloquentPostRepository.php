@@ -59,6 +59,59 @@ class EloquentPostRepository implements PostRepository
             ->get();
     }
 
+    public function getPublicPosts(int $limit = 10)
+    {
+        return $this->model
+            ->with(['user', 'comments', 'likes', 'shares'])
+            ->where('privacy', 'public')
+            ->orderBy('id', 'desc')
+            ->take($limit)
+            ->get();
+    }
+
+    public function getPublicPostsPaginated(?int $lastId = null, int $limit = 10)
+    {
+        $query = $this->model
+            ->with(['user', 'comments', 'likes', 'shares'])
+            ->where('privacy', 'public')
+            ->orderBy('id', 'desc');
+
+        if ($lastId) {
+            $query->where('id', '<', $lastId);
+        }
+
+        return $query->take($limit)->get();
+    }
+
+    public function getUserPostsWithRelations(User $user, bool $publicOnly = false)
+    {
+        $query = $user->posts()
+            ->with(['user', 'comments', 'likes', 'shares'])
+            ->latest();
+
+        if ($publicOnly) {
+            $query->where('privacy', 'public');
+        }
+
+        return $query->get();
+    }
+
+    public function getUserSharedPosts(User $user)
+    {
+        return $user->shares()
+            ->with(['post.user', 'post.comments', 'post.likes', 'post.shares'])
+            ->latest()
+            ->get();
+    }
+
+    public function getSavedPostsForUser(User $user)
+    {
+        return $user->savedPosts()
+            ->with(['user', 'comments', 'likes', 'shares'])
+            ->orderByPivot('created_at', 'desc')
+            ->get();
+    }
+
     public function create(array $data)
     {
         return $this->model->create($data);

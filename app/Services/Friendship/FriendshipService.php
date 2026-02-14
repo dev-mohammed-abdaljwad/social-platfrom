@@ -79,6 +79,23 @@ class FriendshipService
         return ['success' => true, 'message' => 'Friend request rejected'];
     }
 
+    public function cancelRequest($friendshipId, User $user)
+    {
+        $friendship = $this->repository->find($friendshipId);
+
+        if ($friendship->sender_id !== $user->id) {
+            return ['success' => false, 'message' => 'Unauthorized to cancel this request'];
+        }
+
+        if (!$friendship->isPending()) {
+            return ['success' => false, 'message' => 'This request is no longer pending'];
+        }
+
+        $this->repository->delete($friendship);
+        
+        return ['success' => true, 'message' => 'Friend request cancelled'];
+    }
+
     public function removeFriend(User $user, User $friend)
     {
         $friendship = $this->repository->findBetween($user, $friend);
@@ -110,5 +127,34 @@ class FriendshipService
             'is_sender' => $friendship->sender_id === $user->id,
             'friendship' => $friendship,
         ];
+    }
+
+    /**
+     * Get detailed friendship status for profile display.
+     */
+    public function getProfileFriendshipStatus(User $currentUser, User $profileUser): array
+    {
+        if ($currentUser->id === $profileUser->id) {
+            return ['status' => 'self', 'friendship' => null];
+        }
+
+        $result = $this->getFriendshipStatus($currentUser, $profileUser);
+
+        if ($result['status'] === 'none') {
+            return ['status' => 'none', 'friendship' => null];
+        }
+
+        if ($result['status'] === 'accepted') {
+            return ['status' => 'friends', 'friendship' => $result['friendship']];
+        }
+
+        if ($result['status'] === 'pending') {
+            if ($result['is_sender']) {
+                return ['status' => 'pending_sent', 'friendship' => $result['friendship']];
+            }
+            return ['status' => 'pending_received', 'friendship' => $result['friendship']];
+        }
+
+        return ['status' => 'none', 'friendship' => null];
     }
 }

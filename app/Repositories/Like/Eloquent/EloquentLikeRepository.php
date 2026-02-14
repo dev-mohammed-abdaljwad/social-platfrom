@@ -36,6 +36,14 @@ class EloquentLikeRepository implements LikeRepository
             ->get();
     }
 
+    public function findByUserAndLikeable($userId, $likeableType, $likeableId)
+    {
+        return $this->model->where('user_id', $userId)
+            ->where('likeable_type', $likeableType)
+            ->where('likeable_id', $likeableId)
+            ->first();
+    }
+
     public function create(array $data)
     {
         return $this->model->create($data);

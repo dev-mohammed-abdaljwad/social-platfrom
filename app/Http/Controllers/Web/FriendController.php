@@ -3,121 +3,108 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use App\Models\Friendship;
-use App\Models\User;
-use App\Enums\FriendshipStatusEnum;
+use App\Services\Friendship\FriendshipService;
 use App\Services\Notification\NotificationService;
-use Illuminate\Http\Request;
+use App\Services\User\UserService;
 
 class FriendController extends Controller
 {
     public function __construct(
+        protected FriendshipService $friendshipService,
+        protected UserService $userService,
         protected NotificationService $notificationService
     ) {}
 
     /**
      * Send a friend request.
      */
-    public function send(User $user)
+    public function send(int $userId)
     {
         $currentUser = auth()->user();
+        $receiver = $this->userService->find($userId);
 
-        // Can't send to yourself
-        if ($currentUser->id === $user->id) {
-            return response()->json(['success' => false, 'message' => 'Cannot send request to yourself'], 400);
+        $result = $this->friendshipService->sendRequest($currentUser, $receiver);
+
+        if (!$result['success']) {
+            return response()->json(['success' => false, 'message' => $result['message']], 400);
         }
-
-        // Check if request already exists
-        $exists = Friendship::where(function ($query) use ($currentUser, $user) {
-            $query->where('sender_id', $currentUser->id)->where('receiver_id', $user->id);
-        })->orWhere(function ($query) use ($currentUser, $user) {
-            $query->where('sender_id', $user->id)->where('receiver_id', $currentUser->id);
-        })->exists();
-
-        if ($exists) {
-            return response()->json(['success' => false, 'message' => 'Request already exists'], 400);
-        }
-
-        $friendship = Friendship::create([
-            'sender_id' => $currentUser->id,
-            'receiver_id' => $user->id,
-            'status' => FriendshipStatusEnum::Pending,
-        ]);
 
         // Send notification
-        $this->notificationService->friendRequest($user, $currentUser, $friendship);
+        $this->notificationService->friendRequest($receiver, $currentUser, $result['friendship']);
 
-        return response()->json(['success' => true, 'message' => 'Friend request sent']);
+        return response()->json(['success' => true, 'message' => $result['message']]);
     }
 
     /**
      * Accept a friend request.
      */
-    public function accept(Friendship $friendship)
+    public function accept(int $friendshipId)
     {
-        if ($friendship->receiver_id !== auth()->id()) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        $currentUser = auth()->user();
+        $result = $this->friendshipService->acceptRequest($friendshipId, $currentUser);
+
+        if (!$result['success']) {
+            $statusCode = $result['message'] === 'Unauthorized to accept this request' ? 403 : 400;
+            return response()->json(['success' => false, 'message' => $result['message']], $statusCode);
         }
 
-        $friendship->update(['status' => FriendshipStatusEnum::Accepted]);
-
         // Send notification to the sender
+        $friendship = $result['friendship'];
         $this->notificationService->friendAccepted(
             $friendship->sender,
-            auth()->user(),
+            $currentUser,
             $friendship
         );
 
-        return response()->json(['success' => true, 'message' => 'Friend request accepted']);
+        return response()->json(['success' => true, 'message' => $result['message']]);
     }
 
     /**
      * Reject a friend request.
      */
-    public function reject(Friendship $friendship)
+    public function reject(int $friendshipId)
     {
-        if ($friendship->receiver_id !== auth()->id()) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        $currentUser = auth()->user();
+        $result = $this->friendshipService->rejectRequest($friendshipId, $currentUser);
+
+        if (!$result['success']) {
+            $statusCode = $result['message'] === 'Unauthorized to reject this request' ? 403 : 400;
+            return response()->json(['success' => false, 'message' => $result['message']], $statusCode);
         }
 
-        $friendship->delete();
-
-        return response()->json(['success' => true, 'message' => 'Friend request rejected']);
+        return response()->json(['success' => true, 'message' => $result['message']]);
     }
 
     /**
      * Cancel a sent friend request.
      */
-    public function cancel(Friendship $friendship)
+    public function cancel(int $friendshipId)
     {
-        if ($friendship->sender_id !== auth()->id()) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        $currentUser = auth()->user();
+        $result = $this->friendshipService->cancelRequest($friendshipId, $currentUser);
+
+        if (!$result['success']) {
+            $statusCode = $result['message'] === 'Unauthorized to cancel this request' ? 403 : 400;
+            return response()->json(['success' => false, 'message' => $result['message']], $statusCode);
         }
 
-        $friendship->delete();
-
-        return response()->json(['success' => true, 'message' => 'Friend request cancelled']);
+        return response()->json(['success' => true, 'message' => $result['message']]);
     }
 
     /**
      * Remove a friend.
      */
-    public function remove(User $user)
+    public function remove(int $userId)
     {
         $currentUser = auth()->user();
+        $friend = $this->userService->find($userId);
 
-        $friendship = Friendship::where(function ($query) use ($currentUser, $user) {
-            $query->where('sender_id', $currentUser->id)->where('receiver_id', $user->id);
-        })->orWhere(function ($query) use ($currentUser, $user) {
-            $query->where('sender_id', $user->id)->where('receiver_id', $currentUser->id);
-        })->where('status', FriendshipStatusEnum::Accepted)->first();
+        $result = $this->friendshipService->removeFriend($currentUser, $friend);
 
-        if (!$friendship) {
-            return response()->json(['success' => false, 'message' => 'Not friends'], 404);
+        if (!$result['success']) {
+            return response()->json(['success' => false, 'message' => $result['message']], 404);
         }
 
-        $friendship->delete();
-
-        return response()->json(['success' => true, 'message' => 'Friend removed']);
+        return response()->json(['success' => true, 'message' => $result['message']]);
     }
 }
