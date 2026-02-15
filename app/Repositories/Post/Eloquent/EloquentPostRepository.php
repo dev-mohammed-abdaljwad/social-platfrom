@@ -103,7 +103,7 @@ class EloquentPostRepository implements PostRepository
         return $query->cursorPaginate($limit);
     }
 
-
+    // i want to use cursorPaginate instead of get
     public function getUserPostsWithRelations(User $user, bool $publicOnly = false)
     {
         $query = $this->withListRelations($user->posts())
@@ -113,7 +113,7 @@ class EloquentPostRepository implements PostRepository
             $query->where('privacy', 'public');
         }
 
-        return $query->get();
+        return $query->cursorPaginate(20);
     }
 
     public function getUserSharedPosts(User $user)
@@ -121,14 +121,14 @@ class EloquentPostRepository implements PostRepository
         return $user->shares()
             ->with(['post' => fn($q) => $this->withListRelations($q)])
             ->latest()
-            ->get();
+            ->cursorPaginate(20);
     }
 
     public function getSavedPostsForUser(User $user)
     {
         return $this->withListRelations($user->savedPosts())
             ->orderByPivot('created_at', 'desc')
-            ->get();
+            ->cursorPaginate(20);
     }
 
     public function create(array $data)
