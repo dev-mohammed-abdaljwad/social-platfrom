@@ -10,7 +10,8 @@ interface ReactionRepository
     public function delete($model);
     public  function findByReactable(string $reactableType, int $reactableId);
     public function findByUserAndReactable(int $userId, string $reactableType,int $reactableId);
-    public function getCount(string $reactableType, int $reactableId);
+  
+   
 
 
 

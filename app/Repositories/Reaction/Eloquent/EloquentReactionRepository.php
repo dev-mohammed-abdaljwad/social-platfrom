@@ -43,13 +43,7 @@ class EloquentReactionRepository implements ReactionRepository
             ->where('reactable_id', $reactableId)
             ->first();
     }
-       public function getCount(string $reactableType, int $reactableId)
-    {
-        return $this->model->where('reactable_type', $reactableType)
-            ->where('reactable_id', $reactableId)
-            ->select('type', DB::raw('count(*) as count'))
-            ->groupBy('type')
-            ->get();
-    }
+   
+
 
 }

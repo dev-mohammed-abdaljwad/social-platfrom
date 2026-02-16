@@ -68,35 +68,54 @@ class DatabaseSeeder extends Seeder
 
         $this->command->info('Created ' . $comments->count() . ' comments');
 
-        // Create likes on posts and comments
-        $likeCount = 0;
+        // Add reactions to comments
+        $reactionCount = 0;
+        foreach ($comments as $comment) {
+            // Each comment gets reactions from 0-4 random users
+            $reactors = $allUsers->random(rand(0, min(4, $allUsers->count())));
+            foreach ($reactors as $reactor) {
+                \App\Models\Reaction::factory()->create([
+                    'user_id' => $reactor->id,
+                    'reactable_id' => $comment->id,
+                    'reactable_type' => \App\Models\Comment::class,
+                    'type' => 'like', // Assuming 'like' is a valid reaction type
+                ]);
+                $reactionCount++;
+            }
+        }
+        $this->command->info('Created ' . $reactionCount . ' reactions on comments');
+
+        // Create reactions on posts and comments
+        $reactionCount = 0;
         foreach ($posts as $post) {
-            // Each post gets likes from 3-10 random users
+            // Each post gets reac from 3-10 random users
             $likers = $allUsers->random(rand(3, min(10, $allUsers->count())));
             foreach ($likers as $liker) {
-                Like::firstOrCreate([
+                \App\Models\Reaction::firstOrCreate([
                     'user_id' => $liker->id,
-                    'likeable_id' => $post->id,
-                    'likeable_type' => Post::class,
+                    'reactable_id' => $post->id,
+                    'reactable_type' => Post::class,
+                    'type' => 'like',
                 ]);
-                $likeCount++;
+                $reactionCount++;
             }
         }
 
-        // Add some likes to comments too
+        // Add some reactions to comments too
         foreach ($comments->random(min(50, $comments->count())) as $comment) {
             $likers = $allUsers->random(rand(1, 5));
             foreach ($likers as $liker) {
-                Like::firstOrCreate([
+                \App\Models\Reaction::firstOrCreate([
                     'user_id' => $liker->id,
-                    'likeable_id' => $comment->id,
-                    'likeable_type' => Comment::class,
+                    'reactable_id' => $comment->id,
+                    'reactable_type' => Comment::class,
+                    'type' => 'like',
                 ]);
-                $likeCount++;
+                $reactionCount++;
             }
         }
 
-        $this->command->info('Created ' . $likeCount . ' likes');
+        $this->command->info('Created ' . $reactionCount . ' reactions');
 
         // Create friendships between users
         $friendshipCount = 0;

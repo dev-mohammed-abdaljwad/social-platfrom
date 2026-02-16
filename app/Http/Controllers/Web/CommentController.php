@@ -3,92 +3,82 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Web\Comment\StoreCommentRequest;
+use App\Models\Post;
 use App\Services\Comment\CommentService;
-use App\Services\Notification\NotificationService;
-use App\Services\Post\PostService;
+use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class CommentController extends Controller
 {
     public function __construct(
-        protected CommentService $commentService,
-        protected PostService $postService,
-        protected NotificationService $notificationService
+        protected CommentService $commentService
     ) {}
 
     /**
-     * Store a new comment.
+     * Get all comments for a post with reactions
      */
-    public function store(StoreCommentRequest $request, int $postId)
+    public function getComments(Post $post): JsonResponse
     {
-        $post = $this->postService->find($postId);
-        $user = auth()->user();
-
-        $comment = $this->commentService->createForPost(
+        $comments = $this->commentService->getCommentsWithReactions(
             $post->id,
-            $user->id,
-            $request->validated('content'),
-            $request->validated('parent_id')
+            auth()->user()
         );
+     
 
-        // Send notification to post owner (if not self)
-        if ($post->user_id !== $user->id) {
-            $this->notificationService->postCommented(
-                $post->user,
-                $user,
-                $post,
-                $comment
-            );
-        }
-
-        if ($request->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'comment' => $this->commentService->formatNewComment($comment),
-            ]);
-        }
-
-        return redirect()->back()->with('success', 'Comment added!');
+        return response()->json([
+            'success' => true,
+            'comments' => $comments,
+        ]);
     }
 
     /**
-     * Delete a comment.
+     * Create a new comment
      */
-    public function destroy(int $commentId)
+    public function store(Request $request, Post $post): JsonResponse
+    {
+        $request->validate([
+            'content' => 'required|string|max:500',
+        ]);
+
+        $comment = $this->commentService->createForPost(
+            $post->id,
+            auth()->id(),
+            $request->content
+        );
+
+        // Return formatted comment with reaction data
+        return response()->json([
+            'success' => true,
+            'comment' => $this->commentService->formatNewComment($comment, auth()->user()),
+        ], 201);
+    }
+
+    /**
+     * Delete a comment
+     */
+    public function destroy(int $commentId): JsonResponse
     {
         $comment = $this->commentService->find($commentId);
-        $user = auth()->user();
 
-        // Authorization check via service
-        if (!$this->commentService->canDelete($comment->user_id, $user->id)) {
-            if (request()->expectsJson()) {
-                return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-            }
-            return redirect()->back()->with('error', 'Unauthorized');
+        if (!$comment) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Comment not found',
+            ], 404);
+        }
+
+        if (!$this->commentService->canDelete($comment->user_id, auth()->id())) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized',
+            ], 403);
         }
 
         $this->commentService->delete($comment);
 
-        if (request()->expectsJson()) {
-            return response()->json(['success' => true]);
-        }
-
-        return redirect()->back()->with('success', 'Comment deleted!');
+        return response()->json([
+            'success' => true,
+            'message' => 'Comment deleted',
+        ]);
     }
-
-    /**
-     * Get comments for a post (AJAX).
-     */
-    public function index(int $postId)
-    {
-        $user = auth()->user();
-        $comments = $this->commentService->getCommentsForPost($postId, $user);
-
-        return response()->json(['success' => true, 'comments' => $comments]);
-    }
-
-    /**
-     * Toggle like on a comment.
-     */
-   
 }

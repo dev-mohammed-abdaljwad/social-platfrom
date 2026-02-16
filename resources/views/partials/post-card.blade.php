@@ -93,8 +93,8 @@
                     data-post-id="{{ $post->id }}"
                     type="button">
                 @if($userReaction)
-                    <span class="text-lg reaction-emoji">{{ \App\Enums\ReactionTypeEnum::from($userReaction->type->value)->emoji() }}</span>
-                    <span class="text-xs sm:text-sm capitalize reaction-label">{{ $userReaction->type->value }}</span>
+                    <span class="text-lg reaction-emoji">{{ \App\Enums\ReactionTypeEnum::tryFrom($userReaction->type)->emoji() }}</span>
+                    <span class="text-xs sm:text-sm capitalize reaction-label">{{ $userReaction->type }}</span>
                 @else
                     <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.708C19.746 10 20.5 10.811 20.5 11.812c0 .387-.121.76-.346 1.07l-2.44 3.356c-.311.43-.802.682-1.324.682H8.5V10c0-.828.672-1.5 1.5-1.5h.5V4.667c0-.92.747-1.667 1.667-1.667h1.666c.92 0 1.667.747 1.667 1.667V10zM8.5 10H5.5c-.828 0-1.5.672-1.5 1.5v5c0 .828.672 1.5 1.5 1.5h3V10z"></path>
@@ -124,7 +124,7 @@
                 type="button">
             <div class="flex -space-x-1">
                 @foreach($reactionCounts->sortByDesc('count')->take(3) as $count)
-                    <span class="text-xs">{{ \App\Enums\ReactionTypeEnum::from($count->type->value)->emoji() }}</span>
+                    <span class="text-xs">{{ \App\Enums\ReactionTypeEnum::tryFrom($count->type)->emoji() }}</span>
                 @endforeach
             </div>
             <span class="reactions-count">{{ $totalReactions > 0 ? $totalReactions : '' }}</span>

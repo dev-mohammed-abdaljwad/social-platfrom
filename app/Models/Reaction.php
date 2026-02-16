@@ -20,7 +20,7 @@ class Reaction extends Model
     protected function casts(): array
     {
         return [
-            'type' => ReactionTypeEnum::class,
+            // 'type' => ReactionTypeEnum::class,
         ];
     }
     public function reactable(): \Illuminate\Database\Eloquent\Relations\MorphTo

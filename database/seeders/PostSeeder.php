@@ -42,7 +42,7 @@ class PostSeeder extends Seeder
                 ]);
             }
             
-            // Add random number of likes (1-20) for each post
+            // Add random number of reactions (1-20) for each post
             $likesCount = rand(1, 20);
             $likedByUsers = array_rand(array_flip($userIds), min($likesCount, count($userIds)));
             
@@ -51,10 +51,10 @@ class PostSeeder extends Seeder
             }
             
             foreach ($likedByUsers as $userId) {
-                Like::factory()->create([
+                \App\Models\Reaction::factory()->create([
                     'user_id' => $userId,
-                    'likeable_id' => $post->id,
-                    'likeable_type' => Post::class,
+                    'reactable_id' => $post->id,
+                    'reactable_type' => Post::class,
                 ]);
             }
             
@@ -66,6 +66,6 @@ class PostSeeder extends Seeder
         $this->command->info('Done!');
         $this->command->info('Total public posts: ' . Post::where('privacy', 'public')->count());
         $this->command->info('Total comments: ' . Comment::count());
-        $this->command->info('Total likes: ' . Like::count());
+        $this->command->info('Total reactions: ' . \App\Models\Reaction::count());
     }
 }

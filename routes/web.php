@@ -47,10 +47,10 @@ Route::get('/profile', [PageController::class, 'profile'])->name('profile');
 Route::get('/profile/{user}', [PageController::class, 'showProfile'])->name('profile.show');
 
 // Public: Get comments for a post
-Route::get('/posts/{post}/comments', [CommentController::class, 'index'])->name('comments.index');
+// Route::get('/posts/{post}/comments', [CommentController::class, 'index'])->name('comments.index');
 
 // Public: Get likes for a post
-Route::get('/posts/{post}/likes', [PostController::class, 'getLikes'])->name('posts.likes');
+// Route::get('/posts/{post}/likes', [PostController::class, 'getLikes'])->name('posts.likes');
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {
@@ -61,7 +61,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/posts/{post}/like', [PostController::class, 'toggleLike'])->name('posts.like');
     Route::post('/posts/{post}/share', [PostController::class, 'share'])->name('posts.share');
     Route::post('/posts/{post}/save', [PostController::class, 'toggleSave'])->name('posts.save');
-Route::post('/posts/{postId}/react', [ReactionController::class, 'reactToPost'])->middleware('auth')->name('posts.react');    // Shares
+    Route::post('/posts/{postId}/react', [ReactionController::class, 'reactToPost'])->middleware('auth')->name('posts.react');    // Shares
+    Route::post('/comments/{comment}/react', [ReactionController::class, 'reactToComment'])->name('comments.react');
     Route::put('/shares/{share}', [PostController::class, 'updateShare'])->name('shares.update');
     Route::delete('/shares/{share}', [PostController::class, 'destroyShare'])->name('shares.destroy');
 
@@ -69,9 +70,11 @@ Route::post('/posts/{postId}/react', [ReactionController::class, 'reactToPost'])
     Route::get('/saved', [PageController::class, 'saved'])->name('saved');
 
     // Comments
+        Route::get('/posts/{post}/comments', [CommentController::class, 'getComments'])->name('comments.index');
+    
     Route::post('/posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
     Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
-    Route::post('/comments/{comment}/like', [CommentController::class, 'toggleLike'])->name('comments.like');
+    Route::post('/comments/{comment}/react', [CommentController::class, 'reactToComment'])->name('comments.react');
 
     // Pages
     Route::get('/friends', [PageController::class, 'friends'])->name('friends');

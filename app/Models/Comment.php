@@ -57,7 +57,12 @@ class Comment extends Model
         return $this->morphMany(Reaction::class, 'reactable');
     }   
     
-
+    public function getUserReaction()
+    {
+        return auth()->check() 
+            ? $this->reactions()->where('user_id', auth()->id())->first() 
+            : null;
+    }
     /**
      * Check if the comment is a reply.
      */

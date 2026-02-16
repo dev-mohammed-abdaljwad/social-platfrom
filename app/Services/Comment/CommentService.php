@@ -3,8 +3,9 @@
 namespace App\Services\Comment;
 
 use App\Models\User;
+use App\Models\Comment;
 use App\Repositories\Comment\CommentRepository;
-
+use Illuminate\Support\Facades\DB;
 
 class CommentService
 {
@@ -71,11 +72,12 @@ class CommentService
     }
 
     /**
-     * Get comments for a post formatted for response.
+     * Get comments for a post formatted for response (WITH REACTIONS).
      */
     public function getCommentsForPost(int $postId, ?User $authUser = null): array
     {
-        $comments = $this->findRootCommentsByPost($postId);
+        $comments = $this->findRootCommentsByPost($postId)
+            ->load('reactions','user'); // Load reactions and user data
 
         return $comments->map(function ($comment) use ($authUser) {
             return $this->formatComment($comment, $authUser);
@@ -84,13 +86,33 @@ class CommentService
 
     /**
      * Format a single comment for response.
+     * Updated to include reaction data.
      */
     public function formatComment($comment, ?User $authUser = null): array
     {
         $isOwner = $authUser && $authUser->id === $comment->user_id;
+        
+        // Get user's reaction on this comment
+        $userReaction = null;
+        $reactionCounts = [];
+
+        if ($authUser) {
+            $userReaction = $comment->reactions()
+                ->where('user_id', $authUser->id)
+                ->first();
+
+            // Get all reaction counts grouped by type
+            $reactionCounts = $comment->reactions()
+               ->select('type', DB::raw('count(*) as count'))
+                    ->groupBy('type')
+                    ->get()
+                    ->pluck('count', 'type')
+                    ->toArray();
+        }
+
         return [
             'id' => $comment->id,
-            'content' => $comment->content,
+            'content' => htmlspecialchars($comment->content),
             'created_at' => $comment->created_at->diffForHumans(),
             'user' => [
                 'id' => $comment->user->id,
@@ -98,27 +120,58 @@ class CommentService
                 'avatar_url' => $comment->user->avatar_url,
             ],
             'is_owner' => $isOwner,
+            // NEW: Reaction data
+            'user_reaction' => $userReaction?->type,
+            'reaction_counts' => $reactionCounts,
         ];
     }
 
     /**
      * Format a newly created comment for response.
+     * Updated to include reaction data.
      */
-    public function formatNewComment($comment): array
+    public function formatNewComment($comment, ?User $authUser = null): array
     {
-        $comment->load('user');
+        $comment->load('user', 'reactions');
+        
+        // New comment has no reactions yet
+        $userReaction = null;
+        $reactionCounts = [];
+
+        if ($authUser) {
+            $userReaction = $comment->reactions()
+                ->where('user_id', $authUser->id)
+                ->first();
+
+            $reactionCounts = $comment->reactions()
+                ->select('type', DB::raw('count(*) as count'))
+                ->groupBy('type')
+                ->pluck('count', 'type')
+                ->toArray();
+        }
+
         return [
             'id' => $comment->id,
-            'content' => $comment->content,
+            'content' => htmlspecialchars($comment->content),
             'created_at' => $comment->created_at->diffForHumans(),
             'user' => [
+                'id' => $comment->user->id,
                 'name' => $comment->user->name,
                 'avatar_url' => $comment->user->avatar_url,
             ],
+            'is_owner' => $authUser && $authUser->id === $comment->user_id,
+            // NEW: Reaction data
+            'user_reaction' => $userReaction?->type,
+            'reaction_counts' => $reactionCounts,
         ];
     }
 
-
-
-
+    /**
+     * Get comments with reactions for a specific post
+     * Alias for getCommentsForPost (for clarity)
+     */
+    public function getCommentsWithReactions(int $postId, ?User $authUser = null): array
+    {
+        return $this->getCommentsForPost($postId, $authUser);
+    }
 }
