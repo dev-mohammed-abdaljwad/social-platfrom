@@ -1,0 +1,21 @@
+<?php
+
+namespace {{ namespace }};
+
+use App\Http\Controllers\Controller;
+use App\Services\{{ module }}\{{ service }};
+use Illuminate\Http\JsonResponse;
+
+class {{ class }} extends Controller
+{
+    public function __construct(
+        protected {{ service }} $service
+    ) {}
+
+    public function index(): JsonResponse
+    {
+        return response()->json([
+            'data' => $this->service->all(),
+        ]);
+    }
+}

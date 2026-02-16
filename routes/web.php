@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\ReactionController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Web\PageController;
@@ -59,7 +60,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/posts/{post}/like', [PostController::class, 'toggleLike'])->name('posts.like');
     Route::post('/posts/{post}/share', [PostController::class, 'share'])->name('posts.share');
     Route::post('/posts/{post}/save', [PostController::class, 'toggleSave'])->name('posts.save');
-
+    Route::post('/posts/{post}/react', [ReactionController::class, 'reactToPost'])->name('posts.react');
     // Shares
     Route::put('/shares/{share}', [PostController::class, 'updateShare'])->name('shares.update');
     Route::delete('/shares/{share}', [PostController::class, 'destroyShare'])->name('shares.destroy');

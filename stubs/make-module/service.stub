@@ -1,0 +1,37 @@
+<?php
+
+namespace {{ namespace }};
+
+use App\Repositories\{{ module }}\{{ interface }};
+
+class {{ class }}
+{
+    public function __construct(
+        protected {{ interface }} $repository
+    ) {}
+
+    public function all()
+    {
+        return $this->repository->all();
+    }
+
+    public function find($id)
+    {
+        return $this->repository->find($id);
+    }
+
+    public function create(array $data)
+    {
+        return $this->repository->create($data);
+    }
+
+    public function update($model, array $data)
+    {
+        return $this->repository->update($model, $data);
+    }
+
+    public function delete($model)
+    {
+        return $this->repository->delete($model);
+    }
+}
