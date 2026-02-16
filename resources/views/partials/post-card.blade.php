@@ -80,14 +80,46 @@
             
             <!-- Post Actions -->
             <div class="flex items-center justify-between sm:justify-start gap-2 sm:gap-6 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100">
-                <div class="flex items-center gap-0.5 sm:gap-1">
-                    <button class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-red-500 transition-colors like-btn {{ $post->is_liked ? 'text-red-500' : '' }}" data-post-id="{{ $post->id }}">
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="{{ $post->is_liked ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                        </svg>
-                    </button>
-                    <button class="text-gray-600 hover:text-red-500 hover:underline text-xs sm:text-sm view-likes-btn" data-post-id="{{ $post->id }}">
-                        <span class="likes-count">{{ $post->likes_count ?? 0 }}</span>
+                <div class="flex items-center gap-0.5 sm:gap-1 relative group">
+                    @php
+                        $userReaction = auth()->check() ? $post->reactions()->where('user_id', auth()->id())->first() : null;
+                        $reactionCounts = $post->reactions()->select('type', \Illuminate\Support\Facades\DB::raw('count(*) as count'))->groupBy('type')->get();
+                        $totalReactions = $reactionCounts->sum('count');
+                    @endphp
+                    
+                    <div class="relative">
+                        <button class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-blue-500 transition-colors reaction-btn-main {{ $userReaction ? 'text-blue-600 font-semibold' : '' }}" data-post-id="{{ $post->id }}">
+                            @if($userReaction)
+                                <span class="text-lg">{{ \App\Enums\ReactionTypeEnum::from($userReaction->type->value)->emoji() }}</span>
+                                <span class="text-xs sm:text-sm capitalize">{{ $userReaction->type->value }}</span>
+                            @else
+                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.708C19.746 10 20.5 10.811 20.5 11.812c0 .387-.121.76-.346 1.07l-2.44 3.356c-.311.43-.802.682-1.324.682H8.5V10c0-.828.672-1.5 1.5-1.5h.5V4.667c0-.92.747-1.667 1.667-1.667h1.666c.92 0 1.667.747 1.667 1.667V10zM8.5 10H5.5c-.828 0-1.5.672-1.5 1.5v5c0 .828.672 1.5 1.5 1.5h3V10z"></path>
+                                </svg>
+                                <span class="text-xs sm:text-sm">Like</span>
+                            @endif
+                        </button>
+
+                        <!-- Reaction Picker -->
+                        <div class="absolute bottom-full left-0 mb-2 bg-white rounded-full shadow-xl border border-gray-100 p-1 hidden group-hover:flex items-center gap-1 z-20 animate-bounce-in">
+                            @foreach(\App\Enums\ReactionTypeEnum::cases() as $case)
+                                <button class="p-1.5 hover:scale-125 transition-transform reaction-option" 
+                                        data-post-id="{{ $post->id }}" 
+                                        data-type="{{ $case->value }}"
+                                        title="{{ ucfirst($case->value) }}">
+                                    <span class="text-xl sm:text-2xl">{{ $case->emoji() }}</span>
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <button class="text-gray-600 hover:text-blue-500 hover:underline text-xs sm:text-sm view-reactions-btn flex items-center gap-1" data-post-id="{{ $post->id }}">
+                        <div class="flex -space-x-1">
+                            @foreach($reactionCounts->sortByDesc('count')->take(3) as $count)
+                                <span class="text-xs">{{ \App\Enums\ReactionTypeEnum::from($count->type->value)->emoji() }}</span>
+                            @endforeach
+                        </div>
+                        <span class="reactions-count">{{ $totalReactions > 0 ? $totalReactions : '' }}</span>
                     </button>
                 </div>
                 <button class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-blue-500 transition-colors comment-toggle-btn" data-post-id="{{ $post->id }}">

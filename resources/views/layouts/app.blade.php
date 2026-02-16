@@ -7,6 +7,17 @@
     <title>@yield('title', 'SocialTime')</title>
     <script src="https://cdn.tailwindcss.com"></script>
     @stack('styles')
+    <style>
+        @keyframes bounce-in {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); opacity: 1; }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+        .animate-bounce-in {
+            animation: bounce-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+    </style>
 </head>
 <body class="bg-gray-50">
     <!-- Top Navigation Bar -->

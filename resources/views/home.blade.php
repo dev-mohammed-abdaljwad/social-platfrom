@@ -1011,9 +1011,88 @@
     }
     
     // Mark existing buttons as having listeners
-    document.querySelectorAll('.like-btn, .comment-toggle-btn, .share-btn, .save-btn, .comment-form').forEach(el => {
+    document.querySelectorAll('.like-btn, .comment-toggle-btn, .share-btn, .save-btn, .comment-form, .reaction-option').forEach(el => {
         el.setAttribute('data-listener', 'true');
     });
+
+    // Reaction functionality
+    document.addEventListener('click', async function(e) {
+        const reactionOption = e.target.closest('.reaction-option');
+        const reactionBtnMain = e.target.closest('.reaction-btn-main');
+
+        if (reactionOption || reactionBtnMain) {
+            const target = reactionOption || reactionBtnMain;
+            const postId = target.dataset.postId;
+            const type = reactionOption ? target.dataset.type : 'like';
+            
+            try {
+                const response = await fetch(`/posts/${postId}/react`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    },
+                    body: JSON.stringify({ type })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    updatePostReactionUI(postId, data);
+                } else if (response.status === 401) {
+                    openLoginModal();
+                }
+            } catch (error) {
+                console.error('Error reacting to post:', error);
+            }
+        }
+    });
+
+    function updatePostReactionUI(postId, data) {
+        const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+        if (!postCard) return;
+
+        const mainBtn = postCard.querySelector('.reaction-btn-main');
+        const countSpan = postCard.querySelector('.reactions-count');
+        const iconsDiv = postCard.querySelector('.view-reactions-btn div');
+
+        // Update main button
+        if (data.user_reaction) {
+            const emojis = {
+                'like': '👍', 'love': '❤️', 'haha': '😂', 
+                'wow': '😮', 'sad': '😢', 'angry': '😡'
+            };
+            mainBtn.innerHTML = `
+                <span class="text-lg">${emojis[data.user_reaction]}</span>
+                <span class="text-xs sm:text-sm capitalize">${data.user_reaction}</span>
+            `;
+            mainBtn.classList.add('text-blue-600', 'font-semibold');
+        } else {
+            mainBtn.innerHTML = `
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.708C19.746 10 20.5 10.811 20.5 11.812c0 .387-.121.76-.346 1.07l-2.44 3.356c-.311.43-.802.682-1.324.682H8.5V10c0-.828.672-1.5 1.5-1.5h.5V4.667c0-.92.747-1.667 1.667-1.667h1.666c.92 0 1.667.747 1.667 1.667V10zM8.5 10H5.5c-.828 0-1.5.672-1.5 1.5v5c0 .828.672 1.5 1.5 1.5h3V10z"></path>
+                </svg>
+                <span class="text-xs sm:text-sm">Like</span>
+            `;
+            mainBtn.classList.remove('text-blue-600', 'font-semibold');
+        }
+
+        // Update counts and icons
+        countSpan.textContent = data.counts.total > 0 ? data.counts.total : '';
+        
+        const emojis = {
+            'like': '👍', 'love': '❤️', 'haha': '😂', 
+            'wow': '😮', 'sad': '😢', 'angry': '😡'
+        };
+        
+        const topReactions = Object.entries(data.counts.detailed)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3);
+            
+        iconsDiv.innerHTML = topReactions.map(([type]) => `
+            <span class="text-xs">${emojis[type]}</span>
+        `).join('');
+    }
 
     // Save button functionality
     document.querySelectorAll('.save-btn').forEach(btn => {

@@ -217,4 +217,9 @@ class Post extends Model
                 });
         });
     }
+    
+      public function reactions(): MorphMany
+    {
+        return $this->morphMany(Reaction::class, 'reactable');
+    }
 }

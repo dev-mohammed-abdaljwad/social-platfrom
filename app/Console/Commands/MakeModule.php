@@ -107,6 +107,17 @@ class MakeModule extends Command
 
     /* ---------------- MODEL ---------------- */
 
+    protected function getStub(string  $name): string{
+        return file_get_contents( base_path("stubs/make-module/{$name}.stub")); 
+    }
+
+    protected function renderStub(string $stub, array $replacements): string
+    {
+        foreach ($replacements as $key => $value) {
+            $stub = str_replace("{{ {$key} }}", $value, $stub);
+        }
+        return $stub;
+    }    
     protected function createModel(): void
     {
         $modelPath = app_path("Models/{$this->moduleName}.php");
@@ -115,227 +126,94 @@ class MakeModule extends Command
             $this->warn("Model {$this->moduleName} already exists, skipping...");
             return;
         }
+        $stub = $this->getStub('model');
 
-        $name = $this->moduleName;
-        File::put($modelPath, <<<PHP
-<?php
-
-namespace App\Models;
-
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
-
-class {$name} extends Model
-{
-    use HasFactory;
-
-    protected \$fillable = [
-        // Add fillable fields
-    ];
-
-    protected function casts(): array
-    {
-        return [
-            // Add casts
-        ];
-    }
-}
-PHP
-        );
+        $content = $this->renderStub($stub, [
+        'namespace' => 'App\Models',
+        'class'     => $this->moduleName,
+    ]);
+        File::put($modelPath, $content);
         
         $this->info("✓ Model created: app/Models/{$this->moduleName}.php");
     }
-
     /* ---------------- MIGRATION ---------------- */
-
     protected function createMigration(): void
     {
         Artisan::call("make:migration create_{$this->tableName}_table --create={$this->tableName}");
         $this->info("✓ Migration created for table: {$this->tableName}");
     }
-
     /* ---------------- FACTORY ---------------- */
-
     protected function createFactory(): void
     {
         $factoryPath = database_path("factories/{$this->moduleName}Factory.php");
-        
         if (File::exists($factoryPath)) {
             $this->warn("Factory {$this->moduleName}Factory already exists, skipping...");
             return;
         }
-
         $name = $this->moduleName;
-        File::put($factoryPath, <<<PHP
-<?php
-
-namespace Database\Factories;
-
-use App\Models\\{$name};
-use Illuminate\Database\Eloquent\Factories\Factory;
-
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\\{$name}>
- */
-class {$name}Factory extends Factory
-{
-    protected \$model = {$name}::class;
-
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition(): array
-    {
-        return [
-            // Add factory definitions
-        ];
-    }
-}
-PHP
-        );
-        
+        $stub = $this->getStub('factory');
+        $content = $this->renderStub($stub, [
+            'namespace' => "Database\Factories",
+            'class'     => "{$name}Factory",
+        ]);
+        File::put($factoryPath, $content);   
         $this->info("✓ Factory created: database/factories/{$this->moduleName}Factory.php");
     }
-
     /* ---------------- REPOSITORY ---------------- */
-
-    protected function createRepository(): void
-    {
-        $interfacePath = app_path("Repositories/{$this->moduleName}/{$this->moduleName}Repository.php");
-        $eloquentPath = app_path("Repositories/{$this->moduleName}/Eloquent/Eloquent{$this->moduleName}Repository.php");
-        
-        $name = $this->moduleName;
-
-        if (File::exists($interfacePath)) {
-            $this->warn("Repository interface already exists, skipping...");
-        } else {
-            // Interface
-            File::put($interfacePath, <<<PHP
-<?php
-
-namespace App\Repositories\\{$name};
-
-interface {$name}Repository
+   protected function createRepository(): void
 {
-    public function all();
-    public function find(\$id);
-    public function create(array \$data);
-    public function update(\$model, array \$data);
-    public function delete(\$model);
-}
-PHP
-            );
-            $this->info("✓ Repository interface created: app/Repositories/{$this->moduleName}/{$this->moduleName}Repository.php");
-        }
-
-        if (File::exists($eloquentPath)) {
-            $this->warn("Eloquent repository already exists, skipping...");
-        } else {
-            // Eloquent Implementation
-            File::put($eloquentPath, <<<PHP
-<?php
-
-namespace App\Repositories\\{$name}\\Eloquent;
-
-use App\Models\\{$name};
-use App\Repositories\\{$name}\\{$name}Repository;
-
-class Eloquent{$name}Repository implements {$name}Repository
-{
-    public function __construct(protected {$name} \$model) {}
-
-    public function all()
-    {
-        return \$this->model->query()->latest()->get();
+    $module = $this->moduleName;
+    $interfacePath = app_path("Repositories/{$module}/{$module}Repository.php");
+    $eloquentPath  = app_path("Repositories/{$module}/Eloquent/Eloquent{$module}Repository.php");
+    // ---------------- Interface ----------------
+    if (File::exists($interfacePath)) {
+        $this->warn("Repository interface already exists, skipping...");
+    } else {
+        $stub = $this->getStub('repository.interface');
+        $content = $this->renderStub($stub, [
+            'namespace' => "App\Repositories\\{$module}",
+            'interface' => "{$module}Repository",
+        ]);
+        File::put($interfacePath, $content);
+        $this->info("✓ Repository interface created");
     }
+    // ---------------- Eloquent Implementation ----------------
+    if (File::exists($eloquentPath)) {
+        $this->warn("Eloquent repository already exists, skipping...");
+    } else {
+        $stub = $this->getStub('repository.eloquent');
 
-    public function find(\$id)
-    {
-        return \$this->model->findOrFail(\$id);
-    }
-
-    public function create(array \$data)
-    {
-        return \$this->model->create(\$data);
-    }
-
-    public function update(\$model, array \$data)
-    {
-        \$model->update(\$data);
-        return \$model;
-    }
-
-    public function delete(\$model)
-    {
-        return \$model->delete();
+        $content = $this->renderStub($stub, [
+            'namespace' => "App\Repositories\\{$module}\\Eloquent",
+            'class'     => "Eloquent{$module}Repository",
+            'interface' => "{$module}Repository",
+            'module'    => $module,
+            'model'     => $module,
+        ]);
+        File::put($eloquentPath, $content);
+        $this->info("✓ Eloquent repository created");
     }
 }
-PHP
-            );
-            $this->info("✓ Eloquent repository created: app/Repositories/{$this->moduleName}/Eloquent/Eloquent{$this->moduleName}Repository.php");
-        }
-    }
-
     /* ---------------- SERVICE ---------------- */
-
-    protected function createService(): void
-    {
-        $servicePath = app_path("Services/{$this->moduleName}/{$this->moduleName}Service.php");
-        
-        if (File::exists($servicePath)) {
-            $this->warn("Service already exists, skipping...");
-            return;
-        }
-
-        $name = $this->moduleName;
-        File::put($servicePath, <<<PHP
-<?php
-
-namespace App\Services\\{$name};
-
-use App\Repositories\\{$name}\\{$name}Repository;
-
-class {$name}Service
+  protected function createService(): void
 {
-    public function __construct(
-        protected {$name}Repository \$repository
-    ) {}
-
-    public function all()
-    {
-        return \$this->repository->all();
+    $module = $this->moduleName;
+    $servicePath = app_path("Services/{$module}/{$module}Service.php");
+    if (File::exists($servicePath)) {
+        $this->warn("Service already exists, skipping...");
+        return;
     }
-
-    public function find(\$id)
-    {
-        return \$this->repository->find(\$id);
-    }
-
-    public function create(array \$data)
-    {
-        return \$this->repository->create(\$data);
-    }
-
-    public function update(\$model, array \$data)
-    {
-        return \$this->repository->update(\$model, \$data);
-    }
-
-    public function delete(\$model)
-    {
-        return \$this->repository->delete(\$model);
-    }
+    $stub = $this->getStub('service');
+    $content = $this->renderStub($stub, [
+        'namespace' => "App\Services\\{$module}",
+        'class'     => "{$module}Service",
+        'module'    => $module,
+        'interface' => "{$module}Repository",
+    ]);
+    File::put($servicePath, $content);
+    $this->info("✓ Service created");
 }
-PHP
-        );
-        
-        $this->info("✓ Service created: app/Services/{$this->moduleName}/{$this->moduleName}Service.php");
-    }
-
     /* ---------------- CONTROLLER ---------------- */
-
     protected function createController(): void
     {
         $controllerPath = app_path("Http/Controllers/Api/V1/{$this->moduleName}Controller.php");
@@ -344,216 +222,69 @@ PHP
             $this->warn("Controller already exists, skipping...");
             return;
         }
-
         $name = $this->moduleName;
         $varName = Str::camel($this->moduleName);
-
-        File::put($controllerPath, <<<PHP
-<?php
-
-namespace App\Http\Controllers\Api\V1;
-
-use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\V1\\{$name}\Create{$name}Request;
-use App\Http\Requests\Api\V1\\{$name}\Update{$name}Request;
-use App\Services\\{$name}\\{$name}Service;
-use App\Transformers\\{$name}\\{$name}Transformer;
-use Illuminate\Http\JsonResponse;
-
-class {$name}Controller extends Controller
-{
-    public function __construct(
-        protected {$name}Service \$service
-    ) {}
-
-    /**
-     * Display a listing of the resource.
-     */
-    public function index(): JsonResponse
-    {
-        \${$varName}s = \$this->service->all();
-        
-        return response()->json([
-            'data' => {$name}Transformer::collection(\${$varName}s),
+        $stub = $this->getStub('controller');
+        $content = $this->renderStub($stub, [
+            'namespace' => "App\Http\Controllers\Api\V1",
+            'class'     => "{$name}Controller",
+            'service'   => "{$name}Service",
+            'varName'   => $varName,
+            'module'    => $name,
         ]);
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Create{$name}Request \$request): JsonResponse
-    {
-        \${$varName} = \$this->service->create(\$request->validated());
-        
-        return response()->json([
-            'message' => '{$name} created successfully',
-            'data' => new {$name}Transformer(\${$varName}),
-        ], 201);
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(int \$id): JsonResponse
-    {
-        \${$varName} = \$this->service->find(\$id);
-        
-        return response()->json([
-            'data' => new {$name}Transformer(\${$varName}),
-        ]);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Update{$name}Request \$request, int \$id): JsonResponse
-    {
-        \${$varName} = \$this->service->find(\$id);
-        \$updated = \$this->service->update(\${$varName}, \$request->validated());
-        
-        return response()->json([
-            'message' => '{$name} updated successfully',
-            'data' => new {$name}Transformer(\$updated),
-        ]);
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(int \$id): JsonResponse
-    {
-        \${$varName} = \$this->service->find(\$id);
-        \$this->service->delete(\${$varName});
-        
-        return response()->json([
-            'message' => '{$name} deleted successfully',
-        ]);
-    }
-}
-PHP
-        );
-        
+        File::put($controllerPath, $content);
         $this->info("✓ Controller created: app/Http/Controllers/Api/V1/{$this->moduleName}Controller.php");
     }
-
     /* ---------------- REQUESTS ---------------- */
-
     protected function createRequests(): void
     {
         $createPath = app_path("Http/Requests/Api/V1/{$this->moduleName}/Create{$this->moduleName}Request.php");
         $updatePath = app_path("Http/Requests/Api/V1/{$this->moduleName}/Update{$this->moduleName}Request.php");
-
         $name = $this->moduleName;
-
         if (!File::exists($createPath)) {
-            File::put($createPath, <<<PHP
-<?php
-
-namespace App\Http\Requests\Api\V1\\{$name};
-
-use Illuminate\Foundation\Http\FormRequest;
-
-class Create{$name}Request extends FormRequest
-{
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
-
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
-    {
-        return [
-            // Add validation rules
-        ];
-    }
-}
-PHP
-            );
+        $stub = $this->getStub('request.create');    
+        File::put($createPath, 
+            $this->renderStub($stub, [
+                'namespace' => "App\Http\Requests\Api\V1\\{$name}",
+                'class'     => "Create{$name}Request",
+                'module'    => $name,
+            ])
+        );
             $this->info("✓ Create request created: app/Http/Requests/Api/V1/{$this->moduleName}/Create{$this->moduleName}Request.php");
         } else {
             $this->warn("Create request already exists, skipping...");
         }
-
         if (!File::exists($updatePath)) {
-            File::put($updatePath, <<<PHP
-<?php
-
-namespace App\Http\Requests\Api\V1\\{$name};
-
-use Illuminate\Foundation\Http\FormRequest;
-
-class Update{$name}Request extends FormRequest
-{
-    /**
-     * Determine if the user is authorized to make this request.
-     */
-    public function authorize(): bool
-    {
-        return true;
-    }
-
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
-     */
-    public function rules(): array
-    {
-        return [
-            // Add validation rules
-        ];
-    }
-}
-PHP
+        $stub = $this->getStub('request.update');       
+        File::put($updatePath,
+                $this->renderStub($stub, [
+                    'namespace' => "App\Http\Requests\Api\V1\\{$name}",
+                    'class'     => "Update{$name}Request",
+                    'module'    => $name,
+                ])
             );
             $this->info("✓ Update request created: app/Http/Requests/Api/V1/{$this->moduleName}/Update{$this->moduleName}Request.php");
         } else {
             $this->warn("Update request already exists, skipping...");
         }
     }
-
     /* ---------------- TRANSFORMER ---------------- */
-
     protected function createTransformer(): void
     {
         $transformerPath = app_path("Transformers/{$this->moduleName}/{$this->moduleName}Transformer.php");
-        
         if (File::exists($transformerPath)) {
             $this->warn("Transformer already exists, skipping...");
             return;
         }
-
         $name = $this->moduleName;
-        File::put($transformerPath, <<<PHP
-<?php
-
-namespace App\Transformers\\{$name};
-
-use Illuminate\Http\Resources\Json\JsonResource;
-
-class {$name}Transformer extends JsonResource
-{
-    public function toArray(\$request): array
-    {
-        return [
-            'id' => \$this->id,
-            // Add more fields
-            'created_at' => \$this->created_at?->toISOString(),
-            'updated_at' => \$this->updated_at?->toISOString(),
-        ];
-    }
-}
-PHP
+        $stub = $this->getStub('transformer');
+        File::put($transformerPath, 
+            $this->renderStub($stub, [
+                'namespace' => "App\Transformers\\{$name}",
+                'class'     => "{$name}Transformer",
+                'module'    => $name,
+            ])
         );
-        
         $this->info("✓ Transformer created: app/Transformers/{$this->moduleName}/{$this->moduleName}Transformer.php");
     }
 }
