@@ -70,11 +70,7 @@ Route::prefix('v1')->group(function () {
             Route::put('/{id}', [PostController::class, 'update']);
             Route::delete('/{id}', [PostController::class, 'destroy']);
 
-            // Post likes
-            Route::get('/{postId}/likes', [LikeController::class, 'getPostLikes']);
-            Route::post('/{postId}/like', [LikeController::class, 'togglePostLike']);
-            Route::get('/{postId}/liked', [LikeController::class, 'hasLikedPost']);
-
+          
             // Post comments
             Route::get('/{postId}/comments', [CommentController::class, 'index']);
             Route::post('/{postId}/comments', [CommentController::class, 'store']);
@@ -97,9 +93,7 @@ Route::prefix('v1')->group(function () {
         });
 
         // Comment likes
-        Route::post('/comments/{commentId}/like', [LikeController::class, 'toggleCommentLike']);
-        Route::get('/comments/{commentId}/liked', [LikeController::class, 'hasLikedComment']);
-
+    
         // Friendship routes
         Route::prefix('friendships')->group(function () {
             Route::get('/friends', [FriendshipController::class, 'friends']);

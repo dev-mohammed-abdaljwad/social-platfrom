@@ -19,12 +19,12 @@ class EloquentPostRepository implements PostRepository
      */
     protected function withListRelations($query)
     {
-        $query = $query->with(['user'])->withCount(['likes', 'comments', 'shares']);
+        $query = $query->with(['user'])->withCount(['reactions', 'comments', 'shares']);
 
         // Add user-specific interaction checks if authenticated
         if ($userId = Auth::id()) {
             $query->withExists([
-                'likes as is_liked' => fn($q) => $q->where('user_id', $userId),
+                'reactions as is_reacted' => fn($q) => $q->where('user_id', $userId),
                 'shares as is_shared' => fn($q) => $q->where('user_id', $userId),
                 'savedBy as is_saved' => fn($q) => $q->where('user_id', $userId),
             ]);
@@ -38,8 +38,8 @@ class EloquentPostRepository implements PostRepository
      */
     protected function withDetailRelations($query)
     {
-        return $query->with(['user', 'comments.user', 'likes.user', 'shares.user'])
-            ->withCount(['likes', 'comments', 'shares']);
+        return $query->with(['user', 'comments.user', 'reactions.user', 'shares.user'])
+            ->withCount(['reactions', 'comments', 'shares']);
     }
 
     public function all()

@@ -154,21 +154,7 @@ class PostService
     /**
      * Get formatted likes for a post.
      */
-    public function getFormattedLikes(Post $post): array
-    {
-        $likes = $post->likes()->with('user')->get();
-
-        return $likes->map(fn($like) => [
-            'id' => $like->id,
-            'user' => [
-                'id' => $like->user->id,
-                'name' => $like->user->name,
-                'username' => $like->user->username,
-                'avatar_url' => $like->user->avatar_url,
-            ],
-            'created_at' => $like->created_at->toISOString(),
-        ])->toArray();
-    }
+   
 
     /**
      * Format a post for JSON response.

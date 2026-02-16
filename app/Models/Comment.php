@@ -51,13 +51,12 @@ class Comment extends Model
         return $this->hasMany(Comment::class, 'parent_id');
     }
 
-    /**
-     * Get all likes for this comment.
-     */
-    public function likes(): MorphMany
+ // rections relationship
+    public function reactions(): MorphMany
     {
-        return $this->morphMany(Like::class, 'likeable');
-    }
+        return $this->morphMany(Reaction::class, 'reactable');
+    }   
+    
 
     /**
      * Check if the comment is a reply.
@@ -67,11 +66,5 @@ class Comment extends Model
         return $this->parent_id !== null;
     }
 
-    /**
-     * Get the number of likes for this comment.
-     */
-    public function getLikesCountAttribute(): int
-    {
-        return $this->attributes['likes_count'] ?? $this->likes()->count();
-    }
+   
 }

@@ -259,7 +259,9 @@
 
 @push('scripts')
 <script>
-    // Media Preview Functions - Only one media type allowed at a time
+    // ==========================================
+    // MEDIA PREVIEW FUNCTIONS
+    // ==========================================
     function previewImage(input) {
         if (input.files && input.files[0]) {
             const file = input.files[0];
@@ -268,9 +270,7 @@
                 input.value = '';
                 return;
             }
-            // Clear video if selected (only one media type allowed)
             removeVideo();
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('imagePreview').src = e.target.result;
@@ -289,9 +289,7 @@
                 input.value = '';
                 return;
             }
-            // Clear image if selected (only one media type allowed)
             removeImage();
-            
             const reader = new FileReader();
             reader.onload = function(e) {
                 document.getElementById('videoPreview').src = e.target.result;
@@ -324,250 +322,153 @@
         }
     }
 
-    // Like button functionality
-    document.querySelectorAll('.like-btn').forEach(btn => {
-        btn.setAttribute('data-listener', 'true');
-        btn.addEventListener('click', async function() {
-            @auth
-            const postId = this.dataset.postId;
-            const btn = this;
-            const postCard = document.querySelector(`[data-post-id="${postId}"]`);
-            const countSpan = postCard.querySelector('.likes-count');
-            const svg = btn.querySelector('svg');
-            const isLiked = btn.classList.contains('text-red-500');
-            const currentCount = parseInt(countSpan.textContent) || 0;
+    // ==========================================
+    // REACTION SYSTEM (MAIN FIX)
+    // ==========================================
+    const emojis = {
+        'like': '👍', 
+        'love': '❤️', 
+        'haha': '😂', 
+        'wow': '😮', 
+        'sad': '😢', 
+        'angry': '😡'
+    };
+
+    // Close picker when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.reaction-picker-container')) {
+            document.querySelectorAll('.reaction-picker').forEach(p => p.classList.add('hidden'));
+        }
+    });
+
+    // Toggle picker on main button click
+    document.addEventListener('click', function(e) {
+        const mainBtn = e.target.closest('.reaction-btn-main');
+        if (mainBtn) {
+            const postId = mainBtn.dataset.postId;
+            const picker = document.getElementById(`picker-${postId}`);
             
-            // Optimistic update - instant UI change
-            if (isLiked) {
-                btn.classList.remove('text-red-500');
-                svg.setAttribute('fill', 'none');
-                countSpan.textContent = Math.max(0, currentCount - 1);
-            } else {
-                btn.classList.add('text-red-500');
-                svg.setAttribute('fill', 'currentColor');
-                countSpan.textContent = currentCount + 1;
+            // Close all other pickers
+            document.querySelectorAll('.reaction-picker').forEach(p => {
+                if (p.id !== `picker-${postId}`) {
+                    p.classList.add('hidden');
+                }
+            });
+            
+            // Toggle current picker
+            if (picker) {
+                picker.classList.toggle('hidden');
             }
+            e.stopPropagation();
+        }
+    });
+
+    // Handle reaction option click
+    document.addEventListener('click', async function(e) {
+        const option = e.target.closest('.reaction-option');
+        if (option) {
+            const postId = option.dataset.postId;
+            const type = option.dataset.type;
+            const picker = document.getElementById(`picker-${postId}`);
             
+            // Close picker immediately
+            if (picker) picker.classList.add('hidden');
+            
+            // Optimistic UI update - instant feedback
+            const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+            const mainBtn = postCard.querySelector('.reaction-btn-main');
+            const countSpan = postCard.querySelector('.reactions-count');
+            const iconsDiv = postCard.querySelector('.view-reactions-btn div');
+            
+            const emoji = emojis[type];
+            mainBtn.innerHTML = `
+                <span class="text-lg reaction-emoji">${emoji}</span>
+                <span class="text-xs sm:text-sm capitalize reaction-label">${type}</span>
+            `;
+            mainBtn.classList.add('text-blue-600', 'font-semibold');
+            
+            // Send request to server
             try {
-                const response = await fetch(`/posts/${postId}/like`, {
+                const response = await fetch(`/posts/${postId}/react`, {
                     method: 'POST',
                     headers: {
+                        'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    }
+                    },
+                    body: JSON.stringify({ type })
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    // Sync with server count
-                    countSpan.textContent = data.likes_count;
-                } else {
-                    // Revert on error
-                    btn.classList.toggle('text-red-500');
-                    svg.setAttribute('fill', isLiked ? 'currentColor' : 'none');
-                    countSpan.textContent = currentCount;
+                    updatePostReactionUI(postId, data);
+                } else if (response.status === 401) {
+                    openLoginModal();
                 }
             } catch (error) {
-                console.error('Error liking post:', error);
-                // Revert on error
-                btn.classList.toggle('text-red-500');
-                svg.setAttribute('fill', isLiked ? 'currentColor' : 'none');
-                countSpan.textContent = currentCount;
+                console.error('Error reacting to post:', error);
             }
-            @else
-            openLoginModal();
-            @endauth
-        });
-    });
-
-    // View likes modal functionality
-    document.querySelectorAll('.view-likes-btn').forEach(btn => {
-        btn.addEventListener('click', async function() {
-            const postId = this.dataset.postId;
-            openLikesModal(postId);
-        });
-    });
-
-    function openLikesModal(postId) {
-        document.getElementById('likesModal').classList.remove('hidden');
-        document.getElementById('likesModalContent').innerHTML = '<div class="text-center py-4 text-gray-500">Loading...</div>';
-        
-        fetch(`/posts/${postId}/likes`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.likes && data.likes.length > 0) {
-                    let html = '<div class="space-y-3">';
-                    data.likes.forEach(like => {
-                        html += `
-                            <a href="/profile/${like.user.id}" class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                                <img src="${like.user.avatar_url || '/images/default-avatar.png'}" 
-                                     alt="${like.user.name}" 
-                                     class="w-10 h-10 rounded-full object-cover">
-                                <div>
-                                    <p class="font-semibold text-gray-800">${like.user.name}</p>
-                                    <p class="text-sm text-gray-500">@${like.user.username || like.user.name.toLowerCase().replace(/\s+/g, '')}</p>
-                                </div>
-                            </a>
-                        `;
-                    });
-                    html += '</div>';
-                    document.getElementById('likesModalContent').innerHTML = html;
-                } else {
-                    document.getElementById('likesModalContent').innerHTML = '<div class="text-center py-4 text-gray-500">No likes yet</div>';
-                }
-            })
-            .catch(error => {
-                console.error('Error fetching likes:', error);
-                document.getElementById('likesModalContent').innerHTML = '<div class="text-center py-4 text-red-500">Error loading likes</div>';
-            });
-    }
-
-    function closeLikesModal() {
-        document.getElementById('likesModal').classList.add('hidden');
-    }
-
-    // Close modal when clicking outside
-    document.getElementById('likesModal').addEventListener('click', function(e) {
-        if (e.target === this) {
-            closeLikesModal();
+            e.stopPropagation();
         }
     });
 
-    // Share modal state
-    let currentSharePostId = null;
-    let currentShareBtn = null;
+    function updatePostReactionUI(postId, data) {
+        const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+        if (!postCard) return;
 
-    // Share button functionality - opens modal
-    document.querySelectorAll('.share-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            @auth
-            const postId = this.dataset.postId;
-            currentSharePostId = postId;
-            currentShareBtn = this;
-            
-            // Check if already shared - if so, unshare directly
-            if (this.classList.contains('text-green-500')) {
-                unsharePost(postId, this);
-                return;
-            }
-            
-            // Get post data for preview
-            const postCard = document.querySelector(`[data-post-id="${postId}"]`);
-            const userName = postCard.querySelector('a.font-semibold')?.textContent || 'User';
-            const postContent = postCard.querySelector('.whitespace-pre-line')?.textContent || '';
-            const postImage = postCard.querySelector('img[alt="Post image"]')?.src || '';
-            
-            // Build preview
-            let previewHTML = `
-                <div class="flex items-center gap-2 mb-2">
-                    <span class="font-semibold text-sm text-gray-800">${userName}</span>
-                </div>
+        const mainBtn = postCard.querySelector('.reaction-btn-main');
+        const countSpan = postCard.querySelector('.reactions-count');
+        const iconsDiv = postCard.querySelector('.view-reactions-btn div');
+
+        // Update main button
+        if (data.user_reaction) {
+            const emoji = emojis[data.user_reaction];
+            mainBtn.innerHTML = `
+                <span class="text-lg reaction-emoji">${emoji}</span>
+                <span class="text-xs sm:text-sm capitalize reaction-label">${data.user_reaction}</span>
             `;
-            if (postContent) {
-                previewHTML += `<p class="text-gray-700 text-sm line-clamp-3">${postContent}</p>`;
-            }
-            if (postImage) {
-                previewHTML += `<img src="${postImage}" class="mt-2 rounded max-h-32 object-cover" alt="Preview">`;
-            }
-            
-            document.getElementById('sharePostPreview').innerHTML = previewHTML;
-            document.getElementById('shareContent').value = '';
-            document.getElementById('shareModal').classList.remove('hidden');
-            @else
-            openLoginModal();
-            @endauth
-        });
-    });
-
-    // Close share modal
-    function closeShareModal() {
-        document.getElementById('shareModal').classList.add('hidden');
-        currentSharePostId = null;
-        currentShareBtn = null;
-    }
-
-    // Confirm share with optional content
-    async function confirmShare() {
-        if (!currentSharePostId) return;
-        
-        const content = document.getElementById('shareContent').value.trim();
-        
-        try {
-            const response = await fetch(`/posts/${currentSharePostId}/share`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({ content: content || null })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                const countSpan = currentShareBtn.querySelector('.shares-count');
-                const svg = currentShareBtn.querySelector('svg');
-                
-                countSpan.textContent = data.shares_count;
-                
-                if (data.shared) {
-                    currentShareBtn.classList.add('text-green-500');
-                    svg.setAttribute('fill', 'currentColor');
-                }
-                
-                closeShareModal();
-            }
-        } catch (error) {
-            console.error('Error sharing post:', error);
+            mainBtn.classList.add('text-blue-600', 'font-semibold');
+        } else {
+            mainBtn.innerHTML = `
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.708C19.746 10 20.5 10.811 20.5 11.812c0 .387-.121.76-.346 1.07l-2.44 3.356c-.311.43-.802.682-1.324.682H8.5V10c0-.828.672-1.5 1.5-1.5h.5V4.667c0-.92.747-1.667 1.667-1.667h1.666c.92 0 1.667.747 1.667 1.667V10zM8.5 10H5.5c-.828 0-1.5.672-1.5 1.5v5c0 .828.672 1.5 1.5 1.5h3V10z"></path>
+                </svg>
+                <span class="text-xs sm:text-sm">Like</span>
+            `;
+            mainBtn.classList.remove('text-blue-600', 'font-semibold');
         }
+
+        // Update counts and icons
+        countSpan.textContent = data.counts.total > 0 ? data.counts.total : '';
+        
+        const topReactions = Object.entries(data.counts.detailed || {})
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 3);
+        
+        iconsDiv.innerHTML = topReactions
+            .map(([type]) => `<span class="text-xs">${emojis[type] || '❓'}</span>`)
+            .join('');
     }
 
-    // Unshare post (toggle off)
-    async function unsharePost(postId, btn) {
-        try {
-            const response = await fetch(`/posts/${postId}/share`, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                }
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                const countSpan = btn.querySelector('.shares-count');
-                const svg = btn.querySelector('svg');
-                
-                countSpan.textContent = data.shares_count;
-                
-                if (!data.shared) {
-                    btn.classList.remove('text-green-500');
-                    svg.setAttribute('fill', 'none');
-                }
-            }
-        } catch (error) {
-            console.error('Error unsharing post:', error);
-        }
-    }
-
-    // Comment toggle functionality
-    document.querySelectorAll('.comment-toggle-btn').forEach(btn => {
-        btn.addEventListener('click', async function() {
-            const postId = this.dataset.postId;
+    // ==========================================
+    // COMMENT FUNCTIONALITY
+    // ==========================================
+    document.addEventListener('click', function(e) {
+        const toggleBtn = e.target.closest('.comment-toggle-btn');
+        if (toggleBtn) {
+            const postId = toggleBtn.dataset.postId;
             const commentsSection = document.getElementById(`comments-${postId}`);
             const commentsList = document.getElementById(`comments-list-${postId}`);
             
-            // Toggle visibility
             commentsSection.classList.toggle('hidden');
             
-            // Load comments if opening
-            if (!commentsSection.classList.contains('hidden')) {
-                await loadComments(postId, commentsList);
+            if (!commentsSection.classList.contains('hidden') && !commentsList.dataset.loaded) {
+                loadComments(postId, commentsList);
+                commentsList.dataset.loaded = 'true';
             }
-        });
+        }
     });
 
-    // Load comments function
     async function loadComments(postId, container) {
         try {
             const response = await fetch(`/posts/${postId}/comments`, {
@@ -586,7 +487,6 @@
         }
     }
 
-    // Create comment HTML
     function createCommentHTML(comment) {
         const deleteBtn = comment.is_owner ? `
             <button onclick="deleteComment(${comment.id})" class="text-gray-400 hover:text-red-500 text-xs">
@@ -622,12 +522,12 @@
         `;
     }
 
-    // Comment form submit
-    document.querySelectorAll('.comment-form').forEach(form => {
-        form.addEventListener('submit', async function(e) {
+    document.addEventListener('submit', async function(e) {
+        const form = e.target.closest('.comment-form');
+        if (form) {
             e.preventDefault();
-            const postId = this.dataset.postId;
-            const input = this.querySelector('input[name="content"]');
+            const postId = form.dataset.postId;
+            const input = form.querySelector('input[name="content"]');
             const content = input.value.trim();
             
             if (!content) return;
@@ -646,20 +546,13 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // Clear input
                     input.value = '';
-                    
-                    // Add comment to list
                     const commentsList = document.getElementById(`comments-list-${postId}`);
                     const noCommentsMsg = commentsList.querySelector('p');
                     if (noCommentsMsg) noCommentsMsg.remove();
                     
-                    commentsList.insertAdjacentHTML('afterbegin', createCommentHTML({
-                        ...data.comment,
-                        is_owner: true
-                    }));
+                    commentsList.insertAdjacentHTML('afterbegin', createCommentHTML(data.comment));
                     
-                    // Update count
                     const postCard = document.querySelector(`[data-post-id="${postId}"]`);
                     const countSpan = postCard.querySelector('.comment-count');
                     countSpan.textContent = parseInt(countSpan.textContent) + 1;
@@ -667,10 +560,9 @@
             } catch (error) {
                 console.error('Error posting comment:', error);
             }
-        });
+        }
     });
 
-    // Delete comment function
     async function deleteComment(commentId) {
         if (!confirm('Delete this comment?')) return;
         
@@ -695,7 +587,6 @@
         }
     }
 
-    // Like comment function with optimistic update
     async function likeComment(commentId) {
         @auth
         const commentEl = document.getElementById(`comment-${commentId}`);
@@ -705,7 +596,7 @@
         const isLiked = likeBtn.classList.contains('text-red-500');
         const currentCount = parseInt(countSpan.textContent) || 0;
         
-        // Optimistic update - instant UI change
+        // Optimistic update
         if (isLiked) {
             likeBtn.classList.remove('text-red-500');
             likeBtn.classList.add('text-gray-400');
@@ -728,11 +619,10 @@
             });
             
             const data = await response.json();
-            
             if (data.success) {
                 countSpan.textContent = data.likes_count;
             } else {
-                // Revert on error
+                // Revert
                 likeBtn.classList.toggle('text-red-500');
                 likeBtn.classList.toggle('text-gray-400');
                 svg.classList.toggle('fill-current');
@@ -740,7 +630,6 @@
             }
         } catch (error) {
             console.error('Error liking comment:', error);
-            // Revert on error
             likeBtn.classList.toggle('text-red-500');
             likeBtn.classList.toggle('text-gray-400');
             svg.classList.toggle('fill-current');
@@ -751,354 +640,115 @@
         @endauth
     }
 
-    // Infinite Scroll
-    let lastPostId = {{ $posts->last()?->id ?? 'null' }};
-    let isLoading = false;
-    let hasMore = {{ $posts->count() >= 10 ? 'true' : 'false' }};
-    
-    const postsFeed = document.getElementById('postsFeed');
-    const loadingIndicator = document.getElementById('loadingIndicator');
-    const loadingSpinner = document.getElementById('loadingSpinner');
-    const endOfFeed = document.getElementById('endOfFeed');
-    
-    // Intersection Observer for infinite scroll
-    const observerCallback = async (entries) => {
-        const entry = entries[0];
-        if (entry.isIntersecting && !isLoading && hasMore) {
-            await loadMorePosts();
+    // ==========================================
+    // SHARE FUNCTIONALITY
+    // ==========================================
+    let currentSharePostId = null;
+    let currentShareBtn = null;
+
+    document.addEventListener('click', function(e) {
+        const shareBtn = e.target.closest('.share-btn');
+        if (shareBtn) {
+            @auth
+            const postId = shareBtn.dataset.postId;
+            currentSharePostId = postId;
+            currentShareBtn = shareBtn;
+            
+            if (shareBtn.classList.contains('text-green-500')) {
+                unsharePost(postId, shareBtn);
+                return;
+            }
+            
+            const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+            const userName = postCard.querySelector('a.font-semibold')?.textContent || 'User';
+            const postContent = postCard.querySelector('.post-content')?.textContent || '';
+            const postImage = postCard.querySelector('img[alt="Post image"]')?.src || '';
+            
+            let previewHTML = `<div class="flex items-center gap-2 mb-2"><span class="font-semibold text-sm text-gray-800">${userName}</span></div>`;
+            if (postContent) previewHTML += `<p class="text-gray-700 text-sm line-clamp-3">${postContent}</p>`;
+            if (postImage) previewHTML += `<img src="${postImage}" class="mt-2 rounded max-h-32 object-cover" alt="Preview">`;
+            
+            document.getElementById('sharePostPreview').innerHTML = previewHTML;
+            document.getElementById('shareContent').value = '';
+            document.getElementById('shareModal').classList.remove('hidden');
+            @else
+            openLoginModal();
+            @endauth
         }
-    };
-    
-    const observer = new IntersectionObserver(observerCallback, {
-        root: null,
-        rootMargin: '200px',
-        threshold: 0
     });
-    
-    // Start observing the loading indicator
-    if (loadingIndicator && hasMore) {
-        observer.observe(loadingIndicator);
+
+    function closeShareModal() {
+        document.getElementById('shareModal').classList.add('hidden');
+        currentSharePostId = null;
+        currentShareBtn = null;
     }
-    
-    async function loadMorePosts() {
-        if (isLoading || !hasMore || !lastPostId) return;
+
+    async function confirmShare() {
+        if (!currentSharePostId) return;
         
-        isLoading = true;
-        loadingSpinner.classList.remove('hidden');
-        loadingSpinner.classList.add('flex');
+        const content = document.getElementById('shareContent').value.trim();
         
         try {
-            const response = await fetch(`/posts/feed?last_id=${lastPostId}&limit=10`, {
+            const response = await fetch(`/posts/${currentSharePostId}/share`, {
+                method: 'POST',
                 headers: {
+                    'Content-Type': 'application/json',
                     'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ content: content || null })
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
+                const countSpan = currentShareBtn.querySelector('.shares-count');
+                const svg = currentShareBtn.querySelector('svg');
                 
-                if (data.html && data.html.trim()) {
-                    // Insert new posts before the loading indicator
-                    loadingIndicator.insertAdjacentHTML('beforebegin', data.html);
-                    
-                    // Re-attach event listeners to new posts
-                    attachEventListenersToNewPosts();
-                    
-                    lastPostId = data.last_id;
-                    hasMore = data.has_more;
-                } else {
-                    hasMore = false;
+                countSpan.textContent = data.shares_count;
+                if (data.shared) {
+                    currentShareBtn.classList.add('text-green-500');
+                    svg.setAttribute('fill', 'currentColor');
                 }
+                closeShareModal();
+            }
+        } catch (error) {
+            console.error('Error sharing post:', error);
+        }
+    }
+
+    async function unsharePost(postId, btn) {
+        try {
+            const response = await fetch(`/posts/${postId}/share`, {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const countSpan = btn.querySelector('.shares-count');
+                const svg = btn.querySelector('svg');
                 
-                if (!hasMore) {
-                    loadingIndicator.classList.add('hidden');
-                    endOfFeed.classList.remove('hidden');
-                    observer.disconnect();
+                countSpan.textContent = data.shares_count;
+                if (!data.shared) {
+                    btn.classList.remove('text-green-500');
+                    svg.setAttribute('fill', 'none');
                 }
             }
         } catch (error) {
-            console.error('Error loading posts:', error);
-        } finally {
-            isLoading = false;
-            loadingSpinner.classList.add('hidden');
-            loadingSpinner.classList.remove('flex');
+            console.error('Error unsharing post:', error);
         }
     }
-    
-    function attachEventListenersToNewPosts() {
-        // Re-attach like button listeners
-        document.querySelectorAll('.like-btn:not([data-listener])').forEach(btn => {
-            btn.setAttribute('data-listener', 'true');
-            btn.addEventListener('click', async function() {
-                @auth
-                const postId = this.dataset.postId;
-                const btn = this;
-                const postCard = document.querySelector(`[data-post-id="${postId}"]`);
-                const countSpan = postCard.querySelector('.likes-count');
-                const svg = btn.querySelector('svg');
-                const isLiked = btn.classList.contains('text-red-500');
-                const currentCount = parseInt(countSpan.textContent) || 0;
-                
-                // Optimistic update - instant UI change
-                if (isLiked) {
-                    btn.classList.remove('text-red-500');
-                    svg.setAttribute('fill', 'none');
-                    countSpan.textContent = Math.max(0, currentCount - 1);
-                } else {
-                    btn.classList.add('text-red-500');
-                    svg.setAttribute('fill', 'currentColor');
-                    countSpan.textContent = currentCount + 1;
-                }
-                
-                try {
-                    const response = await fetch(`/posts/${postId}/like`, {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        }
-                    });
 
-                    if (response.ok) {
-                        const data = await response.json();
-                        countSpan.textContent = data.likes_count;
-                    } else {
-                        // Revert on error
-                        btn.classList.toggle('text-red-500');
-                        svg.setAttribute('fill', isLiked ? 'currentColor' : 'none');
-                        countSpan.textContent = currentCount;
-                    }
-                } catch (error) {
-                    console.error('Error liking post:', error);
-                    // Revert on error
-                    btn.classList.toggle('text-red-500');
-                    svg.setAttribute('fill', isLiked ? 'currentColor' : 'none');
-                    countSpan.textContent = currentCount;
-                }
-                @else
-                openLoginModal();
-                @endauth
-            });
-        });
-        
-        // Re-attach comment toggle listeners
-        document.querySelectorAll('.comment-toggle-btn:not([data-listener])').forEach(btn => {
-            btn.setAttribute('data-listener', 'true');
-            btn.addEventListener('click', function() {
-                const postId = this.dataset.postId;
-                const commentsSection = document.getElementById(`comments-${postId}`);
-                const commentsList = document.getElementById(`comments-list-${postId}`);
-                
-                commentsSection.classList.toggle('hidden');
-                
-                if (!commentsSection.classList.contains('hidden') && commentsList.dataset.loaded !== 'true') {
-                    loadComments(postId, commentsList);
-                    commentsList.dataset.loaded = 'true';
-                }
-            });
-        });
-        
-        // Re-attach share button listeners
-        document.querySelectorAll('.share-btn:not([data-listener])').forEach(btn => {
-            btn.setAttribute('data-listener', 'true');
-            btn.addEventListener('click', function() {
-                @auth
-                const postId = this.dataset.postId;
-                currentSharePostId = postId;
-                currentShareBtn = this;
-                
-                if (this.classList.contains('text-green-500')) {
-                    unsharePost(postId, this);
-                    return;
-                }
-                
-                const postCard = document.querySelector(`[data-post-id="${postId}"]`);
-                const userName = postCard.querySelector('a.font-semibold')?.textContent || 'User';
-                const postContent = postCard.querySelector('.whitespace-pre-line')?.textContent || '';
-                const postImage = postCard.querySelector('img[alt="Post image"]')?.src || '';
-                
-                let previewHTML = `<div class="flex items-center gap-2 mb-2"><span class="font-semibold text-sm text-gray-800">${userName}</span></div>`;
-                if (postContent) {
-                    previewHTML += `<p class="text-gray-700 text-sm line-clamp-3">${postContent}</p>`;
-                }
-                if (postImage) {
-                    previewHTML += `<img src="${postImage}" class="mt-2 rounded max-h-32 object-cover" alt="Preview">`;
-                }
-                
-                document.getElementById('sharePostPreview').innerHTML = previewHTML;
-                document.getElementById('shareContent').value = '';
-                document.getElementById('shareModal').classList.remove('hidden');
-                @else
-                openLoginModal();
-                @endauth
-            });
-        });
-        
-        // Re-attach comment form listeners
-        document.querySelectorAll('.comment-form:not([data-listener])').forEach(form => {
-            form.setAttribute('data-listener', 'true');
-            form.addEventListener('submit', async function(e) {
-                e.preventDefault();
-                const postId = this.dataset.postId;
-                const input = this.querySelector('input[name="content"]');
-                const content = input.value.trim();
-                
-                if (!content) return;
-                
-                try {
-                    const response = await fetch(`/posts/${postId}/comments`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        },
-                        body: JSON.stringify({ content })
-                    });
-                    
-                    if (response.ok) {
-                        const data = await response.json();
-                        input.value = '';
-                        
-                        const commentsList = document.getElementById(`comments-list-${postId}`);
-                        const commentHtml = createCommentHTML(data.comment);
-                        commentsList.insertAdjacentHTML('afterbegin', commentHtml);
-                        
-                        const commentCount = document.querySelector(`[data-post-id="${postId}"] .comment-count`);
-                        if (commentCount) {
-                            commentCount.textContent = parseInt(commentCount.textContent) + 1;
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error posting comment:', error);
-                }
-            });
-        });
-
-        // Re-attach save button listeners
-        document.querySelectorAll('.save-btn:not([data-listener])').forEach(btn => {
-            btn.setAttribute('data-listener', 'true');
-            btn.addEventListener('click', async function() {
-                const postId = this.dataset.postId;
-                const btn = this;
-                try {
-                    const response = await fetch(`/posts/${postId}/save`, {
-                        method: 'POST',
-                        headers: {
-                            'Accept': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        }
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        const svg = btn.querySelector('svg');
-                        
-                        if (data.saved) {
-                            btn.classList.add('text-yellow-500');
-                            svg.setAttribute('fill', 'currentColor');
-                        } else {
-                            btn.classList.remove('text-yellow-500');
-                            svg.setAttribute('fill', 'none');
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error saving post:', error);
-                }
-            });
-        });
-    }
-    
-    // Mark existing buttons as having listeners
-    document.querySelectorAll('.like-btn, .comment-toggle-btn, .share-btn, .save-btn, .comment-form, .reaction-option').forEach(el => {
-        el.setAttribute('data-listener', 'true');
-    });
-
-    // Reaction functionality
+    // ==========================================
+    // SAVE FUNCTIONALITY
+    // ==========================================
     document.addEventListener('click', async function(e) {
-        const reactionOption = e.target.closest('.reaction-option');
-        const reactionBtnMain = e.target.closest('.reaction-btn-main');
-
-        if (reactionOption || reactionBtnMain) {
-            const target = reactionOption || reactionBtnMain;
-            const postId = target.dataset.postId;
-            const type = reactionOption ? target.dataset.type : 'like';
-            
-            try {
-                const response = await fetch(`/posts/${postId}/react`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify({ type })
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    updatePostReactionUI(postId, data);
-                } else if (response.status === 401) {
-                    openLoginModal();
-                }
-            } catch (error) {
-                console.error('Error reacting to post:', error);
-            }
-        }
-    });
-
-    function updatePostReactionUI(postId, data) {
-        const postCard = document.querySelector(`[data-post-id="${postId}"]`);
-        if (!postCard) return;
-
-        const mainBtn = postCard.querySelector('.reaction-btn-main');
-        const countSpan = postCard.querySelector('.reactions-count');
-        const iconsDiv = postCard.querySelector('.view-reactions-btn div');
-
-        // Update main button
-        if (data.user_reaction) {
-            const emojis = {
-                'like': '👍', 'love': '❤️', 'haha': '😂', 
-                'wow': '😮', 'sad': '😢', 'angry': '😡'
-            };
-            mainBtn.innerHTML = `
-                <span class="text-lg">${emojis[data.user_reaction]}</span>
-                <span class="text-xs sm:text-sm capitalize">${data.user_reaction}</span>
-            `;
-            mainBtn.classList.add('text-blue-600', 'font-semibold');
-        } else {
-            mainBtn.innerHTML = `
-                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.708C19.746 10 20.5 10.811 20.5 11.812c0 .387-.121.76-.346 1.07l-2.44 3.356c-.311.43-.802.682-1.324.682H8.5V10c0-.828.672-1.5 1.5-1.5h.5V4.667c0-.92.747-1.667 1.667-1.667h1.666c.92 0 1.667.747 1.667 1.667V10zM8.5 10H5.5c-.828 0-1.5.672-1.5 1.5v5c0 .828.672 1.5 1.5 1.5h3V10z"></path>
-                </svg>
-                <span class="text-xs sm:text-sm">Like</span>
-            `;
-            mainBtn.classList.remove('text-blue-600', 'font-semibold');
-        }
-
-        // Update counts and icons
-        countSpan.textContent = data.counts.total > 0 ? data.counts.total : '';
-        
-        const emojis = {
-            'like': '👍', 'love': '❤️', 'haha': '😂', 
-            'wow': '😮', 'sad': '😢', 'angry': '😡'
-        };
-        
-        const topReactions = Object.entries(data.counts.detailed)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3);
-            
-        iconsDiv.innerHTML = topReactions.map(([type]) => `
-            <span class="text-xs">${emojis[type]}</span>
-        `).join('');
-    }
-
-    // Save button functionality
-    document.querySelectorAll('.save-btn').forEach(btn => {
-        btn.addEventListener('click', async function() {
-            const postId = this.dataset.postId;
-            const btn = this;
+        const saveBtn = e.target.closest('.save-btn');
+        if (saveBtn) {
+            const postId = saveBtn.dataset.postId;
             try {
                 const response = await fetch(`/posts/${postId}/save`, {
                     method: 'POST',
@@ -1110,30 +760,31 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    const svg = btn.querySelector('svg');
+                    const svg = saveBtn.querySelector('svg');
                     
                     if (data.saved) {
-                        btn.classList.add('text-yellow-500');
+                        saveBtn.classList.add('text-yellow-500');
                         svg.setAttribute('fill', 'currentColor');
                     } else {
-                        btn.classList.remove('text-yellow-500');
+                        saveBtn.classList.remove('text-yellow-500');
                         svg.setAttribute('fill', 'none');
                     }
                 }
             } catch (error) {
                 console.error('Error saving post:', error);
             }
-        });
+        }
     });
 
-    // Post menu toggle functionality
+    // ==========================================
+    // POST MENU & EDIT/DELETE
+    // ==========================================
     document.addEventListener('click', function(e) {
         const menuBtn = e.target.closest('.post-menu-btn');
         if (menuBtn) {
             const postId = menuBtn.dataset.postId;
             const menu = document.querySelector(`.post-menu[data-post-id="${postId}"]`);
             
-            // Close all other menus first
             document.querySelectorAll('.post-menu').forEach(m => {
                 if (m !== menu) m.classList.add('hidden');
             });
@@ -1142,13 +793,11 @@
             return;
         }
         
-        // Close menus when clicking outside
         if (!e.target.closest('.post-menu')) {
             document.querySelectorAll('.post-menu').forEach(m => m.classList.add('hidden'));
         }
     });
 
-    // Edit post button click handler
     document.addEventListener('click', function(e) {
         const editBtn = e.target.closest('.edit-post-btn');
         if (editBtn) {
@@ -1158,25 +807,19 @@
             const privacy = editBtn.dataset.privacy || 'public';
             
             openEditPostModal(postId, content, location, privacy);
-            
-            // Close the menu
             document.querySelectorAll('.post-menu').forEach(m => m.classList.add('hidden'));
         }
     });
 
-    // Delete post button click handler
     document.addEventListener('click', function(e) {
         const deleteBtn = e.target.closest('.delete-post-btn');
         if (deleteBtn) {
             const postId = deleteBtn.dataset.postId;
             openDeleteModal(postId);
-            
-            // Close the menu
             document.querySelectorAll('.post-menu').forEach(m => m.classList.add('hidden'));
         }
     });
 
-    // Edit Post Modal functions
     function openEditPostModal(postId, content, location, privacy) {
         document.getElementById('editPostId').value = postId;
         document.getElementById('editPostContent').value = content;
@@ -1207,23 +850,16 @@
             });
             
             if (response.ok) {
-                const data = await response.json();
-                
-                // Update post content in the DOM
                 const postCard = document.querySelector(`[data-post-id="${postId}"]`);
                 const postContent = postCard.querySelector('.post-content');
-                if (postContent) {
-                    postContent.textContent = content;
-                }
+                if (postContent) postContent.textContent = content;
                 
-                // Update the edit button data attributes
                 const editBtn = postCard.querySelector('.edit-post-btn');
                 if (editBtn) {
                     editBtn.dataset.content = content;
                     editBtn.dataset.location = location;
                     editBtn.dataset.privacy = privacy;
                 }
-                
                 closeEditPostModal();
             } else {
                 const error = await response.json();
@@ -1235,7 +871,6 @@
         }
     }
 
-    // Delete Modal functions
     function openDeleteModal(postId) {
         document.getElementById('deletePostId').value = postId;
         document.getElementById('deleteModal').classList.remove('hidden');
@@ -1258,11 +893,8 @@
             });
             
             if (response.ok) {
-                // Remove the post from the DOM
                 const postCard = document.querySelector(`[data-post-id="${postId}"]`);
-                if (postCard) {
-                    postCard.remove();
-                }
+                if (postCard) postCard.remove();
                 closeDeleteModal();
             } else {
                 const error = await response.json();
@@ -1274,40 +906,94 @@
         }
     }
 
-    // Close modals when clicking outside
-    document.getElementById('editPostModal').addEventListener('click', function(e) {
+    document.getElementById('editPostModal')?.addEventListener('click', function(e) {
         if (e.target === this) closeEditPostModal();
     });
-    document.getElementById('deleteModal').addEventListener('click', function(e) {
+    document.getElementById('deleteModal')?.addEventListener('click', function(e) {
         if (e.target === this) closeDeleteModal();
     });
+    document.getElementById('shareModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closeShareModal();
+    });
 
-    // Scroll to post if coming from notification (run after page fully loaded)
+    // ==========================================
+    // INFINITE SCROLL
+    // ==========================================
+    let lastPostId = {{ $posts->last()?->id ?? 'null' }};
+    let isLoading = false;
+    let hasMore = {{ $posts->count() >= 10 ? 'true' : 'false' }};
+    
+    const postsFeed = document.getElementById('postsFeed');
+    const loadingIndicator = document.getElementById('loadingIndicator');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const endOfFeed = document.getElementById('endOfFeed');
+    
+    const observerCallback = async (entries) => {
+        const entry = entries[0];
+        if (entry.isIntersecting && !isLoading && hasMore) {
+            await loadMorePosts();
+        }
+    };
+    
+    const observer = new IntersectionObserver(observerCallback, {
+        root: null,
+        rootMargin: '200px',
+        threshold: 0
+    });
+    
+    if (loadingIndicator && hasMore) {
+        observer.observe(loadingIndicator);
+    }
+    
+    async function loadMorePosts() {
+        if (isLoading || !hasMore || !lastPostId) return;
+        
+        isLoading = true;
+        loadingSpinner.classList.remove('hidden');
+        loadingSpinner.classList.add('flex');
+        
+        try {
+            const response = await fetch(`/posts/feed?last_id=${lastPostId}&limit=10`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                
+                if (data.html && data.html.trim()) {
+                    loadingIndicator.insertAdjacentHTML('beforebegin', data.html);
+                    lastPostId = data.last_id;
+                    hasMore = data.has_more;
+                } else {
+                    hasMore = false;
+                }
+                
+                if (!hasMore) {
+                    loadingIndicator.classList.add('hidden');
+                    endOfFeed?.classList.remove('hidden');
+                    observer.disconnect();
+                }
+            }
+        } catch (error) {
+            console.error('Error loading posts:', error);
+        } finally {
+            isLoading = false;
+            loadingSpinner.classList.add('hidden');
+            loadingSpinner.classList.remove('flex');
+        }
+    }
+
+    // ==========================================
+    // SCROLL TO POST FROM NOTIFICATION
+    // ==========================================
     window.addEventListener('load', async function() {
         const urlParams = new URLSearchParams(window.location.search);
         const postId = urlParams.get('post');
         
         if (postId) {
-            // Helper function to load comments inline
-            const fetchComments = async (postId, container) => {
-                try {
-                    const response = await fetch(`/posts/${postId}/comments`, {
-                        headers: { 'Accept': 'application/json' }
-                    });
-                    const data = await response.json();
-                    
-                    if (data.success && data.comments.length > 0) {
-                        container.innerHTML = data.comments.map(comment => createCommentHTML(comment)).join('');
-                    } else {
-                        container.innerHTML = '<p class="text-gray-500 text-sm text-center py-2">No comments yet. Be the first to comment!</p>';
-                    }
-                } catch (error) {
-                    console.error('Error loading comments:', error);
-                    container.innerHTML = '<p class="text-red-500 text-sm text-center py-2">Error loading comments</p>';
-                }
-            };
-            
-            // Wait for posts to load and try scrolling
             const attemptScroll = async () => {
                 const postElement = document.getElementById(`post-${postId}`);
                 if (postElement) {
@@ -1316,50 +1002,14 @@
                     setTimeout(() => {
                         postElement.classList.remove('ring-2', 'ring-blue-500', 'ring-opacity-50');
                     }, 3000);
-                    
-                    // Handle comment hash - open and scroll to comment
-                    if (window.location.hash.startsWith('#comment-')) {
-                        const commentId = window.location.hash.replace('#comment-', '');
-                        const commentsSection = document.getElementById(`comments-${postId}`);
-                        const commentsList = document.getElementById(`comments-list-${postId}`);
-                        
-                        if (commentsSection && commentsList) {
-                            commentsSection.classList.remove('hidden');
-                            
-                            // Load comments first
-                            await fetchComments(postId, commentsList);
-                            
-                            // Then scroll to specific comment
-                            setTimeout(() => {
-                                const commentElement = document.getElementById(`comment-${commentId}`);
-                                if (commentElement) {
-                                    commentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                    commentElement.classList.add('bg-blue-50');
-                                    setTimeout(() => commentElement.classList.remove('bg-blue-50'), 3000);
-                                }
-                            }, 300);
-                        }
-                    }
-                    
-                    // Handle like notification - show likes modal
-                    if (window.location.hash === '#likes') {
-                        const viewLikesBtn = postElement.querySelector('.view-likes-btn');
-                        if (viewLikesBtn) {
-                            viewLikesBtn.click();
-                        }
-                    }
-                    
                     return true;
                 }
                 return false;
             };
             
-            // Try after a brief delay to ensure posts are rendered
             setTimeout(async () => {
                 const found = await attemptScroll();
-                if (!found) {
-                    setTimeout(attemptScroll, 1500);
-                }
+                if (!found) setTimeout(attemptScroll, 1500);
             }, 500);
         }
     });

@@ -4,13 +4,12 @@ namespace App\Services\Comment;
 
 use App\Models\User;
 use App\Repositories\Comment\CommentRepository;
-use App\Services\Like\LikeService;
+
 
 class CommentService
 {
     public function __construct(
-        protected CommentRepository $repository,
-        protected LikeService $likeService
+        protected CommentRepository $repository
     ) {}
 
     public function all()
@@ -89,8 +88,6 @@ class CommentService
     public function formatComment($comment, ?User $authUser = null): array
     {
         $isOwner = $authUser && $authUser->id === $comment->user_id;
-        $isLiked = $authUser && $this->likeService->hasLikedComment($authUser, $comment->id);
-
         return [
             'id' => $comment->id,
             'content' => $comment->content,
@@ -101,8 +98,6 @@ class CommentService
                 'avatar_url' => $comment->user->avatar_url,
             ],
             'is_owner' => $isOwner,
-            'likes_count' => $comment->likes_count ?? $comment->likes()->count(),
-            'is_liked' => $isLiked,
         ];
     }
 
@@ -112,7 +107,6 @@ class CommentService
     public function formatNewComment($comment): array
     {
         $comment->load('user');
-
         return [
             'id' => $comment->id,
             'content' => $comment->content,
@@ -121,29 +115,10 @@ class CommentService
                 'name' => $comment->user->name,
                 'avatar_url' => $comment->user->avatar_url,
             ],
-            'likes_count' => 0,
-            'is_liked' => false,
         ];
     }
 
-    /**
-     * Toggle like on a comment.
-     */
-    public function toggleLike(User $user, int $commentId): array
-    {
-        $result = $this->likeService->toggleCommentLike($user, $commentId);
 
-        return [
-            'liked' => $result['liked'],
-            'likes_count' => $this->repository->getLikesCount($commentId),
-        ];
-    }
 
-    /**
-     * Get likes count for a comment.
-     */
-    public function getLikesCount(int $commentId): int
-    {
-        return $this->repository->getLikesCount($commentId);
-    }
+
 }

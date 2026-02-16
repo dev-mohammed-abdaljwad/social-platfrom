@@ -78,71 +78,80 @@
             </p>
             @endif
             
-            <!-- Post Actions -->
-            <div class="flex items-center justify-between sm:justify-start gap-2 sm:gap-6 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100">
-                <div class="flex items-center gap-0.5 sm:gap-1 relative group">
-                    @php
-                        $userReaction = auth()->check() ? $post->reactions()->where('user_id', auth()->id())->first() : null;
-                        $reactionCounts = $post->reactions()->select('type', \Illuminate\Support\Facades\DB::raw('count(*) as count'))->groupBy('type')->get();
-                        $totalReactions = $reactionCounts->sum('count');
-                    @endphp
-                    
-                    <div class="relative">
-                        <button class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-blue-500 transition-colors reaction-btn-main {{ $userReaction ? 'text-blue-600 font-semibold' : '' }}" data-post-id="{{ $post->id }}">
-                            @if($userReaction)
-                                <span class="text-lg">{{ \App\Enums\ReactionTypeEnum::from($userReaction->type->value)->emoji() }}</span>
-                                <span class="text-xs sm:text-sm capitalize">{{ $userReaction->type->value }}</span>
-                            @else
-                                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.708C19.746 10 20.5 10.811 20.5 11.812c0 .387-.121.76-.346 1.07l-2.44 3.356c-.311.43-.802.682-1.324.682H8.5V10c0-.828.672-1.5 1.5-1.5h.5V4.667c0-.92.747-1.667 1.667-1.667h1.666c.92 0 1.667.747 1.667 1.667V10zM8.5 10H5.5c-.828 0-1.5.672-1.5 1.5v5c0 .828.672 1.5 1.5 1.5h3V10z"></path>
-                                </svg>
-                                <span class="text-xs sm:text-sm">Like</span>
-                            @endif
-                        </button>
-
-                        <!-- Reaction Picker -->
-                        <div class="absolute bottom-full left-0 mb-2 bg-white rounded-full shadow-xl border border-gray-100 p-1 hidden group-hover:flex items-center gap-1 z-20 animate-bounce-in">
-                            @foreach(\App\Enums\ReactionTypeEnum::cases() as $case)
-                                <button class="p-1.5 hover:scale-125 transition-transform reaction-option" 
-                                        data-post-id="{{ $post->id }}" 
-                                        data-type="{{ $case->value }}"
-                                        title="{{ ucfirst($case->value) }}">
-                                    <span class="text-xl sm:text-2xl">{{ $case->emoji() }}</span>
-                                </button>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <button class="text-gray-600 hover:text-blue-500 hover:underline text-xs sm:text-sm view-reactions-btn flex items-center gap-1" data-post-id="{{ $post->id }}">
-                        <div class="flex -space-x-1">
-                            @foreach($reactionCounts->sortByDesc('count')->take(3) as $count)
-                                <span class="text-xs">{{ \App\Enums\ReactionTypeEnum::from($count->type->value)->emoji() }}</span>
-                            @endforeach
-                        </div>
-                        <span class="reactions-count">{{ $totalReactions > 0 ? $totalReactions : '' }}</span>
-                    </button>
-                </div>
-                <button class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-blue-500 transition-colors comment-toggle-btn" data-post-id="{{ $post->id }}">
+          <!-- Post Actions -->
+<div class="flex items-center justify-between sm:justify-start gap-2 sm:gap-6 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100">
+    <div class="flex items-center gap-0.5 sm:gap-1 relative">
+        @php
+            $userReaction = auth()->check() ? $post->reactions()->where('user_id', auth()->id())->first() : null;
+            $reactionCounts = $post->reactions()->select('type', \Illuminate\Support\Facades\DB::raw('count(*) as count'))->groupBy('type')->get();
+            $totalReactions = $reactionCounts->sum('count');
+        @endphp
+        
+        <div class="relative reaction-picker-container" data-post-id="{{ $post->id }}">
+            <!-- Main Reaction Button -->
+            <button class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-blue-500 transition-colors reaction-btn-main px-2 py-1.5 rounded-lg hover:bg-gray-100 {{ $userReaction ? 'text-blue-600 font-semibold' : '' }}" 
+                    data-post-id="{{ $post->id }}"
+                    type="button">
+                @if($userReaction)
+                    <span class="text-lg reaction-emoji">{{ \App\Enums\ReactionTypeEnum::from($userReaction->type->value)->emoji() }}</span>
+                    <span class="text-xs sm:text-sm capitalize reaction-label">{{ $userReaction->type->value }}</span>
+                @else
                     <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.708C19.746 10 20.5 10.811 20.5 11.812c0 .387-.121.76-.346 1.07l-2.44 3.356c-.311.43-.802.682-1.324.682H8.5V10c0-.828.672-1.5 1.5-1.5h.5V4.667c0-.92.747-1.667 1.667-1.667h1.666c.92 0 1.667.747 1.667 1.667V10zM8.5 10H5.5c-.828 0-1.5.672-1.5 1.5v5c0 .828.672 1.5 1.5 1.5h3V10z"></path>
                     </svg>
-                    <span class="comment-count text-xs sm:text-sm">{{ $post->comments_count ?? 0 }}</span>
-                </button>
-                <button class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-green-500 transition-colors share-btn {{ $post->is_shared ? 'text-green-500' : '' }}" data-post-id="{{ $post->id }}">
-                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="{{ $post->is_shared ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
-                    </svg>
-                    <span class="shares-count text-xs sm:text-sm">{{ $post->shares_count ?? 0 }}</span>
-                </button>
-                @auth
-                <button class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-yellow-500 transition-colors save-btn sm:ml-auto {{ $post->is_saved ? 'text-yellow-500' : '' }}" data-post-id="{{ $post->id }}">
-                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="{{ $post->is_saved ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
-                    </svg>
-                </button>
-                @endauth
+                    <span class="text-xs sm:text-sm">Like</span>
+                @endif
+            </button>
+
+            <!-- Reaction Picker - Stays visible when opened -->
+            <div class="absolute bottom-full left-0 mb-2 bg-white rounded-full shadow-xl border border-gray-100 p-2 hidden reaction-picker z-20 flex items-center gap-1"
+                 id="picker-{{ $post->id }}">
+                @foreach(\App\Enums\ReactionTypeEnum::cases() as $case)
+                    <button class="p-2 hover:scale-125 transition-transform reaction-option" 
+                            data-post-id="{{ $post->id }}" 
+                            data-type="{{ $case->value }}"
+                            title="{{ ucfirst($case->value) }}"
+                            type="button">
+                        <span class="text-xl sm:text-2xl cursor-pointer">{{ $case->emoji() }}</span>
+                    </button>
+                @endforeach
             </div>
-            
+        </div>
+
+        <!-- Reactions Count & Icons -->
+        <button class="text-gray-600 hover:text-blue-500 hover:underline text-xs sm:text-sm view-reactions-btn flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-gray-100" 
+                data-post-id="{{ $post->id }}"
+                type="button">
+            <div class="flex -space-x-1">
+                @foreach($reactionCounts->sortByDesc('count')->take(3) as $count)
+                    <span class="text-xs">{{ \App\Enums\ReactionTypeEnum::from($count->type->value)->emoji() }}</span>
+                @endforeach
+            </div>
+            <span class="reactions-count">{{ $totalReactions > 0 ? $totalReactions : '' }}</span>
+        </button>
+    </div>
+
+    <!-- Rest of buttons remain the same -->
+    <button class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-blue-500 transition-colors comment-toggle-btn px-2 py-1.5 rounded-lg hover:bg-gray-100" data-post-id="{{ $post->id }}" type="button">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+        </svg>
+        <span class="comment-count text-xs sm:text-sm">{{ $post->comments_count ?? 0 }}</span>
+    </button>
+    <button class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-green-500 transition-colors share-btn px-2 py-1.5 rounded-lg hover:bg-gray-100 {{ $post->is_shared ? 'text-green-500' : '' }}" data-post-id="{{ $post->id }}" type="button">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="{{ $post->is_shared ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+        </svg>
+        <span class="shares-count text-xs sm:text-sm">{{ $post->shares_count ?? 0 }}</span>
+    </button>
+    @auth
+    <button class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-yellow-500 transition-colors save-btn sm:ml-auto px-2 py-1.5 rounded-lg hover:bg-gray-100 {{ $post->is_saved ? 'text-yellow-500' : '' }}" data-post-id="{{ $post->id }}" type="button">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="{{ $post->is_saved ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
+        </svg>
+    </button>
+    @endauth
+</div>
             <!-- Comments Section -->
             <div class="comments-section hidden mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100" id="comments-{{ $post->id }}">
                 <!-- Comment Form -->

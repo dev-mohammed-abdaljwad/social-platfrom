@@ -94,14 +94,7 @@ class Post extends Model
         return $this->hasMany(Comment::class)->whereNull('parent_id');
     }
 
-    /**
-     * Get all likes for the post.
-     */
-    public function likes(): MorphMany
-    {
-        return $this->morphMany(Like::class, 'likeable');
-    }
-
+  
     /**
      * Get all shares for the post.
      */
@@ -110,19 +103,7 @@ class Post extends Model
         return $this->hasMany(Share::class);
     }
 
-    /**
-     * Get the number of likes for this post.
-     * Uses withCount if loaded, otherwise queries.
-     */
-    public function getLikesCountAttribute(): int
-    {
-        return $this->attributes['likes_count'] ?? $this->likes()->count();
-    }
-
-    /**
-     * Get the number of comments for this post.
-     * Uses withCount if loaded, otherwise queries.
-     */
+   
     public function getCommentsCountAttribute(): int
     {
         return $this->attributes['comments_count'] ?? $this->comments()->count();
@@ -145,14 +126,7 @@ class Post extends Model
         return $this->shares()->where('user_id', $user->id)->exists();
     }
 
-    /**
-     * Check if a user has liked this post.
-     */
-    public function isLikedBy(User $user): bool
-    {
-        return $this->likes()->where('user_id', $user->id)->exists();
-    }
-
+ 
     /**
      * Get all users who saved this post.
      */

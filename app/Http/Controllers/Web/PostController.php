@@ -7,7 +7,6 @@ use App\Http\Requests\Web\Post\SharePostRequest;
 use App\Http\Requests\Web\Post\StorePostRequest;
 use App\Http\Requests\Web\Post\UpdatePostRequest;
 use App\Http\Requests\Web\Post\UpdateShareRequest;
-use App\Services\Like\LikeService;
 use App\Services\Notification\NotificationService;
 use App\Services\Post\PostService;
 use App\Services\Share\ShareService;
@@ -16,7 +15,7 @@ class PostController extends Controller
 {
     public function __construct(
         protected PostService $postService,
-        protected LikeService $likeService,
+    
         protected ShareService $shareService,
         protected NotificationService $notificationService
     ) {}
@@ -43,40 +42,7 @@ class PostController extends Controller
     /**
      * Toggle like on a post.
      */
-    public function toggleLike(int $postId)
-    {
-        $post = $this->postService->find($postId);
-
-        if (!$post) {
-            if (request()->expectsJson()) {
-                return response()->json(['success' => false, 'message' => 'Post not found'], 404);
-            }
-            return redirect()->back()->with('error', 'Post not found');
-        }
-
-        $result = $this->likeService->togglePostLike(auth()->user(), $postId);
-
-        // Send notification to post owner (if not self and liked)
-        if ($result['liked'] && $post->user_id !== auth()->id()) {
-            $this->notificationService->postLiked(
-                $post->user,
-                auth()->user(),
-                $post,
-                $result['like']
-            );
-        }
-
-        if (request()->expectsJson()) {
-            return response()->json([
-                'success' => true,
-                'liked' => $result['liked'],
-                'likes_count' => $result['likes_count'],
-            ]);
-        }
-
-        return redirect()->back()->with('success', $result['liked'] ? 'Post liked!' : 'Post unliked!');
-    }
-
+   
     /**
      * Share a post.
      */
@@ -128,21 +94,7 @@ class PostController extends Controller
     /**
      * Get likes for a post.
      */
-    public function getLikes(int $postId)
-    {
-        $post = $this->postService->find($postId);
-
-        if (!$post) {
-            return response()->json(['success' => false, 'message' => 'Post not found'], 404);
-        }
-
-        $likes = $this->postService->getFormattedLikes($post);
-
-        return response()->json([
-            'success' => true,
-            'likes' => $likes,
-        ]);
-    }
+    
 
     /**
      * Update a post.

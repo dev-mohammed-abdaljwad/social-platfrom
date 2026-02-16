@@ -108,13 +108,7 @@ class User extends Authenticatable
         return $this->hasMany(Comment::class);
     }
 
-    /**
-     * Get all likes by the user.
-     */
-    public function likes(): HasMany
-    {
-        return $this->hasMany(Like::class);
-    }
+  
 
     /**
      * Get all shares by the user.

@@ -38,20 +38,20 @@ class EloquentCommentRepository implements CommentRepository
                 'user',
                 'replies' => function ($query) use ($userId) {
                     $query->with('user')
-                        ->withCount('likes')
+                        ->withCount('reactions')
                         ->latest()
                         ->limit(3); // Only load first 3 replies, load more on demand
                     if ($userId) {
-                        $query->withExists(['likes as is_liked' => fn($q) => $q->where('user_id', $userId)]);
+                        $query->withExists(['reactions as is_liked' => fn($q) => $q->where('user_id', $userId)]);
                     }
                 }
             ])
-            ->withCount('likes', 'replies')
+            ->withCount('reactions', 'replies')
             ->latest()
             ->limit($limit);
 
         if ($userId) {
-            $query->withExists(['likes as is_liked' => fn($q) => $q->where('user_id', $userId)]);
+            $query->withExists(['reactions as is_liked' => fn($q) => $q->where('user_id', $userId)]);
         }
 
         return $query->get();
@@ -63,12 +63,12 @@ class EloquentCommentRepository implements CommentRepository
 
         $query = $this->model->where('parent_id', $commentId)
             ->with('user')
-            ->withCount('likes')
+            ->withCount('reactions')
             ->latest()
             ->limit($limit);
 
         if ($userId) {
-            $query->withExists(['likes as is_liked' => fn($q) => $q->where('user_id', $userId)]);
+            $query->withExists(['reactions as is_liked' => fn($q) => $q->where('user_id', $userId)]);
         }
 
         return $query->get();
@@ -90,8 +90,8 @@ class EloquentCommentRepository implements CommentRepository
         return $model->delete();
     }
 
-    public function getLikesCount($commentId): int
+    public function getReactionsCount($commentId): int
     {
-        return $this->model->findOrFail($commentId)->likes()->count();
+        return $this->model->findOrFail($commentId)->reactions()->count();
     }
 }

@@ -90,15 +90,5 @@ class CommentController extends Controller
     /**
      * Toggle like on a comment.
      */
-    public function toggleLike(int $commentId)
-    {
-        $user = auth()->user();
-        $result = $this->commentService->toggleLike($user, $commentId);
-
-        return response()->json([
-            'success' => true,
-            'liked' => $result['liked'],
-            'likes_count' => $result['likes_count'],
-        ]);
-    }
+   
 }
