@@ -38,46 +38,51 @@ class ReactionService
      * Generic react method for any reactable model (Post, Comment, etc)
      */
     public function reactToModel(User $user, Model $reactable, string $type)
-    {
-        $reactionType = ReactionTypeEnum::from($type);
-        
-        // Find existing reaction
-        $existing = $reactable->reactions()
-            ->where('user_id', $user->id)
-            ->first();
+{
+    $reactionType = ReactionTypeEnum::from($type);
 
-        if ($existing) {
-            if ($existing->type->value === $type) {
-                // Unreact - remove the reaction
-                $this->repository->delete($existing);
-                return [
-                    'action' => 'removed',
-                    'reaction' => null,
-                    'counts' => $this->getReactionCounts($reactable)
-                ];
-            } else {
-                // Update to new reaction type
-                $this->repository->update($existing, ['type' => $reactionType]);
-                return [
-                    'action' => 'updated',
-                    'reaction' => $existing,
-                    'counts' => $this->getReactionCounts($reactable)
-                ];
-            }
+    $existing = $reactable->reactions()
+        ->where('user_id', $user->id)
+        ->first();
+
+    if ($existing) {
+
+        // ✅ قارن string مع string
+        if ($existing->type === $type) {
+
+            $this->repository->delete($existing);
+
+            return [
+                'action' => 'removed',
+                'reaction' => null,
+                'counts' => $this->getReactionCounts($reactable)
+            ];
         }
 
-        // Create new reaction
-        $reaction = $reactable->reactions()->create([
-            'user_id' => $user->id,
-            'type' => $reactionType,
+        // ✅ خزّن string مش Enum
+        $this->repository->update($existing, [
+            'type' => $reactionType->value
         ]);
 
         return [
-            'action' => 'added',
-            'reaction' => $reaction,
+            'action' => 'updated',
+            'reaction' => $existing->fresh(),
             'counts' => $this->getReactionCounts($reactable)
         ];
     }
+
+    // ✅ create باستخدام string
+    $reaction = $reactable->reactions()->create([
+        'user_id' => $user->id,
+        'type' => $reactionType->value,
+    ]);
+
+    return [
+        'action' => 'added',
+        'reaction' => $reaction,
+        'counts' => $this->getReactionCounts($reactable)
+    ];
+}
 
     /**
      * Specific method for posts (keeping backward compatibility)
@@ -123,6 +128,7 @@ protected function getReactionCounts($model): array
         if (!$post) return ['detailed' => [], 'total' => 0];
         return $this->getReactionCounts($post);
     }
+    
 
     public function getUserReactionOnPost(int $userId, int $postId)
     {

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Enums\ReactionTypeEnum;
 use App\Http\Controllers\Controller;
 
 use App\Models\Notification;
@@ -11,7 +12,7 @@ use App\Services\Notification\NotificationService;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-
+use Illuminate\Validation\Rule;
 class ReactionController extends Controller
 {
     public function __construct(
@@ -22,63 +23,108 @@ class ReactionController extends Controller
 
     public function reactToPost(Request $request, int $postId): JsonResponse
     {
-        $validatedData = $request->validate([
-            'type' => 'required|in:like,love,angry,sad,haha'
-        ]);
+        $data = $this->validateReaction($request);
 
         $post = $this->postService->find($postId);
         if (!$post) {
-            return response()->json(['success' => false, 'message' => 'Post not found'], 404);
-        }
-        $result = $this->reactionService->reactToPost(auth()->user(), $postId, $validatedData['type']);
-        // Send notification if added or updated (and not self)
-        if (in_array($result['action'], ['added', 'updated']) && $post->user_id !== auth()->id()) {
-            // Note: We might want to add a specific reaction notification type later
-            // For now, we can reuse the like notification or create a generic one
-            $this->notificationService->create(
-                $post->user_id,
-                auth()->id(),
-                Notification::TYPE_REACTION,
-                $post,
-                auth()->user()->name . " reacted to your post with " . $validatedData['type'],
-                ['post_id' => $post->id, 'reaction_type' => $validatedData['type']]
-            );
+            return $this->error('Post not found', 404);
         }
 
-        return response()->json([
-            'success' => true,
-            'action' => $result['action'],
-            'counts' => $result['counts'],
-            'user_reaction' => $result['reaction'] ? $result['reaction']->type->value : null,
-        ]);
+        $result = $this->reactionService
+            ->reactToPost($request->user(), $postId, $data['type']);
+
+        $this->notifyPostOwner($result, $post, $data['type']);
+
+        return $this->successResponse($result);
     }
-
 
     public function reactToComment(Request $request, int $commentId): JsonResponse
     {
-        $validatedData = $request->validate([
-            'type' => 'required|in:like,love,angry,sad,haha'
-        ]   );
+        $data = $this->validateReaction($request);
 
-        $result = $this->reactionService->reactToComment(auth()->user(), $commentId, $validatedData['type']);
-        // send notification if added or updated (and not self)
-        if (in_array($result['action'], ['added', 'updated']) && $result['reaction'] && $result['reaction']->reactable->user_id !== auth()->id()) {
-            $comment = $result['reaction']->reactable;
-            $this->notificationService->create(
-                $comment->user_id,
-                auth()->id(),
-                Notification::TYPE_REACTION,
-                $comment->post, // Notify on the post level for comment reactions
-                auth()->user()->name . " reacted to your comment with " . $validatedData['type'],
-                ['comment_id' => $comment->id, 'reaction_type' => $validatedData['type']]
-            );
+        $result = $this->reactionService
+            ->reactToComment($request->user(), $commentId, $data['type']);
+
+        if (isset($result['error'])) {
+            return $this->error($result['error'], 404);
         }
+
+        $this->notifyCommentOwner($result, $data['type']);
+
+        return $this->successResponse($result);
+    }
+
+    /* =========================
+        Helpers
+    ========================= */
+
+    protected function validateReaction(Request $request): array
+    {
+        return $request->validate([
+            'type' => ['required', Rule::in(ReactionTypeEnum::getvalues())]
+        ]);
+    }
+
+    protected function notifyPostOwner(array $result, $post, string $type): void
+    {
+        if (
+            !in_array($result['action'], ['added', 'updated']) ||
+            $post->user_id === auth()->id()
+        ) {
+            return;
+        }
+
+        $this->notificationService->create(
+            $post->user_id,
+            auth()->id(),
+            Notification::TYPE_REACTION,
+            $post,
+            auth()->user()->name . " reacted to your post",
+            ['reaction_type' => $type]
+        );
+    }
+
+    protected function notifyCommentOwner(array $result, string $type): void
+    {
+        if (
+            !in_array($result['action'], ['added', 'updated']) ||
+            !$result['reaction']
+        ) {
+            return;
+        }
+
+        $comment = $result['reaction']->reactable;
+
+        if ($comment->user_id === auth()->id()) {
+            return;
+        }
+
+        $this->notificationService->create(
+            $comment->user_id,
+            auth()->id(),
+            Notification::TYPE_REACTION,
+            $comment->post,
+            auth()->user()->name . " reacted to your comment",
+            ['comment_id' => $comment->id, 'reaction_type' => $type]
+        );
+    }
+
+    protected function successResponse(array $result): JsonResponse
+    {
         return response()->json([
-            'success' => !isset($result['error']),
-            'message' => $result['error'] ?? 'Reaction processed',
+            'success' => true,
             'action' => $result['action'] ?? null,
-            'counts' => $result['counts'] ?? null,
-            'user_reaction' => $result['reaction'] ? $result['reaction']->type->value : null,
-        ]); 
-    }  
+            'counts' => $result['counts'] ?? [],
+            'user_reaction' => $result['reaction']?->type,
+        ]);
+    }
+
+    protected function error(string $message, int $code = 400): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => $message
+        ], $code);
+    }
 }
+

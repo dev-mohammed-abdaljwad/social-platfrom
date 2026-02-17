@@ -37,7 +37,7 @@ class ReactionController extends Controller
     public  function reactToPost(CreateReactionRequest $request, int $postId): JsonResponse
     {
         $result = $this->service->reactToPost($request->user(), $postId, $request->type);
-
+  
         return response()->json([
             'message' => 'Reaction processed successfully',
             'action' => $result['action'],
