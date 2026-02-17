@@ -180,6 +180,7 @@
                     <div class="text-center py-2">
                         <span class="text-gray-400 text-sm">Loading comments...</span>
                     </div>
+                    
                 </div>
             </div>
         </div>

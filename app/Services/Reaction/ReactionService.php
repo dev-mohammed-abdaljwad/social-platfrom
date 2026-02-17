@@ -9,6 +9,7 @@ use App\Repositories\Comment\CommentRepository;
 use App\Repositories\Post\PostRepository;
 use App\Repositories\Reaction\ReactionRepository;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class ReactionService
 {
@@ -105,27 +106,14 @@ class ReactionService
     /**
      * Get reaction counts for any model
      */
-    public function getReactionCounts(Model $reactable)
-    {
-        $counts = $reactable->reactions()
-            ->select('type', \Illuminate\Support\Facades\DB::raw('count(*) as count'))
-            ->groupBy('type')
-            ->get();
-
-        $formatted = [];
-        $total = 0;
-
-        foreach ($counts as $item) {
-            $formatted[$item->type->value] = $item->count;
-            $total += $item->count;
-        }
-
-        return [
-            'detailed' => $formatted,
-            'total' => $total
-        ];
-    }
-
+protected function getReactionCounts($model): array
+{
+    return $model->reactions()
+        ->select('type', DB::raw('COUNT(*) as count'))
+        ->groupBy('type')
+        ->pluck('count', 'type')
+        ->toArray();
+}
     /**
      * Old method for posts - kept for backward compatibility
      */

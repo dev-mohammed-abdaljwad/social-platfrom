@@ -62,7 +62,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/posts/{post}/share', [PostController::class, 'share'])->name('posts.share');
     Route::post('/posts/{post}/save', [PostController::class, 'toggleSave'])->name('posts.save');
     Route::post('/posts/{postId}/react', [ReactionController::class, 'reactToPost'])->middleware('auth')->name('posts.react');    // Shares
-    Route::post('/comments/{comment}/react', [ReactionController::class, 'reactToComment'])->name('comments.react');
+    Route::post('/comments/{comment}/reaction', [ReactionController::class, 'reactToComment'])->name('comments.react');
     Route::put('/shares/{share}', [PostController::class, 'updateShare'])->name('shares.update');
     Route::delete('/shares/{share}', [PostController::class, 'destroyShare'])->name('shares.destroy');
 
@@ -73,9 +73,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/posts/{post}/comments', [CommentController::class, 'getComments'])->name('comments.index');
     
     Route::post('/posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
-    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
-    Route::post('/comments/{comment}/react', [CommentController::class, 'reactToComment'])->name('comments.react');
-
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');   
+     
     // Pages
     Route::get('/friends', [PageController::class, 'friends'])->name('friends');
     Route::get('/settings', [PageController::class, 'settings'])->name('settings');
