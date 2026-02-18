@@ -135,7 +135,11 @@ class MassSeeder extends Seeder
 
             for ($j = 0; $j < $chunk; $j++) {
                 $daysAgo = rand(0, 365);
-                $createdAt = now()->subDays($daysAgo)->subHours(rand(0, 23))->subMinutes(rand(0, 59));
+                $createdAt  = now()
+    ->subDays($daysAgo)
+    ->subHours(rand(0, 23))
+    ->subMinutes(rand(0, 59))
+    ->format('Y-m-d H:i:s');
                 
                 $posts[] = [
                     'user_id' => rand(1, $userCount),
@@ -193,7 +197,11 @@ class MassSeeder extends Seeder
 
             for ($j = 0; $j < $chunk; $j++) {
                 $daysAgo = rand(0, 365);
-                $createdAt = now()->subDays($daysAgo)->subHours(rand(0, 23))->subMinutes(rand(0, 59));
+                $createdAt  = now()
+    ->subDays($daysAgo)
+    ->subHours(rand(0, 23))
+    ->subMinutes(rand(0, 59))
+    ->format('Y-m-d H:i:s');
                 
                 $comments[] = [
                     'user_id' => rand(1, $userCount),

@@ -838,7 +838,7 @@
         const pusherCluster = '{{ env("PUSHER_APP_CLUSTER", "mt1") }}';
         
         if (pusherKey && pusherKey !== '') {
-            const pusher = new Pusher(pusherKey, {
+             window.pusher = new Pusher(pusherKey, {
                 cluster: pusherCluster,
                 forceTLS: true,
                 authEndpoint: '/broadcasting/auth',
@@ -920,7 +920,7 @@
             window.playNotificationSound = playNotificationSound;
             
             // Subscribe to private notifications channel
-            const channel = pusher.subscribe('private-notifications.{{ auth()->id() }}');
+            const channel = window.pusher.subscribe('private-notifications.{{ auth()->id() }}');
             
             channel.bind('notification.new', function(data) {
                 console.log('New notification received:', data);
@@ -945,7 +945,10 @@
             channel.bind('pusher:subscription_error', function(status) {
                 console.error('Pusher subscription error:', status);
             });
+            // handle frindship notifications
+        
         }
+
         
         // Toast notification
         function showNotificationToast(data) {
@@ -995,7 +998,70 @@
                 setTimeout(() => toast.remove(), 300);
             }, 5000);
         }
-    </script>
+ 
+    document.addEventListener('DOMContentLoaded', function() {
+        const CURRENT_USER_ID = {{ auth()->id() }};
+        console.log('Current user:', CURRENT_USER_ID);
+
+    try {
+        const friendshipChannel = window.pusher.subscribe(`private-friendships.${CURRENT_USER_ID}`);
+        
+        friendshipChannel.bind('pusher:subscription_succeeded', function() {
+            console.log('✅ Subscribed to private-friendships.' + CURRENT_USER_ID);
+        });
+        
+        friendshipChannel.bind('pusher:subscription_error', function(error) {
+            console.error('❌ Subscription error:', error);
+        });
+        
+        friendshipChannel.bind('friend.request.accepted', function(data) {
+            console.log('✅ Friend request accepted:', data);
+            
+            const friendId = data.friendship.sender_id === CURRENT_USER_ID 
+                ? data.friendship.receiver_id 
+                : data.friendship.sender_id;
+            
+            // Update button
+              const container = document.getElementById(`user-actions-${friendId}`);
+               if (!container) return;
+              container.innerHTML = `
+        <div class="relative">
+            <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium flex items-center gap-2">
+                <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4z"/>
+                </svg>
+                Friends
+            </button>
+        </div>
+
+        <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium">
+            Message
+        </button>
+    `;
+            // Notification
+            // playNotificationSound();
+            // const badge = document.getElementById('notificationBadge');
+            // if (badge) {
+            //     updateBadge((parseInt(badge.textContent) || 0) + 1);
+            // }
+            
+            // showNotificationToast({
+            //     id: data.notification_id ?? null,
+            //     from_user: data.from_user,
+            //     message: data.from_user.name + ' accepted your friend request 🎉',
+            //     url: data.url ?? '/friends'
+            // });
+            
+            // if (notificationsOpen) loadNotifications();
+        });
+        
+    } catch (error) {
+        console.error('Error setting up Pusher:', error);
+    }
+
+});
+</script>
+
     <style>
         @keyframes slide-in {
             from { transform: translateX(100%); opacity: 0; }

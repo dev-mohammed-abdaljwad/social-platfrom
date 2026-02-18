@@ -87,7 +87,7 @@ Route::middleware('auth')->group(function () {
 
     // Send friend request with rate limiting (20/min per user)
     Route::middleware('throttle:friend-request')->group(function () {
-        Route::post('/friends/{user}/send', [FriendController::class, 'send'])->name('friends.send');
+        Route::post('/friends/send/{user}', [FriendController::class, 'send'])->name('friends.send');
     });
 
     // Profile settings

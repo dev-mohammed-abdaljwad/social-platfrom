@@ -23,7 +23,8 @@ return new class extends Migration
             $table->enum('privacy', PrivacyTypeEnum::getValues())->default(PrivacyTypeEnum::Public->value);    
             $table->enum('type', ContentTypeEnum::getValues())->default(ContentTypeEnum::Text->value);
             $table->index(['user_id', 'privacy']);
-            $table->timestamps();
+            $table->dateTime('created_at');
+            $table->dateTime('updated_at');
         });
     }
 

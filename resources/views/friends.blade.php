@@ -76,8 +76,8 @@
                             </div>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="acceptRequest({{ $request->id }})" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">Accept</button>
-                            <button onclick="rejectRequest({{ $request->id }})" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors">Decline</button>
+                            <button onclick="acceptFriendRequest({{ $request->id }},{{ auth()->user()->id }})" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">Accept</button>
+                            <button onclick="rejectFriendRequest({{ $request->id }},{{ auth()->user()->id }})" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium transition-colors">Decline</button>
                         </div>
                     </div>
                     @endforeach
@@ -110,7 +110,7 @@
                                 <p class="text-xs text-gray-400">Sent {{ $request->created_at->diffForHumans() }}</p>
                             </div>
                         </div>
-                        <button onclick="cancelRequest({{ $request->id }})" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">Cancel</button>
+                        <button onclick="cancelFriendRequest({{ $request->id }},{{ auth()->user()->id }})" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-200 transition-colors">Cancel</button>
                     </div>
                     @endforeach
                 </div>
@@ -140,7 +140,7 @@
                             </div>
                         </div>
                         <div class="mt-3">
-                            <button onclick="sendRequest({{ $user->id }})" class="w-full px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">Add Friend</button>
+                            <button onclick="sendFriendRequest({{ $user->id }})" class="w-full px-3 py-1.5 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors">Add Friend</button>
                         </div>
                     </div>
                     @endforeach
@@ -153,6 +153,10 @@
             </div>
         </div>
     </div>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+<script>
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+</script>
 @endsection
 
 @push('scripts')
@@ -174,103 +178,6 @@
             document.getElementById(tabId).classList.remove('hidden');
         });
     });
-
-    // Send friend request
-    async function sendRequest(userId) {
-        try {
-            const response = await fetch(`/friends/${userId}/send`, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                }
-            });
-            const data = await response.json();
-            if (data.success) {
-                document.getElementById(`suggestion-${userId}`).remove();
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    }
-
-    // Accept friend request
-    async function acceptRequest(requestId) {
-        try {
-            const response = await fetch(`/friends/${requestId}/accept`, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                }
-            });
-            const data = await response.json();
-            if (data.success) {
-                document.getElementById(`request-${requestId}`).remove();
-                location.reload(); // Refresh to update counts
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    }
-
-    // Reject friend request
-    async function rejectRequest(requestId) {
-        try {
-            const response = await fetch(`/friends/${requestId}/reject`, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                }
-            });
-            const data = await response.json();
-            if (data.success) {
-                document.getElementById(`request-${requestId}`).remove();
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    }
-
-    // Cancel sent request
-    async function cancelRequest(requestId) {
-        try {
-            const response = await fetch(`/friends/${requestId}/cancel`, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                }
-            });
-            const data = await response.json();
-            if (data.success) {
-                document.getElementById(`sent-${requestId}`).remove();
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    }
-
-    // Remove friend
-    async function removeFriend(userId) {
-        if (!confirm('Are you sure you want to remove this friend?')) return;
-        
-        try {
-            const response = await fetch(`/friends/${userId}/remove`, {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                }
-            });
-            const data = await response.json();
-            if (data.success) {
-                document.getElementById(`friend-${userId}`).remove();
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    }
 </script>
+<script src="{{ asset('js/modules/search.js') }}"></script>
 @endpush

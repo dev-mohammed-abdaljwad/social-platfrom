@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Web;
 
+use App\Events\FriendRequestAccepted;
 use App\Http\Controllers\Controller;
 use App\Services\Friendship\FriendshipService;
 use App\Services\Notification\NotificationService;
@@ -60,6 +61,7 @@ class FriendController extends Controller
 
         // Send notification to the sender
         $friendship = $result['friendship'];
+        broadcast(new FriendRequestAccepted($friendship));
         $this->notificationService->friendAccepted(
             $friendship->sender,
             $currentUser,

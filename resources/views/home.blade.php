@@ -118,7 +118,7 @@
     <!-- Posts Feed -->
     <div id="postsFeed" class="space-y-3 sm:space-y-6">
         @forelse($posts as $post)
-        @include('partials.post-card', ['post' => $post])
+        @include('components.post-card', ['post' => $post])
         @empty
         <div class="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-200" id="emptyState">
             <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,11 +262,9 @@
         window.INITIAL_LAST_POST_ID = {{ $posts->last()?->id ?? 'null' }};
         window.INITIAL_HAS_MORE = {{ $posts->count() >= 10 ? 'true' : 'false' }};
     </script>
-
-    <!-- Load modules in order -->
-    <script src="js/modules/posts.js"></script>
-    <script src="js/modules/reactions.js"></script>
-    <script src="js/modules/comments.js"></script>
-    <script src="js/modules/media.js"></script>
-    <script src="js/modules/feed.js"></script>
+    <script src="{{ asset('js/modules/posts.js') }}"></script>
+    <script src="{{ asset('js/modules/reactions.js') }}"></script>
+    <script src="{{ asset('js/modules/comments.js') }}"></script>
+    <script src="{{ asset('js/modules/media.js') }}"></script>
+    <script src="{{ asset('js/modules/feed.js') }}"></script>
 @endpush

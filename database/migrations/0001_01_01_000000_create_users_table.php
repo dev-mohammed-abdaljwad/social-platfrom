@@ -23,7 +23,8 @@ return new class extends Migration
             $table->boolean('is_active')->default(true);    
             $table->string('password');
             $table->rememberToken();
-            $table->timestamps();
+            $table->dateTime('created_at');
+            $table->dateTime('updated_at');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

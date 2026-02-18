@@ -3,80 +3,81 @@
 @section('title', ($user->name ?? 'Profile') . ' - SocialTime')
 
 @section('content')
-    <!-- Profile Header -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
-        <!-- Cover Photo -->
-        <div class="h-48 relative overflow-hidden {{ $user->cover_photo ? '' : 'bg-gradient-to-r from-blue-500 to-purple-600' }}">
+<!-- Profile Header -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+    <!-- Cover Photo -->
+    <div class="h-48 relative overflow-hidden {{ $user->cover_photo ? '' : 'bg-gradient-to-r from-blue-500 to-purple-600' }}">
+        @if($user->cover_photo)
+        <img src="{{ $user->cover_url }}" alt="Cover photo" class="w-full h-full object-cover" id="coverPhotoImage">
+        @else
+        <div class="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600" id="coverPhotoPlaceholder"></div>
+        @endif
+
+        @if(isset($isOwnProfile) && $isOwnProfile)
+        <div class="absolute bottom-4 right-4 flex gap-2">
             @if($user->cover_photo)
-                <img src="{{ $user->cover_url }}" alt="Cover photo" class="w-full h-full object-cover" id="coverPhotoImage">
-            @else
-                <div class="w-full h-full bg-gradient-to-r from-blue-500 to-purple-600" id="coverPhotoPlaceholder"></div>
+            <button onclick="removeCoverPhoto()" class="px-3 py-2 bg-red-500/80 backdrop-blur-sm text-white rounded-lg hover:bg-red-600/80 transition-colors text-sm">
+                <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+            </button>
             @endif
-            
-            @if(isset($isOwnProfile) && $isOwnProfile)
-            <div class="absolute bottom-4 right-4 flex gap-2">
-                @if($user->cover_photo)
-                <button onclick="removeCoverPhoto()" class="px-3 py-2 bg-red-500/80 backdrop-blur-sm text-white rounded-lg hover:bg-red-600/80 transition-colors text-sm">
-                    <svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                    </svg>
-                </button>
-                @endif
-                <button onclick="document.getElementById('coverPhotoInput').click()" class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-colors text-sm">
-                    <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    </svg>
-                    {{ $user->cover_photo ? 'Change Cover' : 'Add Cover' }}
-                </button>
-                <input type="file" id="coverPhotoInput" class="hidden" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp" onchange="uploadCoverPhoto(this)">
-            </div>
-            @endif
+            <button onclick="document.getElementById('coverPhotoInput').click()" class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-colors text-sm">
+                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                {{ $user->cover_photo ? 'Change Cover' : 'Add Cover' }}
+            </button>
+            <input type="file" id="coverPhotoInput" class="hidden" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp" onchange="uploadCoverPhoto(this)">
         </div>
+        @endif
+    </div>
 
-        <!-- Profile Info -->
-        <div class="px-6 pb-6">
-            <div class="flex flex-col sm:flex-row sm:items-end -mt-16 sm:-mt-12 gap-4">
-                <!-- Profile Picture -->
-                <div class="relative group">
-                    <img 
-                        id="profilePictureImage"
-                        src="{{ $user->avatar_url }}" 
-                        alt="{{ $user->name ?? 'User' }}" 
-                        class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover bg-white"
-                    >
-                    @if(isset($isOwnProfile) && $isOwnProfile)
-                    <div class="absolute inset-0 flex items-center justify-center">
-                        <button onclick="document.getElementById('profilePictureInput').click()" class="absolute bottom-2 right-2 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors shadow">
-                            <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                            </svg>
-                        </button>
-                    </div>
-                    <input type="file" id="profilePictureInput" class="hidden" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp" onchange="uploadProfilePicture(this)">
-                    @endif
+    <!-- Profile Info -->
+    <div class="px-6 pb-6">
+        <div class="flex flex-col sm:flex-row sm:items-end -mt-16 sm:-mt-12 gap-4">
+            <!-- Profile Picture -->
+            <div class="relative group">
+                <img id="profilePictureImage" src="{{ $user->avatar_url }}" alt="{{ $user->name ?? 'User' }}" class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover bg-white">
+                @if(isset($isOwnProfile) && $isOwnProfile)
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <button onclick="document.getElementById('profilePictureInput').click()" class="absolute bottom-2 right-2 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors shadow">
+                        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </button>
                 </div>
+                <input type="file" id="profilePictureInput" class="hidden" accept="image/jpeg,image/png,image/jpg,image/gif,image/webp" onchange="uploadProfilePicture(this)">
+                @endif
+            </div>
 
-                <!-- Name and Stats -->
-                <div class="flex-1 sm:ml-4">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <h1 class="text-2xl font-bold text-gray-800">{{ $user->name ?? 'User Name' }}</h1>
-                            <p class="text-gray-500">{{ '@' . ($user->username ?? 'username') }}</p>
-                        </div>
-                        <div class="flex gap-2">
+            <!-- Name and Stats -->
+            <div class="flex-1 sm:ml-4">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-800">{{ $user->name ?? 'User Name' }}</h1>
+                        <p class="text-gray-500">{{ '@' . ($user->username ?? 'username') }}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        @if(isset($isOwnProfile) && $isOwnProfile)
+                        <a href="{{ url('/settings') }}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                            Edit Profile
+                        </a>
+                        @else
+                        {{-- Friend Button with different states --}}
+                        <div id="user-actions-{{ $user->id }}">
                             @if(isset($isOwnProfile) && $isOwnProfile)
                             <a href="{{ url('/settings') }}" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
                                 Edit Profile
                             </a>
                             @else
-                            {{-- Friend Button with different states --}}
                             @if($friendshipStatus === 'friends')
                             <div class="relative" id="friendDropdownContainer">
                                 <button id="friendDropdownBtn" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium flex items-center gap-2">
                                     <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
                                     </svg>
                                     Friends
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -84,588 +85,380 @@
                                     </svg>
                                 </button>
                                 <div id="friendDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
-                                    <button onclick="unfriend({{ $user->id }})" class="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 text-gray-700">
-                                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"></path>
-                                        </svg>
+                                    <button onclick="removeFriend({{ $user->id }})" class="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 text-gray-700">
                                         Unfriend
                                     </button>
                                     <button onclick="blockUser({{ $user->id }})" class="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 text-red-600">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
-                                        </svg>
                                         Block
                                     </button>
                                     <div class="border-t border-gray-100"></div>
                                     <a href="{{ route('friends') }}" class="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 text-gray-700">
-                                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                        </svg>
                                         See All Friends
                                     </a>
                                 </div>
                             </div>
                             @elseif($friendshipStatus === 'pending_sent')
-                            <button id="cancelRequestBtn" onclick="cancelFriendRequest({{ $friendship->id }})" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                Request Sent
+                            <button onclick="cancelFriendRequest({{ $friendship->id }}, {{ $user->id }})" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                                Cancel Request
                             </button>
                             @elseif($friendshipStatus === 'pending_received')
                             <div class="flex gap-2">
-                                <button onclick="acceptFriendRequest({{ $friendship->id }})" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                <button onclick="acceptFriendRequest({{ $friendship->id }}, {{ $user->id }})" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
                                     Accept
                                 </button>
-                                <button onclick="rejectFriendRequest({{ $friendship->id }})" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                                <button onclick="rejectFriendRequest({{ $friendship->id }}, {{ $user->id }})" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
                                     Decline
                                 </button>
                             </div>
                             @else
-                            <button id="addFriendBtn" onclick="sendFriendRequest({{ $user->id }})" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
-                                </svg>
+                            <button onclick="sendFriendRequest({{ $user->id }})" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
                                 Add Friend
                             </button>
                             @endif
-                            
+
                             <button class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
-                                <svg class="w-5 h-5 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-                                </svg>
                                 Message
                             </button>
                             @endif
                         </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Bio -->
-            <p class="mt-4 text-gray-700">{{ $user->bio ?? 'No bio yet.' }}</p>
-
-            <!-- Stats -->
-            <div class="flex gap-6 mt-4 pt-4 border-t border-gray-100">
-                <div class="text-center">
-                    <span class="block text-xl font-bold text-gray-800">{{ $posts->count() }}</span>
-                    <span class="text-sm text-gray-500">Posts</span>
-                </div>
-                <div class="text-center">
-                    <span class="block text-xl font-bold text-gray-800">{{ $sharedPosts->count() }}</span>
-                    <span class="text-sm text-gray-500">Shares</span>
-                </div>
-                <div class="text-center">
-                    <span class="block text-xl font-bold text-gray-800">{{ $friends->count() }}</span>
-                    <span class="text-sm text-gray-500">Friends</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tabs -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
-        <div class="flex border-b border-gray-200">
-            <button class="flex-1 px-4 py-3 text-center font-medium text-blue-600 border-b-2 border-blue-600 tab-btn active" data-tab="posts">
-                Posts
-            </button>
-            <button class="flex-1 px-4 py-3 text-center font-medium text-gray-500 hover:text-gray-700 tab-btn" data-tab="shares">
-                Shares
-            </button>
-            <button class="flex-1 px-4 py-3 text-center font-medium text-gray-500 hover:text-gray-700 tab-btn" data-tab="friends">
-                Friends
-            </button>
-            <button class="flex-1 px-4 py-3 text-center font-medium text-gray-500 hover:text-gray-700 tab-btn" data-tab="about">
-                About
-            </button>
-        </div>
-    </div>
-
-    <!-- Tab Content -->
-    <div id="postsTab" class="tab-content space-y-6">
-        @forelse($posts as $post)
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4" data-post-id="{{ $post->id }}">
-            <div class="flex gap-4">
-                <a href="{{ route('profile.show', $post->user) }}">
-                    <img src="{{ $post->user->avatar_url }}" 
-                         alt="{{ $post->user->name }}" 
-                         class="w-10 h-10 rounded-full object-cover">
-                </a>
-                <div class="flex-1">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <a href="{{ route('profile.show', $post->user) }}" class="font-semibold text-gray-800 hover:text-blue-600">{{ $post->user->name }}</a>
-                            <p class="text-sm text-gray-500">{{ $post->created_at->diffForHumans() }}</p>
-                        </div>
-                        @if(auth()->check() && auth()->id() === $post->user_id)
-                        <div class="relative">
-                            <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors post-menu-btn" data-post-id="{{ $post->id }}">
-                                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
-                                </svg>
-                            </button>
-                            <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 hidden z-10 post-menu" data-post-id="{{ $post->id }}">
-                                <button class="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-t-lg edit-post-btn" 
-                                        data-post-id="{{ $post->id }}" 
-                                        data-content="{{ $post->content }}"
-                                        data-location="{{ $post->location }}"
-                                        data-privacy="{{ $post->privacy?->value }}">
-                                    <span class="flex items-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                        </svg>
-                                        Edit Post
-                                    </span>
-                                </button>
-                                <button class="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 rounded-b-lg delete-post-btn" data-post-id="{{ $post->id }}">
-                                    <span class="flex items-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                        </svg>
-                                        Delete Post
-                                    </span>
-                                </button>
-                            </div>
-                        </div>
                         @endif
                     </div>
-                    
-                    @if($post->content)
-                    <p class="mt-3 text-gray-700 whitespace-pre-line post-content">{{ $post->content }}</p>
-                    @endif
-                    
-                    @if($post->image_url)
-                    <img src="{{ $post->image_url }}" alt="Post image" class="mt-3 rounded-lg max-h-96 w-full object-cover">
-                    @endif
-                    
-                    @if($post->video_url)
-                    <video src="{{ $post->video_url }}" controls class="mt-3 rounded-lg max-h-96 w-full"></video>
-                    @endif
-                        <!-- Post Location -->
-                    @if($post->location)
-                    <div class="mt-2 text-xs sm:text-sm text-gray-500 flex items-center gap-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                        {{ $post->location }}
-                    </div>
-                    @endif
-                    <!-- Post Actions -->
-                 <div class="flex items-center justify-between sm:justify-start gap-2 sm:gap-6 mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100">
-    <div class="flex items-center gap-0.5 sm:gap-1 relative">
-        @php
-            $userReaction = auth()->check() ? $post->reactions()->where('user_id', auth()->id())->first() : null;
-            $reactionCounts = $post->reactions()->select('type', \Illuminate\Support\Facades\DB::raw('count(*) as count'))->groupBy('type')->get();
-            $totalReactions = $reactionCounts->sum('count');
-        @endphp
-        
-        <div class="relative reaction-picker-container" data-post-id="{{ $post->id }}">
-            <!-- Main Reaction Button -->
-            <button class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-blue-500 transition-colors reaction-btn-main px-2 py-1.5 rounded-lg hover:bg-gray-100 {{ $userReaction ? 'text-blue-600 font-semibold' : '' }}" 
-                    data-post-id="{{ $post->id }}"
-                    type="button">
-                @if($userReaction)
-                    <span class="text-lg reaction-emoji">{{ \App\Enums\ReactionTypeEnum::tryFrom($userReaction->type)->emoji() }}</span>
-                    <span class="text-xs sm:text-sm capitalize reaction-label">{{ $userReaction->type }}</span>
-                @else
-                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.708C19.746 10 20.5 10.811 20.5 11.812c0 .387-.121.76-.346 1.07l-2.44 3.356c-.311.43-.802.682-1.324.682H8.5V10c0-.828.672-1.5 1.5-1.5h.5V4.667c0-.92.747-1.667 1.667-1.667h1.666c.92 0 1.667.747 1.667 1.667V10zM8.5 10H5.5c-.828 0-1.5.672-1.5 1.5v5c0 .828.672 1.5 1.5 1.5h3V10z"></path>
-                    </svg>
-                    <span class="text-xs sm:text-sm">Like</span>
-                @endif
-            </button>
-
-            <!-- Reaction Picker - Stays visible when opened -->
-            <div class="absolute bottom-full left-0 mb-2 bg-white rounded-full shadow-xl border border-gray-100 p-2 hidden reaction-picker z-20 flex items-center gap-1"
-                 id="picker-{{ $post->id }}">
-                @foreach(\App\Enums\ReactionTypeEnum::cases() as $case)
-                    <button class="p-2 hover:scale-125 transition-transform reaction-option" 
-                            data-post-id="{{ $post->id }}" 
-                            data-type="{{ $case->value }}"
-                            title="{{ ucfirst($case->value) }}"
-                            type="button">
-                        <span class="text-xl sm:text-2xl cursor-pointer">{{ $case->emoji() }}</span>
-                    </button>
-                @endforeach
+                </div>
             </div>
         </div>
 
-        <!-- Reactions Count & Icons -->
-        <button class="text-gray-600 hover:text-blue-500 hover:underline text-xs sm:text-sm view-reactions-btn flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-gray-100" 
-                data-post-id="{{ $post->id }}"
-                type="button">
-            <div class="flex -space-x-1">
-                @foreach($reactionCounts->sortByDesc('count')->take(3) as $count)
-                    <span class="text-xs">{{ \App\Enums\ReactionTypeEnum::tryFrom($count->type)->emoji() }}</span>
-                @endforeach
+        <!-- Bio -->
+        <p class="mt-4 text-gray-700">{{ $user->bio ?? 'No bio yet.' }}</p>
+
+        <!-- Stats -->
+        <div class="flex gap-6 mt-4 pt-4 border-t border-gray-100">
+            <div class="text-center">
+                <span class="block text-xl font-bold text-gray-800">{{ $posts->count() }}</span>
+                <span class="text-sm text-gray-500">Posts</span>
             </div>
-            <span class="reactions-count">{{ $totalReactions > 0 ? $totalReactions : '' }}</span>
+            <div class="text-center">
+                <span class="block text-xl font-bold text-gray-800">{{ $sharedPosts->count() }}</span>
+                <span class="text-sm text-gray-500">Shares</span>
+            </div>
+            <div class="text-center">
+                <span class="block text-xl font-bold text-gray-800">{{ $friends->count() }}</span>
+                <span class="text-sm text-gray-500">Friends</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
+    <div class="flex border-b border-gray-200">
+        <button class="flex-1 px-4 py-3 text-center font-medium text-blue-600 border-b-2 border-blue-600 tab-btn active" data-tab="posts">
+            Posts
+        </button>
+        <button class="flex-1 px-4 py-3 text-center font-medium text-gray-500 hover:text-gray-700 tab-btn" data-tab="shares">
+            Shares
+        </button>
+        <button class="flex-1 px-4 py-3 text-center font-medium text-gray-500 hover:text-gray-700 tab-btn" data-tab="friends">
+            Friends
+        </button>
+        <button class="flex-1 px-4 py-3 text-center font-medium text-gray-500 hover:text-gray-700 tab-btn" data-tab="about">
+            About
         </button>
     </div>
+</div>
 
-    <!-- Rest of buttons remain the same -->
-    <button class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-blue-500 transition-colors comment-toggle-btn px-2 py-1.5 rounded-lg hover:bg-gray-100" data-post-id="{{ $post->id }}" type="button">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+<!-- Tab Content -->
+<div id="postsTab" class="tab-content space-y-6">
+    @forelse($posts as $post)
+    <x-post-card :post="$post" />
+    @empty
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+        <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
         </svg>
-        <span class="comment-count text-xs sm:text-sm">{{ $post->comments_count ?? 0 }}</span>
-    </button>
-    <button class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-green-500 transition-colors share-btn px-2 py-1.5 rounded-lg hover:bg-gray-100 {{ $post->is_shared ? 'text-green-500' : '' }}" data-post-id="{{ $post->id }}" type="button">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="{{ $post->is_shared ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+        <p class="text-gray-500">No posts yet.</p>
+    </div>
+    @endforelse
+</div>
+
+
+
+<div id="sharesTab" class="tab-content hidden space-y-6">
+    @forelse($sharedPosts as $share)
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4" data-share-id="{{ $share->id }}">
+        <!-- Share Header -->
+        <div class="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
+            <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-green-500" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
+                </svg>
+                <span class="text-sm text-gray-500">{{ $user->name }} shared this post</span>
+                <span class="text-sm text-gray-400">{{ $share->created_at->diffForHumans() }}</span>
+            </div>
+            @if(auth()->check() && auth()->id() === $share->user_id)
+            <div class="relative">
+                <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors share-menu-btn" data-share-id="{{ $share->id }}">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                    </svg>
+                </button>
+                <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 hidden z-10 share-menu" data-share-id="{{ $share->id }}">
+                    <button class="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-t-lg edit-share-btn" data-share-id="{{ $share->id }}" data-content="{{ $share->content }}">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                            Edit Share
+                        </span>
+                    </button>
+                    <button class="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 rounded-b-lg delete-share-btn" data-share-id="{{ $share->id }}">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            Delete Share
+                        </span>
+                    </button>
+                </div>
+            </div>
+            @endif
+        </div>
+
+        @if($share->content)
+        <p class="text-gray-700 mb-3 share-content">{{ $share->content }}</p>
+        @endif
+
+        <!-- Original Post -->
+        <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div class="flex gap-4">
+                <a href="{{ route('profile.show', $share->post->user) }}">
+                    <img src="{{ $share->post->user->avatar_url }}" alt="{{ $share->post->user->name }}" class="w-10 h-10 rounded-full object-cover">
+                </a>
+                <div class="flex-1">
+                    <div>
+                        <a href="{{ route('profile.show', $share->post->user) }}" class="font-semibold text-gray-800 hover:text-blue-600">{{ $share->post->user->name }}</a>
+                        <p class="text-sm text-gray-500">{{ $share->post->created_at->diffForHumans() }}</p>
+                    </div>
+
+                    @if($share->post->content)
+                    <p class="mt-3 text-gray-700 whitespace-pre-line">{{ $share->post->content }}</p>
+                    @endif
+
+                    @if($share->post->image_url)
+                    <img src="{{ $share->post->image_url }}" alt="Post image" class="mt-3 rounded-lg max-h-96 w-full object-cover">
+                    @endif
+
+                    @if($share->post->video_url)
+                    <video src="{{ $share->post->video_url }}" controls class="mt-3 rounded-lg max-h-96 w-full"></video>
+                    @endif
+                </div>
+            </div>
+        </div>
+    </div>
+    @empty
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+        <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
         </svg>
-        <span class="shares-count text-xs sm:text-sm">{{ $post->shares_count ?? 0 }}</span>
-    </button>
-    @auth
-    <button class="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-yellow-500 transition-colors save-btn sm:ml-auto px-2 py-1.5 rounded-lg hover:bg-gray-100 {{ $post->is_saved ? 'text-yellow-500' : '' }}" data-post-id="{{ $post->id }}" type="button">
-        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="{{ $post->is_saved ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
-        </svg>
-    </button>
-    @endauth
+        <p class="text-gray-500">No shared posts yet.</p>
+    </div>
+    @endforelse
 </div>
-                    <!-- Comments Section -->
-                  <div class="comments-section hidden mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100" id="comments-{{ $post->id }}">
-                <!-- Comment Form -->
-                @auth
-                <form class="comment-form flex gap-2 sm:gap-3 mb-3 sm:mb-4" data-post-id="{{ $post->id }}">
-                    <img src="{{ auth()->user()->avatar_url }}" alt="Profile" class="w-6 h-6 sm:w-8 sm:h-8 rounded-full object-cover flex-shrink-0">
-                    <div class="flex-1 flex gap-1.5 sm:gap-2">
-                        <input type="text" 
-                               name="content" 
-                               placeholder="Write a comment..." 
-                               class="flex-1 px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-100 rounded-full text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                               required>
-                        <button type="submit" class="px-3 sm:px-4 py-1.5 sm:py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium">
-                            Post
-                        </button>
-                    </div>
-                </form>
-                @else
-                <p class="text-gray-500 text-sm mb-4">
-                    <button onclick="openLoginModal()" class="text-blue-600 hover:underline">Log in</button> to comment
-                </p>
-                @endauth
-                
-                <!-- Comments List -->
-                <div class="comments-list space-y-3" id="comments-list-{{ $post->id }}">
-                    <div class="text-center py-2">
-                        <span class="text-gray-400 text-sm">Loading comments...</span>
-                    </div>
-                    
-                </div>
-            </div>
-            
 
-            </div>
-                </div>
-            </div>
+<div id="friendsTab" class="tab-content hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Friends ({{ $friends->count() }})</h3>
+        @if($friends->count() > 0)
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+            @foreach($friends as $friend)
+            <a href="{{ route('profile.show', $friend) }}" class="block p-3 hover:bg-gray-50 rounded-lg transition-colors text-center">
+                <img src="{{ $friend->avatar_url }}" alt="{{ $friend->name }}" class="w-20 h-20 rounded-full mx-auto mb-2 object-cover">
+                <p class="font-medium text-gray-800 truncate">{{ $friend->name }}</p>
+                <p class="text-sm text-gray-500 truncate">{{ '@' . $friend->username }}</p>
+            </a>
+            @endforeach
         </div>
-        @empty
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+        @else
+        <div class="text-center py-8">
             <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
             </svg>
-            <p class="text-gray-500">No posts yet.</p>
+            <p class="text-gray-500">No friends yet.</p>
         </div>
-        @endforelse
+        @endif
     </div>
+</div>
 
-    <div id="sharesTab" class="tab-content hidden space-y-6">
-        @forelse($sharedPosts as $share)
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4" data-share-id="{{ $share->id }}">
-            <!-- Share Header -->
-            <div class="flex items-center justify-between mb-3 pb-3 border-b border-gray-100">
-                <div class="flex items-center gap-2">
-                    <svg class="w-4 h-4 text-green-500" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
-                    </svg>
-                    <span class="text-sm text-gray-500">{{ $user->name }} shared this post</span>
-                    <span class="text-sm text-gray-400">{{ $share->created_at->diffForHumans() }}</span>
-                </div>
-                @if(auth()->check() && auth()->id() === $share->user_id)
-                <div class="relative">
-                    <button class="p-2 hover:bg-gray-100 rounded-lg transition-colors share-menu-btn" data-share-id="{{ $share->id }}">
-                        <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
-                        </svg>
-                    </button>
-                    <div class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 hidden z-10 share-menu" data-share-id="{{ $share->id }}">
-                        <button class="w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 rounded-t-lg edit-share-btn" 
-                                data-share-id="{{ $share->id }}" 
-                                data-content="{{ $share->content }}">
-                            <span class="flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
-                                </svg>
-                                Edit Share
-                            </span>
-                        </button>
-                        <button class="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 rounded-b-lg delete-share-btn" data-share-id="{{ $share->id }}">
-                            <span class="flex items-center gap-2">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                                </svg>
-                                Delete Share
-                            </span>
-                        </button>
-                    </div>
-                </div>
-                @endif
-            </div>
-            
-            @if($share->content)
-            <p class="text-gray-700 mb-3 share-content">{{ $share->content }}</p>
-            @endif
-
-            <!-- Original Post -->
-            <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <div class="flex gap-4">
-                    <a href="{{ route('profile.show', $share->post->user) }}">
-                        <img src="{{ $share->post->user->avatar_url }}" 
-                             alt="{{ $share->post->user->name }}" 
-                             class="w-10 h-10 rounded-full object-cover">
-                    </a>
-                    <div class="flex-1">
-                        <div>
-                            <a href="{{ route('profile.show', $share->post->user) }}" class="font-semibold text-gray-800 hover:text-blue-600">{{ $share->post->user->name }}</a>
-                            <p class="text-sm text-gray-500">{{ $share->post->created_at->diffForHumans() }}</p>
-                        </div>
-                        
-                        @if($share->post->content)
-                        <p class="mt-3 text-gray-700 whitespace-pre-line">{{ $share->post->content }}</p>
-                        @endif
-                        
-                        @if($share->post->image_url)
-                        <img src="{{ $share->post->image_url }}" alt="Post image" class="mt-3 rounded-lg max-h-96 w-full object-cover">
-                        @endif
-                        
-                        @if($share->post->video_url)
-                        <video src="{{ $share->post->video_url }}" controls class="mt-3 rounded-lg max-h-96 w-full"></video>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
-        @empty
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-            <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"></path>
-            </svg>
-            <p class="text-gray-500">No shared posts yet.</p>
-        </div>
-        @endforelse
-    </div>
-
-    <div id="friendsTab" class="tab-content hidden">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Friends ({{ $friends->count() }})</h3>
-            @if($friends->count() > 0)
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                @foreach($friends as $friend)
-                <a href="{{ route('profile.show', $friend) }}" class="block p-3 hover:bg-gray-50 rounded-lg transition-colors text-center">
-                    <img 
-                        src="{{ $friend->avatar_url }}" 
-                        alt="{{ $friend->name }}" 
-                        class="w-20 h-20 rounded-full mx-auto mb-2 object-cover"
-                    >
-                    <p class="font-medium text-gray-800 truncate">{{ $friend->name }}</p>
-                    <p class="text-sm text-gray-500 truncate">{{ '@' . $friend->username }}</p>
-                </a>
-                @endforeach
-            </div>
-            @else
-            <div class="text-center py-8">
-                <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+<div id="aboutTab" class="tab-content hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">About</h3>
+        <div class="space-y-4">
+            @if($user->bio)
+            <div class="flex items-start gap-3">
+                <svg class="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
-                <p class="text-gray-500">No friends yet.</p>
+                <span class="text-gray-700">{{ $user->bio }}</span>
             </div>
             @endif
-        </div>
-    </div>
-
-    <div id="aboutTab" class="tab-content hidden">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">About</h3>
-            <div class="space-y-4">
-                @if($user->bio)
-                <div class="flex items-start gap-3">
-                    <svg class="w-5 h-5 text-gray-400 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                    </svg>
-                    <span class="text-gray-700">{{ $user->bio }}</span>
-                </div>
-                @endif
-                <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                    </svg>
-                    <span class="text-gray-700">{{ $user->email }}</span>
-                </div>
-                <div class="flex items-center gap-3">
-                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <span class="text-gray-700">Joined {{ $user->created_at->format('F Y') }}</span>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Share Modal -->
-    <div id="shareModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-800">Share Post</h3>
-                <button onclick="closeShareModal()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            <div class="p-6">
-                <textarea 
-                    id="shareContent" 
-                    placeholder="Add a comment to your share (optional)..." 
-                    class="w-full px-4 py-3 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    rows="3"
-                ></textarea>
-                
-                <!-- Post Preview -->
-                <div id="sharePostPreview" class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <!-- Will be filled dynamically -->
-                </div>
-            </div>
-            <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200">
-                <button onclick="closeShareModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium">
-                    Cancel
-                </button>
-                <button onclick="confirmShare()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
-                    Share
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Likes Modal -->
-    <div id="likesModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 overflow-hidden max-h-[80vh] flex flex-col">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-800">Likes</h3>
-                <button onclick="closeLikesModal()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            <div class="p-4 overflow-y-auto flex-1" id="likesModalContent">
-                <div class="text-center py-4 text-gray-500">Loading...</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Post Modal -->
-    <div id="editPostModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-800">Edit Post</h3>
-                <button onclick="closeEditPostModal()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            <div class="p-6">
-                <input type="hidden" id="editPostId">
-                <textarea 
-                    id="editPostContent" 
-                    placeholder="What's on your mind?" 
-                    class="w-full px-4 py-3 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    rows="4"
-                ></textarea>
-                <div class="mt-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Privacy</label>
-                    <select id="editPostPrivacy" class="w-full px-4 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="public">Public</option>
-                        <option value="friends">Friends Only</option>
-                        <option value="private">Only Me</option>
-                    </select>
-                </div>
-            </div>
-            <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200">
-                <button onclick="closeEditPostModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium">
-                    Cancel
-                </button>
-                <button onclick="saveEditPost()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                    Save Changes
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Share Modal -->
-    <div id="editShareModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-800">Edit Share</h3>
-                <button onclick="closeEditShareModal()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            <div class="p-6">
-                <input type="hidden" id="editShareId">
-                <textarea 
-                    id="editShareContent" 
-                    placeholder="Add a comment to your share (optional)..." 
-                    class="w-full px-4 py-3 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                    rows="3"
-                ></textarea>
-            </div>
-            <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200">
-                <button onclick="closeEditShareModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium">
-                    Cancel
-                </button>
-                <button onclick="saveEditShare()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                    Save Changes
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Delete Confirmation Modal -->
-    <div id="deleteConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 overflow-hidden">
-            <div class="p-6 text-center">
-                <svg class="w-16 h-16 mx-auto text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                 </svg>
-                <h3 class="text-lg font-semibold text-gray-800 mb-2" id="deleteConfirmTitle">Delete Post?</h3>
-                <p class="text-gray-600 mb-6" id="deleteConfirmMessage">This action cannot be undone. Are you sure you want to delete this post?</p>
-                <input type="hidden" id="deleteItemId">
-                <input type="hidden" id="deleteItemType">
-                <div class="flex justify-center gap-3">
-                    <button onclick="closeDeleteConfirmModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium">
-                        Cancel
-                    </button>
-                    <button onclick="confirmDelete()" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
-                        Delete
-                    </button>
-                </div>
+                <span class="text-gray-700">{{ $user->email }}</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                <span class="text-gray-700">Joined {{ $user->created_at->format('F Y') }}</span>
             </div>
         </div>
     </div>
+</div>
+
+<!-- Share Modal -->
+<div id="shareModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Share Post</h3>
+            <button onclick="closeShareModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <textarea id="shareContent" placeholder="Add a comment to your share (optional)..." class="w-full px-4 py-3 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" rows="3"></textarea>
+
+            <!-- Post Preview -->
+            <div id="sharePostPreview" class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                <!-- Will be filled dynamically -->
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <button onclick="closeShareModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium">
+                Cancel
+            </button>
+            <button onclick="confirmShare()" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                Share
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Likes Modal -->
+<div id="likesModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-xl max-w-md w-full mx-4 overflow-hidden max-h-[80vh] flex flex-col">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Likes</h3>
+            <button onclick="closeLikesModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="p-4 overflow-y-auto flex-1" id="likesModalContent">
+            <div class="text-center py-4 text-gray-500">Loading...</div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Post Modal -->
+<div id="editPostModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Edit Post</h3>
+            <button onclick="closeEditPostModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <input type="hidden" id="editPostId">
+            <textarea id="editPostContent" placeholder="What's on your mind?" class="w-full px-4 py-3 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" rows="4"></textarea>
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Privacy</label>
+                <select id="editPostPrivacy" class="w-full px-4 py-2 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="public">Public</option>
+                    <option value="friends">Friends Only</option>
+                    <option value="private">Only Me</option>
+                </select>
+            </div>
+        </div>
+        <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <button onclick="closeEditPostModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium">
+                Cancel
+            </button>
+            <button onclick="saveEditPost()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Share Modal -->
+<div id="editShareModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">Edit Share</h3>
+            <button onclick="closeEditShareModal()" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <input type="hidden" id="editShareId">
+            <textarea id="editShareContent" placeholder="Add a comment to your share (optional)..." class="w-full px-4 py-3 bg-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none" rows="3"></textarea>
+        </div>
+        <div class="flex justify-end gap-3 px-6 py-4 bg-gray-50 border-t border-gray-200">
+            <button onclick="closeEditShareModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium">
+                Cancel
+            </button>
+            <button onclick="saveEditShare()" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                Save Changes
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteConfirmModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+    <div class="bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 overflow-hidden">
+        <div class="p-6 text-center">
+            <svg class="w-16 h-16 mx-auto text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <h3 class="text-lg font-semibold text-gray-800 mb-2" id="deleteConfirmTitle">Delete Post?</h3>
+            <p class="text-gray-600 mb-6" id="deleteConfirmMessage">This action cannot be undone. Are you sure you want to delete this post?</p>
+            <input type="hidden" id="deleteItemId">
+            <input type="hidden" id="deleteItemType">
+            <div class="flex justify-center gap-3">
+                <button onclick="closeDeleteConfirmModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors font-medium">
+                    Cancel
+                </button>
+                <button onclick="confirmDelete()" class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-medium">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+</div>
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<script>
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+</script>
 @endsection
-
 @push('scripts')
-
-    <script src="js/modules/posts.js"></script>
-    <script src="js/modules/reactions.js"></script>
-    <script src="js/modules/comments.js"></script>
-    <script src="js/modules/media.js"></script>
-  <script src="js/modules/profile.js"></script>
-  
+<script src="{{ asset('js/modules/posts.js') }}"></script>
+<script src="{{ asset('js/modules/reactions.js') }}"></script>
+<script src="{{ asset('js/modules/comments.js') }}"></script>
+<script src="{{ asset('js/modules/media.js') }}"></script>
+<script src="{{ asset('js/modules/profile.js') }}"></script>
+<script src="{{ asset('js/modules/settings.js') }}"></script>
+<script src="{{ asset('js/modules/search.js') }}"></script>
 @endpush

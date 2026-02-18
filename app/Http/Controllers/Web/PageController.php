@@ -39,7 +39,7 @@ class PageController extends Controller
 
         $postsHtml = '';
         foreach ($posts as $post) {
-            $postsHtml .= view('partials.post-card', compact('post'))->render();
+            $postsHtml .= view('components.post-card', compact('post'))->render();
         }
 
         return response()->json([
@@ -97,6 +97,7 @@ class PageController extends Controller
             $friendship = $result['friendship'];
         }
 
+        
         return view('profile', [
             'user' => $user,
             'posts' => $posts,
