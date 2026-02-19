@@ -1,4 +1,9 @@
-// Bio character count
+// Guard: only run on the settings page where these elements exist
+if (!document.getElementById('bio')) {
+    // Not on the settings page — do nothing
+} else {
+
+    // Bio character count
     function updateBioCount() {
         const bio = document.getElementById('bio');
         const count = document.getElementById('bioCount');
@@ -9,16 +14,16 @@
     // Upload Profile Picture
     async function uploadProfilePicture(input) {
         if (!input.files || !input.files[0]) return;
-        
+
         const file = input.files[0];
         if (file.size > 5 * 1024 * 1024) {
             showError('Profile picture must be less than 5MB');
             return;
         }
-        
+
         const formData = new FormData();
         formData.append('profile_picture', file);
-        
+
         try {
             const response = await fetch('/profile/picture', {
                 method: 'POST',
@@ -28,13 +33,12 @@
                 },
                 body: formData
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 document.getElementById('profilePreview').src = data.profile_picture_url;
                 showSuccess('Profile picture updated!');
-                // Reload to show remove button if first upload
                 setTimeout(() => location.reload(), 1000);
             } else {
                 showError(data.message || 'Failed to upload profile picture');
@@ -42,14 +46,14 @@
         } catch (error) {
             showError('Failed to upload profile picture');
         }
-        
+
         input.value = '';
     }
 
     // Remove Profile Picture
     async function removeProfilePicture() {
         if (!confirm('Remove your profile picture?')) return;
-        
+
         try {
             const response = await fetch('/profile/picture', {
                 method: 'DELETE',
@@ -58,9 +62,9 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                 }
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 document.getElementById('profilePreview').src = data.profile_picture_url;
                 showSuccess('Profile picture removed!');
@@ -74,9 +78,9 @@
     }
 
     // Profile form submit
-    document.getElementById('profileForm').addEventListener('submit', async function(e) {
+    document.getElementById('profileForm').addEventListener('submit', async function (e) {
         e.preventDefault();
-        
+
         try {
             const response = await fetch('/profile', {
                 method: 'PUT',
@@ -92,9 +96,9 @@
                     phone: document.getElementById('phone').value
                 })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 showSuccess('Profile updated successfully!');
             } else {
@@ -106,9 +110,9 @@
     });
 
     // Email form submit
-    document.getElementById('emailForm').addEventListener('submit', async function(e) {
+    document.getElementById('emailForm').addEventListener('submit', async function (e) {
         e.preventDefault();
-        
+
         try {
             const response = await fetch('/profile/email', {
                 method: 'PUT',
@@ -122,9 +126,9 @@
                     password: document.getElementById('email_password').value
                 })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 showSuccess('Email updated successfully!');
                 document.getElementById('email_password').value = '';
@@ -137,17 +141,17 @@
     });
 
     // Password form submit
-    document.getElementById('passwordForm').addEventListener('submit', async function(e) {
+    document.getElementById('passwordForm').addEventListener('submit', async function (e) {
         e.preventDefault();
-        
+
         const password = document.getElementById('password').value;
         const confirmation = document.getElementById('password_confirmation').value;
-        
+
         if (password !== confirmation) {
             showError('Passwords do not match');
             return;
         }
-        
+
         try {
             const response = await fetch('/profile/password', {
                 method: 'PUT',
@@ -162,9 +166,9 @@
                     password_confirmation: confirmation
                 })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 showSuccess('Password updated successfully!');
                 document.getElementById('passwordForm').reset();
@@ -189,9 +193,9 @@
     }
 
     // Delete form submit
-    document.getElementById('deleteForm').addEventListener('submit', async function(e) {
+    document.getElementById('deleteForm').addEventListener('submit', async function (e) {
         e.preventDefault();
-        
+
         try {
             const response = await fetch('/profile', {
                 method: 'DELETE',
@@ -204,9 +208,9 @@
                     password: document.getElementById('delete_password').value
                 })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 window.location.href = data.redirect || '/';
             } else {
@@ -236,8 +240,10 @@
     }
 
     // Close modal on outside click
-    document.getElementById('deleteModal').addEventListener('click', function(e) {
+    document.getElementById('deleteModal').addEventListener('click', function (e) {
         if (e.target === this) {
             hideDeleteModal();
         }
     });
+
+} // end settings page guard

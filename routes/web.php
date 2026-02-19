@@ -70,11 +70,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/saved', [PageController::class, 'saved'])->name('saved');
 
     // Comments
-        Route::get('/posts/{post}/comments', [CommentController::class, 'getComments'])->name('comments.index');
-    
+    Route::get('/posts/{post}/comments', [CommentController::class, 'getComments'])->name('comments.index');
+
     Route::post('/posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
-    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');   
-     
+    Route::delete('/comments/{comment}', [CommentController::class, 'destroy'])->name('comments.destroy');
+
     // Pages
     Route::get('/friends', [PageController::class, 'friends'])->name('friends');
     Route::get('/settings', [PageController::class, 'settings'])->name('settings');

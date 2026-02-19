@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Events;
 
 use Illuminate\Broadcasting\Channel;
@@ -12,26 +13,46 @@ use Illuminate\Foundation\Events\Dispatchable;
 class FriendRequestAccepted implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
-    
 
-    public $friendship;
+    public int $senderId;
+    public int $receiverId;
+    public string $status;
+    public ?array $fromUser;
 
-    public function __construct($friendship)
+    /**
+     * @param int $senderId  The original friend-request sender's ID
+     * @param int $receiverId The original friend-request receiver's ID
+     * @param string $status  'pending' | 'friends' | 'none'
+     * @param array|null $fromUser  The user who triggered the action (for toast)
+     */
+    public function __construct(int $senderId, int $receiverId, string $status, ?array $fromUser = null)
     {
-        
-        $this->friendship = $friendship;
+        $this->senderId   = $senderId;
+        $this->receiverId = $receiverId;
+        $this->status     = $status;
+        $this->fromUser   = $fromUser;
     }
 
+    public function broadcastOn(): array
+    {
+        return [
+            new PrivateChannel('friendships.' . $this->senderId),
+            new PrivateChannel('friendships.' . $this->receiverId),
+        ];
+    }
 
-public function broadcastOn()
-{
-    return [
-       new PrivateChannel('friendships.' . $this->friendship->sender_id),
-        new PrivateChannel('friendships.' . $this->friendship->receiver_id)
-    ];
-}
-public function broadcastAs()
-{
-    return 'friend.request.accepted';
-}
+    public function broadcastAs(): string
+    {
+        return 'friendship.updated';
+    }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'status'      => $this->status,
+            'sender_id'   => $this->senderId,
+            'receiver_id' => $this->receiverId,
+            'from_user'   => $this->fromUser,
+        ];
+    }
 }

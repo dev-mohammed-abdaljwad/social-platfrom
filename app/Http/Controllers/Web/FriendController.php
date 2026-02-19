@@ -17,12 +17,24 @@ class FriendController extends Controller
     ) {}
 
     /**
+     * Build a minimal from_user array for broadcast payloads.
+     */
+    private function buildFromUser($user): array
+    {
+        return [
+            'id'         => $user->id,
+            'name'       => $user->name,
+            'avatar_url' => $user->avatar_url,
+        ];
+    }
+
+    /**
      * Send a friend request.
      */
     public function send(int $userId)
     {
         $currentUser = auth()->user();
-        $receiver = $this->userService->find($userId);
+        $receiver    = $this->userService->find($userId);
 
         $result = $this->friendshipService->sendRequest($currentUser, $receiver);
 
@@ -33,8 +45,21 @@ class FriendController extends Controller
             return redirect()->back()->with('error', $result['message']);
         }
 
-        // Send notification
+        // Send notification to the receiver
         $this->notificationService->friendRequest($receiver, $currentUser, $result['friendship']);
+
+        // Broadcast:
+        // - To the SENDER  → status becomes 'pending_sent'
+        // - To the RECEIVER → status becomes 'pending_received'
+        $friendship = $result['friendship'];
+        $fromUser   = $this->buildFromUser($currentUser);
+
+        broadcast(new FriendRequestAccepted(
+            $friendship->sender_id,
+            $friendship->receiver_id,
+            'pending',      // raw status; JS will resolve per-user direction
+            $fromUser
+        ));
 
         if (request()->expectsJson()) {
             return response()->json(['success' => true, 'message' => $result['message']]);
@@ -49,7 +74,7 @@ class FriendController extends Controller
     public function accept(int $friendshipId)
     {
         $currentUser = auth()->user();
-        $result = $this->friendshipService->acceptRequest($friendshipId, $currentUser);
+        $result      = $this->friendshipService->acceptRequest($friendshipId, $currentUser);
 
         if (!$result['success']) {
             if (request()->expectsJson()) {
@@ -59,14 +84,22 @@ class FriendController extends Controller
             return redirect()->back()->with('error', $result['message']);
         }
 
-        // Send notification to the sender
         $friendship = $result['friendship'];
-        broadcast(new FriendRequestAccepted($friendship));
+        $fromUser   = $this->buildFromUser($currentUser);
+
+        // Notify original sender that their request was accepted
         $this->notificationService->friendAccepted(
             $friendship->sender,
             $currentUser,
             $friendship
         );
+
+        broadcast(new FriendRequestAccepted(
+            $friendship->sender_id,
+            $friendship->receiver_id,
+            'friends',
+            $fromUser
+        ));
 
         if (request()->expectsJson()) {
             return response()->json(['success' => true, 'message' => $result['message']]);
@@ -81,7 +114,7 @@ class FriendController extends Controller
     public function reject(int $friendshipId)
     {
         $currentUser = auth()->user();
-        $result = $this->friendshipService->rejectRequest($friendshipId, $currentUser);
+        $result      = $this->friendshipService->rejectRequest($friendshipId, $currentUser);
 
         if (!$result['success']) {
             if (request()->expectsJson()) {
@@ -90,6 +123,14 @@ class FriendController extends Controller
             }
             return redirect()->back()->with('error', $result['message']);
         }
+
+        $friendship = $result['friendship'];
+        broadcast(new FriendRequestAccepted(
+            $friendship->sender_id,
+            $friendship->receiver_id,
+            'none',
+            $this->buildFromUser($currentUser)
+        ));
 
         if (request()->expectsJson()) {
             return response()->json(['success' => true, 'message' => $result['message']]);
@@ -104,7 +145,7 @@ class FriendController extends Controller
     public function cancel(int $friendshipId)
     {
         $currentUser = auth()->user();
-        $result = $this->friendshipService->cancelRequest($friendshipId, $currentUser);
+        $result      = $this->friendshipService->cancelRequest($friendshipId, $currentUser);
 
         if (!$result['success']) {
             if (request()->expectsJson()) {
@@ -113,6 +154,14 @@ class FriendController extends Controller
             }
             return redirect()->back()->with('error', $result['message']);
         }
+
+        $friendship = $result['friendship'];
+        broadcast(new FriendRequestAccepted(
+            $friendship->sender_id,
+            $friendship->receiver_id,
+            'none',
+            $this->buildFromUser($currentUser)
+        ));
 
         if (request()->expectsJson()) {
             return response()->json(['success' => true, 'message' => $result['message']]);
@@ -127,7 +176,7 @@ class FriendController extends Controller
     public function remove(int $userId)
     {
         $currentUser = auth()->user();
-        $friend = $this->userService->find($userId);
+        $friend      = $this->userService->find($userId);
 
         $result = $this->friendshipService->removeFriend($currentUser, $friend);
 
@@ -137,6 +186,14 @@ class FriendController extends Controller
             }
             return redirect()->back()->with('error', $result['message']);
         }
+
+        $friendship = $result['friendship'];
+        broadcast(new FriendRequestAccepted(
+            $friendship->sender_id,
+            $friendship->receiver_id,
+            'none',
+            $this->buildFromUser($currentUser)
+        ));
 
         if (request()->expectsJson()) {
             return response()->json(['success' => true, 'message' => $result['message']]);

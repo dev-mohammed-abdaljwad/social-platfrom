@@ -58,7 +58,7 @@ class FriendshipService
         }
 
         $this->repository->acceptRequest($friendship);
-        
+
         return ['success' => true, 'message' => 'Friend request accepted', 'friendship' => $friendship->fresh()];
     }
 
@@ -75,8 +75,8 @@ class FriendshipService
         }
 
         $this->repository->rejectRequest($friendship);
-        
-        return ['success' => true, 'message' => 'Friend request rejected'];
+
+        return ['success' => true, 'message' => 'Friend request rejected', 'friendship' => $friendship];
     }
 
     public function cancelRequest($friendshipId, User $user)
@@ -92,8 +92,8 @@ class FriendshipService
         }
 
         $this->repository->delete($friendship);
-        
-        return ['success' => true, 'message' => 'Friend request cancelled'];
+
+        return ['success' => true, 'message' => 'Friend request cancelled', 'friendship' => $friendship];
     }
 
     public function removeFriend(User $user, User $friend)
@@ -105,8 +105,8 @@ class FriendshipService
         }
 
         $this->repository->delete($friendship);
-        
-        return ['success' => true, 'message' => 'Friend removed'];
+
+        return ['success' => true, 'message' => 'Friend removed', 'friendship' => $friendship];
     }
 
     public function areFriends(User $user1, User $user2): bool
