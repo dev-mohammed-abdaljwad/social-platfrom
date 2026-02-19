@@ -24,3 +24,14 @@ Broadcast::channel('friendships.{id}', function ($user, $id) {
 
     return (int) $user->id === (int) $id;
 });
+
+// Chat: only conversation participants can subscribe
+Broadcast::channel('chat.{conversationId}', function ($user, $conversationId) {
+    $conversation = \App\Models\Conversations::find($conversationId);
+
+    if (!$conversation) {
+        return false;
+    }
+
+    return $conversation->hasParticipant($user->id);
+});

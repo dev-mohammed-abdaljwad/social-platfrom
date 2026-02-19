@@ -2,9 +2,9 @@
 
 namespace App\Providers;
 
+use App\Repositories\Chat\ChatRepository;
+use App\Repositories\Chat\Eloquent\EloquentChatRepository;
 use Illuminate\Support\ServiceProvider;
-
-// Repositories
 use App\Repositories\User\UserRepository;
 use App\Repositories\User\Eloquent\EloquentUserRepository;
 use App\Repositories\Post\PostRepository;
@@ -13,6 +13,8 @@ use App\Repositories\Comment\CommentRepository;
 use App\Repositories\Comment\Eloquent\EloquentCommentRepository;
 use App\Repositories\Friendship\FriendshipRepository;
 use App\Repositories\Friendship\Eloquent\EloquentFriendshipRepository;
+use App\Repositories\Message\Eloquent\EloquentMessageRepository;
+use App\Repositories\Message\MessageRepository;
 use App\Repositories\Share\ShareRepository;
 use App\Repositories\Share\Eloquent\EloquentShareRepository;
 use App\Repositories\Reaction\ReactionRepository;
@@ -29,10 +31,11 @@ class RepositoryServiceProvider extends ServiceProvider
         UserRepository::class => EloquentUserRepository::class,
         PostRepository::class => EloquentPostRepository::class,
         CommentRepository::class => EloquentCommentRepository::class,
-      
         FriendshipRepository::class => EloquentFriendshipRepository::class,
         ShareRepository::class => EloquentShareRepository::class,
-         ReactionRepository::class => EloquentReactionRepository::class,
+        ReactionRepository::class => EloquentReactionRepository::class,
+        ChatRepository::class => EloquentChatRepository::class,
+        MessageRepository::class => EloquentMessageRepository::class,
     ];
 
     /**

@@ -41,6 +41,7 @@ class Notification extends Model
     const TYPE_LIKE = 'like';
     const TYPE_COMMENT = 'comment';
     const TYPE_REACTION = 'reaction';
+    const TYPE_MESSAGE = 'message';
 
     /**
      * Get the recipient user.

@@ -10,6 +10,7 @@ use App\Http\Controllers\Web\ProfileController;
 use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\ReactionController;
 use App\Http\Controllers\Web\SearchController;
+use App\Http\Controllers\Web\ChatController;
 
 /*
 |--------------------------------------------------------------------------
@@ -106,8 +107,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
-});
 
+    // Chat — static routes FIRST (before {conversation} wildcard)
+    Route::get('/chat', [ChatController::class, 'index'])->name('chat.index');
+    Route::post('/chat/start', [ChatController::class, 'startConversation'])->name('chat.start');
+    Route::get('/chat/unread-count', [ChatController::class, 'unreadCount'])->name('chat.unread-count');
+
+    // Chat — parameterised routes
+    Route::get('/chat/{conversation}', [ChatController::class, 'show'])->name('chat.show');
+    Route::get('/chat/{conversation}/messages', [ChatController::class, 'getMessages'])->name('chat.messages');
+    Route::post('/chat/{conversation}/send', [ChatController::class, 'sendMessage'])->name('chat.send');
+    Route::post('/chat/{conversation}/read', [ChatController::class, 'markAsRead'])->name('chat.read');
+});
 
 Route::get('/logo', function () {
     return view('welcome');

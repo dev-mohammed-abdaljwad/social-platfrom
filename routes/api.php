@@ -1,10 +1,10 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\ChatController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\PostController;
 use App\Http\Controllers\Api\V1\CommentController;
-use App\Http\Controllers\Api\V1\LikeController;
 use App\Http\Controllers\Api\V1\FriendshipController;
 use App\Http\Controllers\Api\V1\ShareController;
 use Illuminate\Support\Facades\Route;
@@ -106,6 +106,24 @@ Route::prefix('v1')->group(function () {
             Route::middleware('throttle:friend-request')->group(function () {
                 Route::post('/send/{userId}', [FriendshipController::class, 'sendRequest']);
             });
+        });
+
+        // Chat routes — /api/v1/chat/conversations
+        Route::prefix('chat')->group(function () {
+            // GET    /api/v1/chat/conversations                              → inbox
+            Route::get('/conversations', [ChatController::class, 'index']);
+
+            // POST   /api/v1/chat/conversations                              → start/get conversation
+            Route::post('/conversations', [ChatController::class, 'store']);
+
+            // GET    /api/v1/chat/conversations/{conversation}/messages       → get messages (paginated)
+            Route::get('/conversations/{conversation}/messages', [ChatController::class, 'messages']);
+
+            // POST   /api/v1/chat/conversations/{conversation}/messages       → send message
+            Route::post('/conversations/{conversation}/messages', [ChatController::class, 'sendMessage']);
+
+            // POST   /api/v1/chat/conversations/{conversation}/read           → mark as read
+            Route::post('/conversations/{conversation}/read', [ChatController::class, 'markAsRead']);
         });
     });
 });

@@ -121,14 +121,17 @@
                             </div>
                         </div>
 
-                        <!-- Messages -->
-                        <button class="p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                        <!-- Messages with unread badge -->
+                        <a href="{{ route('chat.index') }}"
+                            class="relative p-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
                                 </path>
                             </svg>
-                        </button>
+                            <span id="chatUnreadBadge"
+                                class="hidden absolute top-0 right-0 min-w-[18px] h-[18px] bg-blue-600 rounded-full text-white text-xs flex items-center justify-center font-medium">0</span>
+                        </a>
 
                         <!-- Profile Dropdown -->
                         <div class="relative" x-data="{ open: false }">
@@ -247,6 +250,22 @@
                             d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"></path>
                     </svg>
                     <span>Saved</span>
+                </a>
+
+                <!-- Messages -->
+                <a href="{{ route('chat.index') }}"
+                    class="flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-blue-50 rounded-lg transition-colors font-semibold {{ request()->is('chat*') ? 'bg-blue-50 text-blue-600' : '' }}">
+                    <div class="relative">
+                        <svg class="w-6 h-6 {{ request()->is('chat*') ? 'text-blue-600' : '' }}" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z">
+                            </path>
+                        </svg>
+                        <span id="sidebarChatBadge"
+                            class="hidden absolute -top-1 -right-1 min-w-[16px] h-4 bg-blue-600 rounded-full text-white text-[10px] flex items-center justify-center font-bold"></span>
+                    </div>
+                    <span>Messages</span>
                 </a>
 
                 <!-- Settings -->
@@ -491,6 +510,8 @@
 
     <script>
         window.CURRENT_USER_ID = {{ auth()->id() ?? 'null' }};
+        window.CURRENT_CONVERSATION_ID = {{ $activeConversation ?? 'null' }};
+
     </script>
 
     <script>
@@ -868,8 +889,8 @@
         <!-- Pusher/Echo Real-time Notifications -->
         <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
         <script>
-                                                    // Initialize Pusher for real-time notifications
-                                                    const pusherKey = '{{ env("PUSHER_APP_KEY") }}';
+                                                                            // Initialize Pusher for real-time notifications
+                                                                            const pusherKey = '{{ env("PUSHER_APP_KEY") }}';
             const pusherCluster = '{{ env("PUSHER_APP_CLUSTER", "mt1") }}';
 
             if (pusherKey && pusherKey !== '') {
@@ -961,6 +982,11 @@
                     console.log('New notification received:', data);
 
                     // Play notification sound
+                    if (data.type === 'message' &&
+                        window.CURRENT_CONVERSATION_ID == data.data.conversation_id) {
+                        return;
+                    }
+
                     playNotificationSound();
 
                     // Update badge count
@@ -990,20 +1016,20 @@
                 const toast = document.createElement('div');
                 toast.className = 'fixed bottom-4 right-4 bg-white rounded-lg shadow-xl border border-gray-200 p-4 max-w-sm z-50 animate-slide-in cursor-pointer hover:bg-gray-50 transition-colors';
                 toast.innerHTML = `
-                                                            <div class="flex items-start gap-3">
-                                                                <img src="${data.from_user.avatar_url}" alt="${data.from_user.name}" class="w-10 h-10 rounded-full object-cover">
-                                                                <div class="flex-1">
-                                                                    <p class="font-medium text-gray-800">${data.from_user.name}</p>
-                                                                    <p class="text-sm text-gray-600">${data.message}</p>
-                                                                    <p class="text-xs text-blue-500 mt-1">Click to view</p>
-                                                                </div>
-                                                                <button class="toast-close text-gray-400 hover:text-gray-600">
-                                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                                    </svg>
-                                                                </button>
-                                                            </div>
-                                                        `;
+                                                                                    <div class="flex items-start gap-3">
+                                                                                        <img src="${data.from_user.avatar_url}" alt="${data.from_user.name}" class="w-10 h-10 rounded-full object-cover">
+                                                                                        <div class="flex-1">
+                                                                                            <p class="font-medium text-gray-800">${data.from_user.name}</p>
+                                                                                            <p class="text-sm text-gray-600">${data.message}</p>
+                                                                                            <p class="text-xs text-blue-500 mt-1">Click to view</p>
+                                                                                        </div>
+                                                                                        <button class="toast-close text-gray-400 hover:text-gray-600">
+                                                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                                                            </svg>
+                                                                                        </button>
+                                                                                    </div>
+                                                                                `;
 
                 // Click to navigate to notification URL
                 toast.addEventListener('click', function (e) {
@@ -1134,56 +1160,56 @@
                 switch (status) {
                     case 'friends':
                         container.innerHTML = `
-                                                                    <button onclick="removeFriend(${friendId})"
-                                                                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors font-medium">
-                                                                        Friends
-                                                                    </button>
-                                                                    <button onclick="sendMessage(${friendId})"
-                                                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                                                        Message
-                                                                    </button>       
-                                                                `
+                                                                                            <button onclick="removeFriend(${friendId})"
+                                                                                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors font-medium">
+                                                                                                Friends
+                                                                                            </button>
+                                                                                            <button onclick="sendMessage(${friendId})"
+                                                                                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                                                                                Message
+                                                                                            </button>       
+                                                                                        `
                             ;
                         break;
 
                     case 'pending_sent':
                         container.innerHTML = `
-                                                                    <button onclick="cancelFriendRequest(${friendshipId}, ${friendId})"
-                                                                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
-                                                                        Cancel Request
-                                                                    </button>
-                                                                    <button onclick="sendMessage(${friendId})"
-                                                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                                                        Message
-                                                                    </button>       
+                                                                                            <button onclick="cancelFriendRequest(${friendshipId}, ${friendId})"
+                                                                                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                                                                                                Cancel Request
+                                                                                            </button>
+                                                                                            <button onclick="sendMessage(${friendId})"
+                                                                                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                                                                                Message
+                                                                                            </button>       
 
-                                                                `;
+                                                                                        `;
                         break;
 
                     case 'pending_received':
                         container.innerHTML = `
-                                                                    <button onclick="acceptFriendRequest(${friendshipId}, ${friendId})"
-                                                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                                                        Accept
-                                                                    </button>
-                                                                    <button onclick="rejectFriendRequest(${friendshipId}, ${friendId})"
-                                                                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium ml-2">
-                                                                        Decline
-                                                                    </button>
-                                                                `;
+                                                                                            <button onclick="acceptFriendRequest(${friendshipId}, ${friendId})"
+                                                                                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                                                                                Accept
+                                                                                            </button>
+                                                                                            <button onclick="rejectFriendRequest(${friendshipId}, ${friendId})"
+                                                                                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium ml-2">
+                                                                                                Decline
+                                                                                            </button>
+                                                                                        `;
                         break;
 
                     default: // 'none'
                         container.innerHTML = `
-                                                                    <button onclick="sendFriendRequest(${friendId})"
-                                                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                                                        Add Friend
-                                                                    </button>
-                                                                    <button onclick="sendMessage(${friendId})"
-                                                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                                                        Message
-                                                                    </button>   
-                                                                `;
+                                                                                            <button onclick="sendFriendRequest(${friendId})"
+                                                                                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                                                                                Add Friend
+                                                                                            </button>
+                                                                                            <button onclick="sendMessage(${friendId})"
+                                                                                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                                                                                Message
+                                                                                            </button>   
+                                                                                        `;
                 }
             }
 
@@ -1289,6 +1315,380 @@
                 animation: fade-out 0.3s ease-out;
             }
         </style>
+    @endauth
+
+    @auth
+        {{-- ═══════════════════════════════════════════════════ --}}
+        {{-- POPUP CHAT CONTAINER + ENGINE --}}
+        {{-- ═══════════════════════════════════════════════════ --}}
+
+        {{-- Popup dock: bottom-right, stacks horizontally --}}
+        <div id="chatPopupDock" class="fixed bottom-0 right-4 flex items-end gap-2 z-[200]" style="pointer-events:none;">
+        </div>
+
+        <style>
+            /* ── Popup chat window ── */
+            .chat-popup {
+                width: 320px;
+                height: 440px;
+                display: flex;
+                flex-direction: column;
+                background: #fff;
+                border-radius: 16px 16px 0 0;
+                box-shadow: 0 -4px 32px rgba(0, 0, 0, .15);
+                border: 1px solid #e5e7eb;
+                border-bottom: none;
+                pointer-events: all;
+                animation: popupSlideUp 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+                overflow: hidden;
+                transition: height .2s ease;
+            }
+
+            .chat-popup.minimized {
+                height: 52px;
+            }
+
+            @keyframes popupSlideUp {
+                from {
+                    transform: translateY(60px);
+                    opacity: 0;
+                }
+
+                to {
+                    transform: translateY(0);
+                    opacity: 1;
+                }
+            }
+
+            /* ── Popup header ── */
+            .popup-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 8px 10px;
+                background: linear-gradient(135deg, #2563eb, #4f46e5);
+                cursor: pointer;
+                user-select: none;
+                flex-shrink: 0;
+                min-height: 52px;
+            }
+
+            .popup-header-left {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                min-width: 0;
+            }
+
+            .popup-avatar-wrap {
+                position: relative;
+                flex-shrink: 0;
+            }
+
+            .popup-avatar-img {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                object-fit: cover;
+                border: 2px solid rgba(255, 255, 255, .4);
+            }
+
+            .popup-online-dot {
+                position: absolute;
+                bottom: 0;
+                right: 0;
+                width: 9px;
+                height: 9px;
+                background: #22c55e;
+                border-radius: 50%;
+                border: 2px solid #fff;
+            }
+
+            .popup-header-info {
+                min-width: 0;
+            }
+
+            .popup-name {
+                display: block;
+                font-size: 13px;
+                font-weight: 600;
+                color: #fff;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 150px;
+            }
+
+            .popup-typing-label {
+                display: none;
+                font-size: 10px;
+                color: rgba(255, 255, 255, .75);
+                font-style: italic;
+            }
+
+            .popup-header-actions {
+                display: flex;
+                align-items: center;
+                gap: 2px;
+                flex-shrink: 0;
+            }
+
+            .popup-action-btn {
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: rgba(255, 255, 255, .8);
+                padding: 4px;
+                border-radius: 6px;
+                transition: background .15s, color .15s;
+            }
+
+            .popup-action-btn:hover {
+                background: rgba(255, 255, 255, .15);
+                color: #fff;
+            }
+
+            /* ── Messages area ── */
+            .popup-messages {
+                flex: 1;
+                overflow-y: auto;
+                padding: 12px;
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                background: #f9fafb;
+            }
+
+            .popup-messages::-webkit-scrollbar {
+                width: 3px;
+            }
+
+            .popup-messages::-webkit-scrollbar-thumb {
+                background: #d1d5db;
+                border-radius: 3px;
+            }
+
+            .popup-loading,
+            .popup-empty {
+                text-align: center;
+                font-size: 12px;
+                color: #9ca3af;
+                padding: 16px;
+            }
+
+            /* ── Message bubbles ── */
+            .popup-msg {
+                max-width: 85%;
+            }
+
+            .popup-msg.mine {
+                align-self: flex-end;
+            }
+
+            .popup-msg.other {
+                align-self: flex-start;
+            }
+
+            .popup-bubble {
+                padding: 8px 12px;
+                border-radius: 16px;
+                font-size: 13px;
+                line-height: 1.4;
+                word-break: break-word;
+            }
+
+            .popup-msg.mine .popup-bubble {
+                background: linear-gradient(135deg, #2563eb, #4f46e5);
+                color: #fff;
+                border-bottom-right-radius: 4px;
+            }
+
+            .popup-msg.other .popup-bubble {
+                background: #fff;
+                color: #1f2937;
+                border: 1px solid #e5e7eb;
+                border-bottom-left-radius: 4px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, .06);
+            }
+
+            .popup-time {
+                font-size: 10px;
+                opacity: .6;
+                margin-top: 2px;
+                text-align: right;
+            }
+
+            .popup-msg.other .popup-time {
+                text-align: left;
+            }
+
+            /* ── Input bar ── */
+            .popup-input-bar {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 10px;
+                background: #fff;
+                border-top: 1px solid #f3f4f6;
+                flex-shrink: 0;
+            }
+
+            .popup-input {
+                flex: 1;
+                padding: 7px 12px;
+                font-size: 13px;
+                background: #f3f4f6;
+                border: 1.5px solid transparent;
+                border-radius: 20px;
+                outline: none;
+                font-family: inherit;
+                transition: border-color .2s, background .2s;
+            }
+
+            .popup-input:focus {
+                background: #fff;
+                border-color: #3b82f6;
+                box-shadow: 0 0 0 3px rgba(59, 130, 246, .1);
+            }
+
+            .popup-send-btn {
+                width: 32px;
+                height: 32px;
+                border-radius: 50%;
+                flex-shrink: 0;
+                background: linear-gradient(135deg, #2563eb, #4f46e5);
+                color: #fff;
+                border: none;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                transition: transform .15s, box-shadow .15s;
+                box-shadow: 0 2px 8px rgba(37, 99, 235, .35);
+            }
+
+            .popup-send-btn:hover {
+                transform: scale(1.1);
+            }
+
+            .popup-send-btn:active {
+                transform: scale(.9);
+            }
+        </style>
+
+        <script src="{{ asset('js/chat/PopupManager.js') }}"></script>
+        <script>
+            (function () {
+                'use strict';
+
+                const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+                const ME = {{ auth()->id() }};
+
+                /* ── 1. Instantiate PopupManager ── */
+                const _pm = new PopupManager({
+                    currentUserId: ME,
+                    csrf: CSRF,
+                    maxPopups: 3,
+                });
+
+                /* ── 2. Global bridge used by onclick handlers in PopupManager HTML ── */
+                window.ChatPopupEngine = {
+                    toggle: (id) => _pm.toggle(id),
+                    close: (id) => _pm.close(id),
+                    send: (id) => _pm.send(id),
+                };
+
+                /* ── 3. Global sendMessage() — called from profile/friends page buttons ── */
+                window.sendMessage = function (userId) {
+                    const actionsDiv = document.getElementById(`user-actions-${userId}`);
+                    let userName = actionsDiv?.dataset.friendName || null;
+                    let userAvatar = actionsDiv?.dataset.friendAvatar || null;
+
+                    if (!userName) {
+                        const h1 = document.querySelector('h1.text-2xl, h1.font-bold');
+                        userName = h1 ? h1.textContent.trim() : 'User';
+                    }
+                    if (!userAvatar) {
+                        const avatarEl = document.querySelector('img#profilePictureImage')
+                            || document.querySelector('.profile-picture img');
+                        userAvatar = avatarEl ? avatarEl.src : null;
+                    }
+
+                    _pm.openByUserId(userId, userName, userAvatar);
+                };
+
+                /* ── 4. Backwards-compat alias (used in old onclick attributes) ── */
+                window.openChatPopup = (userId, userName, userAvatar) =>
+                    _pm.openByUserId(userId, userName, userAvatar);
+
+                /* ── 5. Unread badge helper ── */
+                function updateChatBadge(count) {
+                    ['chatUnreadBadge', 'sidebarChatBadge'].forEach(id => {
+                        const b = document.getElementById(id);
+                        if (!b) return;
+                        if (count > 0) {
+                            b.textContent = count > 99 ? '99+' : count;
+                            b.classList.remove('hidden');
+                            b.classList.add('flex');
+                        } else {
+                            b.classList.add('hidden');
+                            b.classList.remove('flex');
+                        }
+                    });
+                }
+
+                /* ── 6. Load initial unread count ── */
+                @if(auth()->check())
+                    fetch('/chat/unread-count')
+                        .then(r => r.json())
+                        .then(d => { if (d.success) updateChatBadge(d.count); })
+                        .catch(() => { });
+                @endif
+
+                    /* ── 7. Listen on notification channel for message events & auto-open popup ── */
+                    if (typeof window.pusher !== 'undefined') {
+                    const userCh = window.pusher.channel('private-notifications.{{ auth()->id() }}');
+                    if (userCh) {
+                        // Chat badge update
+                        userCh.bind('chat.unread', (data) => updateChatBadge(data.count));
+
+                        // Auto-open popup when a message arrives and user is NOT in that conversation
+                        // Payload shape from NewNotification::broadcastWith():
+                        //   { id, type, message, data: { conversation_id, message_id }, url, from_user, ... }
+                        userCh.bind('notification.new', (payload) => {
+                            try {
+                                if (payload.type !== 'message') return;
+
+                                // The nested meta lives under 'data', not 'meta'
+                                const meta = payload.data || {};
+                                const fromUser = payload.from_user;
+                                const convId = meta.conversation_id;
+
+                                if (!convId || !fromUser) return;
+
+                                // Don't open popup if user is already viewing that conversation
+                                if (window.CURRENT_CONVERSATION_ID == convId) return;
+
+                                _pm.onIncomingMessage(
+                                    convId,
+                                    {
+                                        id: meta.message_id ?? null,
+                                        sender_id: fromUser.id,
+                                        body: payload.message || '…',
+                                        created_at: new Date().toISOString(),
+                                    },
+                                    fromUser.name,
+                                    fromUser.avatar_url
+                                );
+                            } catch (e) {
+                                console.warn('[ChatPopup] notification.new handler error:', e, payload);
+                            }
+                        });
+                    }
+                }
+
+            })();
+        </script>
     @endauth
 
     @stack('scripts')

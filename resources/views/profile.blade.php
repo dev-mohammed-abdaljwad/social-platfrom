@@ -84,7 +84,8 @@
                             @else
                                 {{-- Friend Button with different states --}}
                                 <div id="user-actions-{{ $user->id }}" data-initial-status="{{ $friendshipStatus ?? 'none' }}"
-                                    data-friend-id="{{ $user->id }}" data-friendship-id="{{ $friendship->id ?? '' }}">
+                                    data-friend-id="{{ $user->id }}" data-friendship-id="{{ $friendship->id ?? '' }}"
+                                    data-friend-name="{{ $user->name }}" data-friend-avatar="{{ $user->avatar_url }}">
                                 </div>
 
                             @endif

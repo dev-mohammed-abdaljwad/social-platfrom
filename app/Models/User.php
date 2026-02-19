@@ -209,4 +209,28 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Post::class, 'saved_posts')->withTimestamps();
     }
+    /**
+     * All messages sent by this user.
+     */
+    public function sentMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'sender_id');
+    }
+    /**
+     * All messages received by this user.
+     */
+    public function receivedMessages(): HasMany
+    {
+        return $this->hasMany(Message::class, 'receiver_id');
+    }
+
+
+    public function conversationsAsUserTwo(): HasMany
+    {
+        return $this->hasMany(Conversations::class, 'user_two_id');
+    }
+    public function conversationsAsUserOne(): HasMany
+    {
+        return $this->hasMany(Conversations::class, 'user_one_id');
+    }
 }
