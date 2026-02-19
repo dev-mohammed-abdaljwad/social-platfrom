@@ -99,7 +99,6 @@ class User extends Authenticatable
     {
         return $this->hasMany(Post::class);
     }
-
     /**
      * Get all comments by the user.
      */
@@ -107,9 +106,6 @@ class User extends Authenticatable
     {
         return $this->hasMany(Comment::class);
     }
-
-  
-
     /**
      * Get all shares by the user.
      */

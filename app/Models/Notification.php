@@ -40,7 +40,7 @@ class Notification extends Model
     const TYPE_FRIEND_ACCEPTED = 'friend_accepted';
     const TYPE_LIKE = 'like';
     const TYPE_COMMENT = 'comment';
-      const TYPE_REACTION = 'reaction';
+    const TYPE_REACTION = 'reaction';
 
     /**
      * Get the recipient user.
@@ -109,7 +109,7 @@ class Notification extends Model
 
         return match ($this->type) {
             self::TYPE_LIKE => isset($data['post_id']) ? '/?post=' . $data['post_id'] . '#likes' : '/',
-            self::TYPE_COMMENT => isset($data['post_id']) 
+            self::TYPE_COMMENT => isset($data['post_id'])
                 ? '/?post=' . $data['post_id'] . (isset($data['comment_id']) ? '#comment-' . $data['comment_id'] : '')
                 : '/',
             self::TYPE_FRIEND_REQUEST, self::TYPE_FRIEND_ACCEPTED => '/profile/' . $this->from_user_id,

@@ -94,7 +94,7 @@ class Post extends Model
         return $this->hasMany(Comment::class)->whereNull('parent_id');
     }
 
-  
+
     /**
      * Get all shares for the post.
      */
@@ -103,7 +103,7 @@ class Post extends Model
         return $this->hasMany(Share::class);
     }
 
-   
+
     public function getCommentsCountAttribute(): int
     {
         return $this->attributes['comments_count'] ?? $this->comments()->count();
@@ -126,7 +126,7 @@ class Post extends Model
         return $this->shares()->where('user_id', $user->id)->exists();
     }
 
- 
+
     /**
      * Get all users who saved this post.
      */
@@ -191,8 +191,7 @@ class Post extends Model
                 });
         });
     }
-    
-      public function reactions(): MorphMany
+    public function reactions(): MorphMany
     {
         return $this->morphMany(Reaction::class, 'reactable');
     }

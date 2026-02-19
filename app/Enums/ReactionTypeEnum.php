@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Enums;
+
 enum ReactionTypeEnum: string
 {
     case LIKE = 'like';
@@ -9,13 +11,13 @@ enum ReactionTypeEnum: string
     case SAD = 'sad';
     case ANGRY = 'angry';
 
-public static function getValues(): array
+    public static function getValues(): array
     {
-       return array_map(fn($case) => $case->value, self::cases());
+        return array_map(fn($case) => $case->value, self::cases());
     }
     public function emoji(): string
     {
-        return match($this) {
+        return match ($this) {
             self::LIKE => '👍',
             self::LOVE => '❤️',
             self::HAHA => '😂',

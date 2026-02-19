@@ -480,5 +480,4 @@
     <script src="{{ asset('js/modules/media.js') }}"></script>
     <script src="{{ asset('js/modules/profile.js') }}"></script>
     <script src="{{ asset('js/modules/settings.js') }}"></script>
-    <script src="{{ asset('js/modules/search.js') }}"></script>
 @endpush

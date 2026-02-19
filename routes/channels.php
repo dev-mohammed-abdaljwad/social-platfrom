@@ -21,10 +21,6 @@ Broadcast::channel('notifications.{userId}', function ($user, $userId) {
     return (int) $user->id === (int) $userId;
 });
 Broadcast::channel('friendships.{id}', function ($user, $id) {
-        \Log::info('🔐 Authorization check for private-friendships', [
-            'user_id' => $user->id,
-            'channel_id' => $id,
-            'is_authorized' => (int) $user->id === (int) $id
-        ]);
+
     return (int) $user->id === (int) $id;
 });
