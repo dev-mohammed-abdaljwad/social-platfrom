@@ -4,11 +4,13 @@ namespace App\Services\Friendship;
 
 use App\Models\User;
 use App\Repositories\Friendship\FriendshipRepository;
+use App\Services\Follow\FollowService;
 
 class FriendshipService
 {
     public function __construct(
-        protected FriendshipRepository $repository
+        protected FriendshipRepository $repository,
+        protected FollowService $followService,
     ) {}
 
     public function all()
@@ -59,7 +61,15 @@ class FriendshipService
 
         $this->repository->acceptRequest($friendship);
 
-        return ['success' => true, 'message' => 'Friend request accepted', 'friendship' => $friendship->fresh()];
+        $fresh = $friendship->fresh(['sender', 'receiver']);
+
+        // Auto-follow both users when they become friends
+        $this->followService->createMutualFollow(
+            $fresh->sender,
+            $fresh->receiver
+        );
+
+        return ['success' => true, 'message' => 'Friend request accepted', 'friendship' => $fresh];
     }
 
     public function rejectRequest($friendshipId, User $user)
@@ -105,6 +115,9 @@ class FriendshipService
         }
 
         $this->repository->delete($friendship);
+
+        // Auto-unfollow both users when they unfriend each other
+        $this->followService->removeMutualFollow($user, $friend);
 
         return ['success' => true, 'message' => 'Friend removed', 'friendship' => $friendship];
     }

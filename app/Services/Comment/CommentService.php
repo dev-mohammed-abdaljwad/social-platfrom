@@ -77,7 +77,7 @@ class CommentService
     public function getCommentsForPost(int $postId, ?User $authUser = null): array
     {
         $comments = $this->findRootCommentsByPost($postId)
-            ->load('reactions','user'); // Load reactions and user data
+            ->load('reactions', 'user'); // Load reactions and user data
 
         return $comments->map(function ($comment) use ($authUser) {
             return $this->formatComment($comment, $authUser);
@@ -91,7 +91,7 @@ class CommentService
     public function formatComment($comment, ?User $authUser = null): array
     {
         $isOwner = $authUser && $authUser->id === $comment->user_id;
-        
+
         // Get user's reaction on this comment
         $userReaction = null;
         $reactionCounts = [];
@@ -103,15 +103,16 @@ class CommentService
 
             // Get all reaction counts grouped by type
             $reactionCounts = $comment->reactions()
-               ->select('type', DB::raw('count(*) as count'))
-                    ->groupBy('type')
-                    ->get()
-                    ->pluck('count', 'type')
-                    ->toArray();
+                ->select('type', DB::raw('count(*) as count'))
+                ->groupBy('type')
+                ->get()
+                ->pluck('count', 'type')
+                ->toArray();
         }
 
         return [
             'id' => $comment->id,
+            'parent_id' => $comment->parent_id,
             'content' => htmlspecialchars($comment->content),
             'created_at' => $comment->created_at->diffForHumans(),
             'user' => [
@@ -123,6 +124,10 @@ class CommentService
             // NEW: Reaction data
             'user_reaction' => $userReaction?->type,
             'reaction_counts' => $reactionCounts,
+            'replies_count' => $comment->replies_count ?? 0,
+            'replies' => $comment->relationLoaded('replies') ? $comment->replies->map(function ($reply) use ($authUser) {
+                return $this->formatComment($reply, $authUser);
+            })->toArray() : [],
         ];
     }
 
@@ -133,7 +138,7 @@ class CommentService
     public function formatNewComment($comment, ?User $authUser = null): array
     {
         $comment->load('user', 'reactions');
-        
+
         // New comment has no reactions yet
         $userReaction = null;
         $reactionCounts = [];
@@ -152,6 +157,7 @@ class CommentService
 
         return [
             'id' => $comment->id,
+            'parent_id' => $comment->parent_id,
             'content' => htmlspecialchars($comment->content),
             'created_at' => $comment->created_at->diffForHumans(),
             'user' => [
@@ -163,6 +169,8 @@ class CommentService
             // NEW: Reaction data
             'user_reaction' => $userReaction?->type,
             'reaction_counts' => $reactionCounts,
+            'replies_count' => 0,
+            'replies' => [],
         ];
     }
 

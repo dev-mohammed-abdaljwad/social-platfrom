@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\ChatController;
 use App\Http\Controllers\Api\V1\UserController;
 use App\Http\Controllers\Api\V1\PostController;
 use App\Http\Controllers\Api\V1\CommentController;
+use App\Http\Controllers\Api\V1\FollowController;
 use App\Http\Controllers\Api\V1\FriendshipController;
 use App\Http\Controllers\Api\V1\ShareController;
 use Illuminate\Support\Facades\Route;
@@ -59,6 +60,13 @@ Route::prefix('v1')->group(function () {
             Route::get('/username/{username}', [UserController::class, 'showByUsername']);
             Route::get('/{id}', [UserController::class, 'show']);
             Route::get('/{id}/posts', [PostController::class, 'userPosts']);
+
+            // Follow routes nested under users
+            Route::post('/{userId}/follow', [FollowController::class, 'follow']);
+            Route::delete('/{userId}/follow', [FollowController::class, 'unfollow']);
+            Route::get('/{userId}/followers', [FollowController::class, 'followers']);
+            Route::get('/{userId}/following', [FollowController::class, 'following']);
+            Route::get('/{userId}/follow-status', [FollowController::class, 'status']);
         });
 
         // Post routes
@@ -91,6 +99,14 @@ Route::prefix('v1')->group(function () {
         });
 
         // Comment likes
+
+        // Follow request routes
+        Route::prefix('follow-requests')->group(function () {
+            Route::get('/', [FollowController::class, 'followRequests']);
+            Route::post('/{userId}/accept', [FollowController::class, 'acceptRequest']);
+            Route::delete('/{userId}/decline', [FollowController::class, 'declineRequest']);
+            Route::delete('/{userId}/cancel', [FollowController::class, 'cancelRequest']);
+        });
 
         // Friendship routes
         Route::prefix('friendships')->group(function () {

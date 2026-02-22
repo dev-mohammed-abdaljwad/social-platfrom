@@ -110,7 +110,7 @@ class EloquentFriendshipRepository implements FriendshipRepository
 
     public function rejectRequest($friendship)
     {
-        return $this->update($friendship, ['status' => FriendshipStatusEnum::Rejected->value]);
+        return $this->delete($friendship);
     }
 
     public function areFriends(User $user1, User $user2): bool

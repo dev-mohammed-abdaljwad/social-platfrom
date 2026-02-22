@@ -88,6 +88,14 @@
                                     data-friend-name="{{ $user->name }}" data-friend-avatar="{{ $user->avatar_url }}">
                                 </div>
 
+                                {{-- Follow Button (Hidden if already friends since friends = automatically follow each other) --}}
+                                @if(!isset($friendshipStatus) || $friendshipStatus !== 'friends')
+                                    @include('components.follow-button', [
+                                        'targetUser'   => $user,
+                                        'followStatus' => $followStatus ?? 'none',
+                                    ])
+                                @endif
+
                             @endif
                         </div>
                     </div>
@@ -111,6 +119,16 @@
                     <span class="block text-xl font-bold text-gray-800">{{ $friends->count() }}</span>
                     <span class="text-sm text-gray-500">Friends</span>
                 </div>
+                <a href="{{ route('follows.followers', $user->id) }}"
+                   class="text-center hover:opacity-75 transition-opacity">
+                    <span class="block text-xl font-bold text-gray-800">{{ $followersCount ?? 0 }}</span>
+                    <span class="text-sm text-gray-500">Followers</span>
+                </a>
+                <a href="{{ route('follows.following', $user->id) }}"
+                   class="text-center hover:opacity-75 transition-opacity">
+                    <span class="block text-xl font-bold text-gray-800">{{ $followingCount ?? 0 }}</span>
+                    <span class="text-sm text-gray-500">Following</span>
+                </a>
             </div>
         </div>
     </div>

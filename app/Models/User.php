@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+
+use App\Enums\FollowStatusEnum;
 use App\Enums\FriendshipStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -31,6 +33,7 @@ class User extends Authenticatable
         'bio',
         'phone',
         'is_active',
+        'is_private',
         'username',
     ];
 
@@ -55,8 +58,9 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'is_active' => 'boolean',
+            'password'          => 'hashed',
+            'is_active'         => 'boolean',
+            'is_private'        => 'boolean',
         ];
     }
 
@@ -145,17 +149,13 @@ class User extends Authenticatable
      */
     public function friendIds(): \Illuminate\Support\Collection
     {
-        return Friendship::where('status', FriendshipStatusEnum::Accepted)
+        return Friendship::selectRaw('CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END as friend_id', [$this->id])
+            ->where('status', FriendshipStatusEnum::Accepted)
             ->where(function ($query) {
                 $query->where('sender_id', $this->id)
                     ->orWhere('receiver_id', $this->id);
             })
-            ->get()
-            ->map(function ($friendship) {
-                return $friendship->sender_id === $this->id
-                    ? $friendship->receiver_id
-                    : $friendship->sender_id;
-            });
+            ->pluck('friend_id');
     }
 
     /**
@@ -232,5 +232,49 @@ class User extends Authenticatable
     public function conversationsAsUserOne(): HasMany
     {
         return $this->hasMany(Conversations::class, 'user_one_id');
+    }
+    public function following(): HasMany
+    {
+        return $this->hasMany(Follow::class, 'follower_id');
+    }
+    public function followers(): HasMany
+    {
+        return $this->hasMany(Follow::class, 'followee_id');
+    }
+    public function followingCount(): int
+    {
+        return $this->following()->count();
+    }
+    public function followersCount(): int
+    {
+        return $this->followers()->count();
+    }
+    public function isFollowing(User $user): bool
+    {
+        return $this->following()->where('followee_id', $user->id)->exists();
+    }
+    public function isFollowedBy(User $user): bool
+    {
+        return $this->followers()->where('follower_id', $user->id)->exists();
+    }
+    public function follow(User $user): void
+    {
+        $this->following()->create([
+            'followee_id' => $user->id,
+        ]);
+    }
+    public function unfollow(User $user): void
+    {
+        $this->following()->where('followee_id', $user->id)->delete();
+    }
+    public function acceptFollowRequest(User $user): void
+    {
+        $this->followers()->where('follower_id', $user->id)->update([
+            'status' => FollowStatusEnum::Accepted,
+        ]);
+    }
+    public function declineFollowRequest(User $user): void
+    {
+        $this->followers()->where('follower_id', $user->id)->delete();
     }
 }

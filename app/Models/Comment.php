@@ -51,16 +51,16 @@ class Comment extends Model
         return $this->hasMany(Comment::class, 'parent_id');
     }
 
- // rections relationship
+    // rections relationship
     public function reactions(): MorphMany
     {
         return $this->morphMany(Reaction::class, 'reactable');
-    }   
-    
+    }
+
     public function getUserReaction()
     {
-        return auth()->check() 
-            ? $this->reactions()->where('user_id', auth()->id())->first() 
+        return auth()->check()
+            ? $this->reactions()->where('user_id', auth()->id())->first()
             : null;
     }
     /**
@@ -71,5 +71,18 @@ class Comment extends Model
         return $this->parent_id !== null;
     }
 
-   
+    protected static function booted()
+    {
+        static::created(function ($comment) {
+            if ($comment->post_id) {
+                Post::where('id', $comment->post_id)->increment('comments_count');
+            }
+        });
+
+        static::deleted(function ($comment) {
+            if ($comment->post_id) {
+                Post::where('id', $comment->post_id)->decrement('comments_count');
+            }
+        });
+    }
 }

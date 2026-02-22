@@ -53,11 +53,12 @@ class Conversations extends Model
             ? $this->user_two_id
             : $this->user_one_id;
     }
-    //scopeForUser
     public function scopeForUser($query, int $userId)
     {
-        return $query->where('user_one_id', $userId)
-            ->orWhere('user_two_id', $userId);
+        return $query->where(function ($q) use ($userId) {
+            $q->where('user_one_id', $userId)
+                ->orWhere('user_two_id', $userId);
+        });
     }
     public function getParticipants(): array
     {

@@ -11,6 +11,7 @@ use App\Http\Controllers\Web\NotificationController;
 use App\Http\Controllers\Web\ReactionController;
 use App\Http\Controllers\Web\SearchController;
 use App\Http\Controllers\Web\ChatController;
+use App\Http\Controllers\Web\FollowController;
 
 /*
 |--------------------------------------------------------------------------
@@ -79,6 +80,29 @@ Route::middleware('auth')->group(function () {
     Route::get('/friends', [PageController::class, 'friends'])->name('friends');
     Route::get('/settings', [PageController::class, 'settings'])->name('settings');
 
+    // -------------------------------------------------------------------------
+    // Follow routes
+    // -------------------------------------------------------------------------
+    // Hub page: followers / following / requests tabs
+    Route::get('/follows', [FollowController::class, 'index'])->name('follows.index');
+
+    // Per-user public lists
+    Route::get('/users/{userId}/followers', [FollowController::class, 'userFollowers'])->name('follows.followers');
+    Route::get('/users/{userId}/following', [FollowController::class, 'userFollowing'])->name('follows.following');
+
+    // Follow / Unfollow actions
+    Route::post('/follow/{userId}', [FollowController::class, 'follow'])->name('follow.follow');
+    Route::delete('/follow/{userId}', [FollowController::class, 'unfollow'])->name('follow.unfollow');
+
+    // Follow request management
+    Route::post('/follow-requests/{userId}/accept', [FollowController::class, 'acceptRequest'])->name('follow.accept');
+    Route::delete('/follow-requests/{userId}/decline', [FollowController::class, 'declineRequest'])->name('follow.decline');
+    Route::delete('/follow-requests/{userId}/cancel', [FollowController::class, 'cancelRequest'])->name('follow.cancel');
+
+    // Follow status (JSON endpoint for JS)
+    Route::get('/follow-status/{userId}', [FollowController::class, 'status'])->name('follow.status');
+
+    // -------------------------------------------------------------------------
     // Friendship actions
     Route::post('/friends/{friendship}/accept', [FriendController::class, 'accept'])->name('friends.accept');
     Route::post('/friends/{friendship}/reject', [FriendController::class, 'reject'])->name('friends.reject');

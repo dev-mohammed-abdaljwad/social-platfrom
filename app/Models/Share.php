@@ -31,4 +31,15 @@ class Share extends Model
     {
         return $this->belongsTo(Post::class);
     }
+
+    protected static function booted()
+    {
+        static::created(function ($share) {
+            Post::where('id', $share->post_id)->increment('shares_count');
+        });
+
+        static::deleted(function ($share) {
+            Post::where('id', $share->post_id)->decrement('shares_count');
+        });
+    }
 }

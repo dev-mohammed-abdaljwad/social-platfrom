@@ -31,4 +31,20 @@ class Reaction extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    protected static function booted()
+    {
+        static::created(function ($reaction) {
+            if ($reaction->reactable_type === Post::class) {
+                // Using morph relation to touch the post's counter
+                Post::where('id', $reaction->reactable_id)->increment('likes_count');
+            }
+        });
+
+        static::deleted(function ($reaction) {
+            if ($reaction->reactable_type === Post::class) {
+                Post::where('id', $reaction->reactable_id)->decrement('likes_count');
+            }
+        });
+    }
 }

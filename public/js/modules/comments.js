@@ -31,12 +31,12 @@ function createCommentHTML(comment) {
         .join('');
 
     return `
-        <div class="flex gap-3 comment-item" id="comment-${comment.id}">
+        <div class="flex gap-3 comment-item" id="comment-${comment.id}" data-comment-id="${comment.id}">
             <img src="${comment.user.avatar_url}"
                  alt="${comment.user.name}"
                  class="w-8 h-8 rounded-full object-cover">
 
-            <div class="flex-1">
+            <div class="flex-1 w-full">
 
                 <div class="bg-gray-100 rounded-2xl px-4 py-2">
                     <div class="flex items-center justify-between">
@@ -86,6 +86,13 @@ function createCommentHTML(comment) {
                         </div>
                     </div>
 
+                    <!-- Reply Button -->
+                    ${!comment.parent_id ? `
+                    <button class="text-xs text-gray-500 hover:text-gray-700 comment-reply-btn" data-comment-id="${comment.id}" data-user-name="${comment.user.name}">
+                        Reply
+                    </button>
+                    ` : ''}
+
                     ${
                         totalReactions > 0
                             ? `
@@ -97,6 +104,21 @@ function createCommentHTML(comment) {
                             : ''
                     }
                 </div>
+                
+                <!-- Replies Section -->
+                ${!comment.parent_id ? `
+                <div class="replies-section mt-2 ml-4 hidden" id="replies-${comment.id}">
+                    <div class="replies-list space-y-3" id="replies-list-${comment.id}">
+                        ${comment.replies && comment.replies.length > 0 ? comment.replies.map(r => createCommentHTML(r)).join('') : ''}
+                    </div>
+                </div>
+                <!-- View Replies Toggle -->
+                ${(comment.replies_count > 0 || (comment.replies && comment.replies.length > 0)) ? `
+                <button class="text-xs text-gray-500 hover:text-gray-700 font-medium mt-1 ml-2 toggle-replies-btn" data-comment-id="${comment.id}">
+                    Show Replies (${comment.replies_count || comment.replies.length})
+                </button>
+                ` : ''}
+                ` : ''}
             </div>
         </div>
     `;
@@ -164,8 +186,16 @@ document.addEventListener('submit', async function (e) {
     const postId = form.dataset.postId;
     const input = form.querySelector('input[name="content"]');
     const content = input.value.trim();
+    // Handle hidden input for parent_id
+    let parentIdInput = form.querySelector('input[name="parent_id"]');
+    const parentId = parentIdInput ? parentIdInput.value : null;
 
     if (!content) return;
+
+    const body = { content };
+    if (parentId) {
+        body.parent_id = parentId;
+    }
 
     const response = await fetch(`/posts/${postId}/comments`, {
         method: 'POST',
@@ -175,15 +205,42 @@ document.addEventListener('submit', async function (e) {
             'X-CSRF-TOKEN': document
                 .querySelector('meta[name="csrf-token"]').content
         },
-        body: JSON.stringify({ content })
+        body: JSON.stringify(body)
     });
 
     const data = await response.json();
 
     if (data.success) {
         input.value = '';
-        const list = document.getElementById(`comments-list-${postId}`);
-        list.insertAdjacentHTML('afterbegin', createCommentHTML(data.comment));
+        if (parentIdInput) {
+            parentIdInput.value = '';
+            input.placeholder = 'Write a comment...';
+        }
+        
+        let replyToBadge = form.querySelector('.reply-to-badge');
+        if (replyToBadge) {
+            replyToBadge.remove();
+        }
+
+        if (parentId) {
+            // Append reply
+            const replyList = document.getElementById(`replies-list-${parentId}`);
+            if (replyList) {
+                replyList.insertAdjacentHTML('beforeend', createCommentHTML(data.comment));
+                
+                // Show replies section if it was hidden
+                const repliesSection = document.getElementById(`replies-${parentId}`);
+                if (repliesSection) {
+                    repliesSection.classList.remove('hidden');
+                }
+            }
+        } else {
+            // Append root comment
+            const list = document.getElementById(`comments-list-${postId}`);
+            if (list) {
+                list.insertAdjacentHTML('afterbegin', createCommentHTML(data.comment));
+            }
+        }
     }
 });
 
@@ -273,4 +330,98 @@ document.addEventListener('click', function (e) {
             .forEach(p => p.classList.add('hidden'));
     }
 
+});
+
+/* =========================
+   Reply to Comment
+========================= */
+document.addEventListener('click', function (e) {
+    const replyBtn = e.target.closest('.comment-reply-btn');
+    if (!replyBtn) return;
+
+    const commentId = replyBtn.dataset.commentId;
+    const userName = replyBtn.dataset.userName;
+    
+    // Find the closest comment form (it's in the same post container)
+    const postContainer = replyBtn.closest('.comments-section');
+    if (!postContainer) return;
+    
+    const form = postContainer.querySelector('.comment-form');
+    if (!form) return;
+
+    const parentIdInput = form.querySelector('input[name="parent_id"]');
+    const contentInput = form.querySelector('input[name="content"]');
+    
+    if (parentIdInput && contentInput) {
+        parentIdInput.value = commentId;
+        contentInput.placeholder = `Replying to ${userName}...`;
+        contentInput.focus();
+        
+        // Add a visual indicator that we are replying
+        let replyBadge = form.querySelector('.reply-to-badge');
+        if (!replyBadge) {
+            replyBadge = document.createElement('div');
+            replyBadge.className = 'reply-to-badge absolute -top-6 left-2 text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full flex items-center gap-1 z-10';
+            replyBadge.innerHTML = `
+                <span>Replying to <strong>${userName}</strong></span>
+                <button type="button" class="cancel-reply hover:text-red-500 ml-1 rounded-full p-0.5" title="Cancel reply">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            `;
+            form.querySelector('.input-wrapper').parentElement.appendChild(replyBadge);
+        } else {
+            replyBadge.querySelector('strong').textContent = userName;
+        }
+    }
+});
+
+/* =========================
+   Cancel Reply
+========================= */
+document.addEventListener('click', function (e) {
+    const cancelBtn = e.target.closest('.cancel-reply');
+    if (!cancelBtn) return;
+
+    const form = cancelBtn.closest('.comment-form');
+    if (!form) return;
+
+    const parentIdInput = form.querySelector('input[name="parent_id"]');
+    const contentInput = form.querySelector('input[name="content"]');
+    
+    if (parentIdInput && contentInput) {
+        parentIdInput.value = '';
+        contentInput.placeholder = 'Write a comment...';
+        
+        const replyBadge = form.querySelector('.reply-to-badge');
+        if (replyBadge) {
+            replyBadge.remove();
+        }
+    }
+});
+
+/* =========================
+   Toggle Replies View
+========================= */
+document.addEventListener('click', function(e) {
+    const toggleBtn = e.target.closest('.toggle-replies-btn');
+    if (!toggleBtn) return;
+    
+    const commentId = toggleBtn.dataset.commentId;
+    const repliesSection = document.getElementById(`replies-${commentId}`);
+    
+    if (repliesSection) {
+        if (repliesSection.classList.contains('hidden')) {
+            repliesSection.classList.remove('hidden');
+            const toggleText = toggleBtn.textContent;
+            toggleBtn.dataset.originalText = toggleText;
+            toggleBtn.textContent = 'Hide Replies';
+        } else {
+            repliesSection.classList.add('hidden');
+            if (toggleBtn.dataset.originalText) {
+                toggleBtn.textContent = toggleBtn.dataset.originalText;
+            } else {
+                toggleBtn.textContent = 'Show Replies';
+            }
+        }
+    }
 });

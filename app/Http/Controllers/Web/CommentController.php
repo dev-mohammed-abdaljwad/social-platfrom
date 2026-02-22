@@ -23,7 +23,7 @@ class CommentController extends Controller
             $post->id,
             auth()->user()
         );
-     
+
 
         return response()->json([
             'success' => true,
@@ -38,12 +38,14 @@ class CommentController extends Controller
     {
         $request->validate([
             'content' => 'required|string|max:500',
+            'parent_id' => 'nullable|exists:comments,id',
         ]);
 
         $comment = $this->commentService->createForPost(
             $post->id,
             auth()->id(),
-            $request->content
+            $request->content,
+            $request->parent_id
         );
 
         // Return formatted comment with reaction data

@@ -65,7 +65,10 @@ class EloquentPostRepository implements PostRepository
 
     public function getFeed(User $user, ?int $lastId = null, int $limit = 20)
     {
-        $friendIdsSubquery = Friendship::selectRaw('CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END', [$user->id])
+        $friendIdsSubquery = Friendship::selectRaw(
+            'CASE WHEN sender_id = ? THEN receiver_id ELSE sender_id END',
+            [$user->id]
+        )
             ->where('status', FriendshipStatusEnum::Accepted)
             ->where(function ($q) use ($user) {
                 $q->where('sender_id', $user->id)
@@ -75,7 +78,6 @@ class EloquentPostRepository implements PostRepository
         $query = $this->withListRelations(
             $this->model->where(function ($q) use ($user, $friendIdsSubquery) {
                 $q->where('user_id', $user->id)
-                    ->orWhere('privacy', PrivacyTypeEnum::Public)
                     ->orWhere(function ($q2) use ($friendIdsSubquery) {
                         $q2->whereIn('user_id', $friendIdsSubquery)
                             ->whereIn('privacy', [PrivacyTypeEnum::Public, PrivacyTypeEnum::Friends]);

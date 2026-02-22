@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Web;
 
 use App\Http\Controllers\Controller;
+use App\Services\Follow\FollowService;
 use App\Services\Friendship\FriendshipService;
 use App\Services\Post\PostService;
 use App\Services\User\UserService;
@@ -14,7 +15,9 @@ class PageController extends Controller
     public function __construct(
         protected PostService $postService,
         protected UserService $userService,
-        protected FriendshipService $friendshipService
+        protected FriendshipService $friendshipService,
+        protected FollowService $followService,
+        protected \App\Services\Feed\FeedService $feedService
     ) {}
 
     /**
@@ -22,7 +25,11 @@ class PageController extends Controller
      */
     public function home()
     {
-        $posts = $this->postService->getPublicPosts(10);
+        if (auth()->check()) {
+            $posts = $this->feedService->getSmartFeed(auth()->user(), 1, 10);
+        } else {
+            $posts = $this->postService->getPublicPosts(10);
+        }
 
         return view('home', compact('posts'));
     }
@@ -32,10 +39,20 @@ class PageController extends Controller
      */
     public function fetchPosts(Request $request): JsonResponse
     {
-        $lastId = $request->query('last_id');
         $limit = (int) $request->query('limit', 10);
+        $page = (int) $request->query('page', 1);
 
-        $posts = $this->postService->getPublicPosts($limit, $lastId);
+        if (auth()->check()) {
+            // Using Smart Feed which uses page numbers, not last_id cursor
+            $posts = $this->feedService->getSmartFeed(auth()->user(), $page, $limit);
+            $hasMore = $posts->count() === $limit;
+            $nextPage = $page + 1;
+        } else {
+            $lastId = $request->query('last_id');
+            $posts = $this->postService->getPublicPosts($limit, $lastId);
+            $hasMore = $posts->count() === $limit;
+            $nextPage = null;
+        }
 
         $postsHtml = '';
         foreach ($posts as $post) {
@@ -45,8 +62,9 @@ class PageController extends Controller
         return response()->json([
             'success' => true,
             'html' => $postsHtml,
-            'has_more' => $posts->count() === $limit,
+            'has_more' => $hasMore,
             'last_id' => $posts->last()?->id,
+            'next_page' => $nextPage,
         ]);
     }
 
@@ -61,16 +79,20 @@ class PageController extends Controller
             return redirect()->route('login');
         }
 
-        $posts = $this->postService->getUserPostsWithRelations($user);
-        $sharedPosts = $this->postService->getUserSharedPosts($user);
-        $friends = $this->friendshipService->getFriendsOf($user);
+        $posts          = $this->postService->getUserPostsWithRelations($user);
+        $sharedPosts    = $this->postService->getUserSharedPosts($user);
+        $friends        = $this->friendshipService->getFriendsOf($user);
+        $followersCount = $this->followService->getFollowers($user->id)->total();
+        $followingCount = $this->followService->getFollowing($user->id)->total();
 
         return view('profile', [
-            'user' => $user,
-            'posts' => $posts,
-            'sharedPosts' => $sharedPosts,
-            'friends' => $friends,
-            'isOwnProfile' => true,
+            'user'           => $user,
+            'posts'          => $posts,
+            'sharedPosts'    => $sharedPosts,
+            'friends'        => $friends,
+            'isOwnProfile'   => true,
+            'followersCount' => $followersCount,
+            'followingCount' => $followingCount,
         ]);
     }
 
@@ -79,33 +101,46 @@ class PageController extends Controller
      */
     public function showProfile(int $userId)
     {
-        $user = $this->userService->find($userId);
+        $user         = $this->userService->find($userId);
         $isOwnProfile = auth()->check() && auth()->id() === $user->id;
 
-        $posts = $this->postService->getUserPostsWithRelations($user, !$isOwnProfile);
+        $posts       = $this->postService->getUserPostsWithRelations($user, !$isOwnProfile);
         $sharedPosts = $this->postService->getUserSharedPosts($user);
-        $friends = $this->friendshipService->getFriendsOf($user);
+        $friends     = $this->friendshipService->getFriendsOf($user);
+
+        // Follower / following counts
+        $followersCount = $this->followService->getFollowers($user->id)->total();
+        $followingCount = $this->followService->getFollowing($user->id)->total();
 
         // Friendship status for non-own profiles
         $friendshipStatus = null;
-        $friendship = null;
+        $friendship       = null;
+
+        // Follow status for non-own profiles
+        $followStatus = 'none';
 
         if (auth()->check() && !$isOwnProfile) {
             $currentUser = auth()->user();
-            $result = $this->friendshipService->getProfileFriendshipStatus($currentUser, $user);
+
+            $result           = $this->friendshipService->getProfileFriendshipStatus($currentUser, $user);
             $friendshipStatus = $result['status'];
-            $friendship = $result['friendship'];
+            $friendship       = $result['friendship'];
+
+            $followData   = $this->followService->getStatus($currentUser, $user);
+            $followStatus = $followData['status']; // none | pending | accepted
         }
 
-        
         return view('profile', [
-            'user' => $user,
-            'posts' => $posts,
-            'sharedPosts' => $sharedPosts,
-            'friends' => $friends,
-            'isOwnProfile' => $isOwnProfile,
+            'user'             => $user,
+            'posts'            => $posts,
+            'sharedPosts'      => $sharedPosts,
+            'friends'          => $friends,
+            'isOwnProfile'     => $isOwnProfile,
             'friendshipStatus' => $friendshipStatus,
-            'friendship' => $friendship,
+            'friendship'       => $friendship,
+            'followStatus'     => $followStatus,
+            'followersCount'   => $followersCount,
+            'followingCount'   => $followingCount,
         ]);
     }
 

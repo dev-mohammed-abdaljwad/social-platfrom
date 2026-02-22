@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Notification;
 use App\Services\Chat\ChatService;
 use App\Services\Notification\NotificationService;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,7 +14,7 @@ class ChatController extends Controller
 {
     public function __construct(
         protected ChatService $chatService,
-              protected NotificationService $notificationService
+        protected NotificationService $notificationService
     ) {
         //
     }
@@ -39,35 +40,35 @@ class ChatController extends Controller
     {
         $user          = auth()->user();
         $conversations = $this->chatService->getUserConversations($user->id);
-        $page          = $request->integer('page', 1);
 
-        // Load messages (newest-first via paginator, reversed in blade)
-        $messages = $this->chatService->getConversationMessages(
-            $conversation,
-            $user->id,
-            30
-        );
-
-        // Mark as read silently
-        $this->chatService->markAsRead($conversation, $user->id);
-
-        // Find the other participant from the loaded conversations
+        // Authorization: ensure the user belongs to this conversation
         $conv = $conversations->firstWhere('id', $conversation);
         if (! $conv) {
             return redirect()->route('chat.index')->with('error', 'Conversation not found.');
         }
 
-        $otherUser = $conv->user_one_id == $user->id ? $conv->userTwo : $conv->userOne;
+        // Load messages (newest-first via paginator, reversed in blade)
+        try {
+            $messages = $this->chatService->getConversationMessages($conversation, $user->id, 30);
+        } catch (AuthorizationException) {
+            return redirect()->route('chat.index')->with('error', 'Unauthorized.');
+        }
 
+        // Mark as read silently
+        try {
+
+            $this->chatService->markAsRead($conversation, $user->id);
+        } catch (AuthorizationException) {
+            return redirect()->route('chat.index')->with('error', 'Unauthorized.');
+        }
         return view('chat.index', [
             'conversations'      => $conversations,
             'currentUserId'      => $user->id,
             'activeConversation' => $conversation,
             'messages'           => $messages,
-            'otherUser'          => $otherUser,
+            'otherUser'          => $conv->user_one_id == $user->id ? $conv->userTwo : $conv->userOne,
         ]);
     }
-
     /**
      * POST /chat/start — AJAX: get-or-create conversation.
      */
@@ -89,12 +90,17 @@ class ChatController extends Controller
      */
     public function getMessages(Request $request, int $conversation): JsonResponse
     {
-        $user     = auth()->user();
-        $paginator = $this->chatService->getConversationMessages(
-            $conversation,
-            $user->id,
-            $request->integer('per_page', 30)
-        );
+        $user = auth()->user();
+
+        try {
+            $paginator = $this->chatService->getConversationMessages(
+                $conversation,
+                $user->id,
+                $request->integer('per_page', 30)
+            );
+        } catch (AuthorizationException) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized.'], 403);
+        }
 
         $this->chatService->markAsRead($conversation, $user->id);
 
@@ -115,11 +121,18 @@ class ChatController extends Controller
         $request->validate(['body' => 'required|string|max:5000']);
 
         $user    = auth()->user();
-        $message = $this->chatService->sendMessage(
-            $conversation,
-            $user->id,
-            $request->string('body')
-        );
+        try {
+            $message = $this->chatService->sendMessage(
+                $conversation,
+                $user->id,
+                $request->string('body')
+            );
+        } catch (AuthorizationException) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized.',
+            ], 403);
+        }
         $this->notificationService->create(
             $message->conversation->user_one_id === $user->id ? $message->conversation->user_two_id : $message->conversation->user_one_id,
             $user->id,
@@ -141,7 +154,14 @@ class ChatController extends Controller
     public function markAsRead(Request $request, int $conversation): JsonResponse
     {
         $user  = auth()->user();
-        $count = $this->chatService->markAsRead($conversation, $user->id);
+        try {
+            $count = $this->chatService->markAsRead($conversation, $user->id);
+        } catch (AuthorizationException) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized.',
+            ], 403);
+        }
 
         return response()->json([
             'success' => true,
