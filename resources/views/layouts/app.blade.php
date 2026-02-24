@@ -889,8 +889,8 @@
         <!-- Pusher/Echo Real-time Notifications -->
         <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
         <script>
-                                                                            // Initialize Pusher for real-time notifications
-                                                                            const pusherKey = '{{ env("PUSHER_APP_KEY") }}';
+                                                                                // Initialize Pusher for real-time notifications
+                                                                                const pusherKey = '{{ env("PUSHER_APP_KEY") }}';
             const pusherCluster = '{{ env("PUSHER_APP_CLUSTER", "mt1") }}';
 
             if (pusherKey && pusherKey !== '') {
@@ -1016,20 +1016,20 @@
                 const toast = document.createElement('div');
                 toast.className = 'fixed bottom-4 right-4 bg-white rounded-lg shadow-xl border border-gray-200 p-4 max-w-sm z-50 animate-slide-in cursor-pointer hover:bg-gray-50 transition-colors';
                 toast.innerHTML = `
-                                                                                    <div class="flex items-start gap-3">
-                                                                                        <img src="${data.from_user.avatar_url}" alt="${data.from_user.name}" class="w-10 h-10 rounded-full object-cover">
-                                                                                        <div class="flex-1">
-                                                                                            <p class="font-medium text-gray-800">${data.from_user.name}</p>
-                                                                                            <p class="text-sm text-gray-600">${data.message}</p>
-                                                                                            <p class="text-xs text-blue-500 mt-1">Click to view</p>
+                                                                                        <div class="flex items-start gap-3">
+                                                                                            <img src="${data.from_user.avatar_url}" alt="${data.from_user.name}" class="w-10 h-10 rounded-full object-cover">
+                                                                                            <div class="flex-1">
+                                                                                                <p class="font-medium text-gray-800">${data.from_user.name}</p>
+                                                                                                <p class="text-sm text-gray-600">${data.message}</p>
+                                                                                                <p class="text-xs text-blue-500 mt-1">Click to view</p>
+                                                                                            </div>
+                                                                                            <button class="toast-close text-gray-400 hover:text-gray-600">
+                                                                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                                                                                </svg>
+                                                                                            </button>
                                                                                         </div>
-                                                                                        <button class="toast-close text-gray-400 hover:text-gray-600">
-                                                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                                                                            </svg>
-                                                                                        </button>
-                                                                                    </div>
-                                                                                `;
+                                                                                    `;
 
                 // Click to navigate to notification URL
                 toast.addEventListener('click', function (e) {
@@ -1160,56 +1160,56 @@
                 switch (status) {
                     case 'friends':
                         container.innerHTML = `
-                                                                                            <button onclick="removeFriend(${friendId})"
-                                                                                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors font-medium">
-                                                                                                Friends
-                                                                                            </button>
-                                                                                            <button onclick="sendMessage(${friendId})"
-                                                                                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                                                                                Message
-                                                                                            </button>       
-                                                                                        `
+                                                                                                <button onclick="removeFriend(${friendId})"
+                                                                                                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-red-50 hover:text-red-600 transition-colors font-medium">
+                                                                                                    Friends
+                                                                                                </button>
+                                                                                                <button onclick="sendMessage(${friendId})"
+                                                                                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                                                                                    Message
+                                                                                                </button>       
+                                                                                            `
                             ;
                         break;
 
                     case 'pending_sent':
                         container.innerHTML = `
-                                                                                            <button onclick="cancelFriendRequest(${friendshipId}, ${friendId})"
-                                                                                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
-                                                                                                Cancel Request
-                                                                                            </button>
-                                                                                            <button onclick="sendMessage(${friendId})"
-                                                                                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                                                                                Message
-                                                                                            </button>       
+                                                                                                <button onclick="cancelFriendRequest(${friendshipId}, ${friendId})"
+                                                                                                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium">
+                                                                                                    Cancel Request
+                                                                                                </button>
+                                                                                                <button onclick="sendMessage(${friendId})"
+                                                                                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                                                                                    Message
+                                                                                                </button>       
 
-                                                                                        `;
+                                                                                            `;
                         break;
 
                     case 'pending_received':
                         container.innerHTML = `
-                                                                                            <button onclick="acceptFriendRequest(${friendshipId}, ${friendId})"
-                                                                                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                                                                                Accept
-                                                                                            </button>
-                                                                                            <button onclick="rejectFriendRequest(${friendshipId}, ${friendId})"
-                                                                                                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium ml-2">
-                                                                                                Decline
-                                                                                            </button>
-                                                                                        `;
+                                                                                                <button onclick="acceptFriendRequest(${friendshipId}, ${friendId})"
+                                                                                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                                                                                    Accept
+                                                                                                </button>
+                                                                                                <button onclick="rejectFriendRequest(${friendshipId}, ${friendId})"
+                                                                                                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors font-medium ml-2">
+                                                                                                    Decline
+                                                                                                </button>
+                                                                                            `;
                         break;
 
                     default: // 'none'
                         container.innerHTML = `
-                                                                                            <button onclick="sendFriendRequest(${friendId})"
-                                                                                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                                                                                Add Friend
-                                                                                            </button>
-                                                                                            <button onclick="sendMessage(${friendId})"
-                                                                                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-                                                                                                Message
-                                                                                            </button>   
-                                                                                        `;
+                                                                                                <button onclick="sendFriendRequest(${friendId})"
+                                                                                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                                                                                    Add Friend
+                                                                                                </button>
+                                                                                                <button onclick="sendMessage(${friendId})"
+                                                                                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                                                                                                    Message
+                                                                                                </button>   
+                                                                                            `;
                 }
             }
 
@@ -1645,8 +1645,8 @@
                         .catch(() => { });
                 @endif
 
-                    /* ── 7. Listen on notification channel for message events & auto-open popup ── */
-                    if (typeof window.pusher !== 'undefined') {
+                        /* ── 7. Listen on notification channel for message events & auto-open popup ── */
+                        if (typeof window.pusher !== 'undefined') {
                     const userCh = window.pusher.channel('private-notifications.{{ auth()->id() }}');
                     if (userCh) {
                         // Chat badge update
@@ -1691,6 +1691,7 @@
         </script>
     @endauth
 
+    <script src="{{ asset('js/modules/mentions.js') }}"></script>
     @stack('scripts')
 </body>
 

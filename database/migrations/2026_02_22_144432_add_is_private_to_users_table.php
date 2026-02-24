@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::table('users', function (Blueprint $table) {
             // Private accounts require follow requests to be approved
             $table->boolean('is_private')->default(false)->after('is_active');
+            $table->index('username');
         });
     }
 

@@ -15,7 +15,6 @@ class PostController extends Controller
 {
     public function __construct(
         protected PostService $postService,
-    
         protected ShareService $shareService,
         protected NotificationService $notificationService
     ) {}
@@ -39,10 +38,6 @@ class PostController extends Controller
         return redirect()->back()->with('success', 'Post created!');
     }
 
-    /**
-     * Toggle like on a post.
-     */
-   
     /**
      * Share a post.
      */
@@ -90,11 +85,6 @@ class PostController extends Controller
 
         return redirect()->back()->with('success', $result['saved'] ? 'Post saved!' : 'Post unsaved!');
     }
-
-    /**
-     * Get likes for a post.
-     */
-    
 
     /**
      * Update a post.

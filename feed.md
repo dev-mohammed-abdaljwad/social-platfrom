@@ -1,9 +1,4 @@
-1	Smart Feed
-    Ranking logic
-    Time decay
-    Engagement scoring
-    Query optimization
-    Indexing
+
 
 
 2	Follow System

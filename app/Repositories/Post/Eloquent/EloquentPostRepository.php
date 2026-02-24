@@ -19,7 +19,10 @@ class EloquentPostRepository implements PostRepository
      */
     protected function withListRelations($query)
     {
-        $query = $query->with(['user'])->withCount(['reactions', 'comments', 'shares']);
+        $query = $query->with([
+            'user',
+            'mentions.mentionedUser:id,username,name,avatar'
+        ])->withCount(['reactions', 'comments', 'shares']);
 
         // Add user-specific interaction checks if authenticated
         if ($userId = Auth::id()) {
@@ -38,7 +41,7 @@ class EloquentPostRepository implements PostRepository
      */
     protected function withDetailRelations($query)
     {
-        return $query->with(['user', 'comments.user', 'reactions.user', 'shares.user'])
+        return $query->with(['user', 'mentions.mentionedUser', 'comments.user', 'reactions.user', 'shares.user'])
             ->withCount(['reactions', 'comments', 'shares']);
     }
 

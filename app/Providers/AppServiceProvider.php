@@ -23,6 +23,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureRateLimiting();
+
+        \Illuminate\Support\Facades\Blade::directive('mentions', function ($expression) {
+            return "<?php echo app(\App\Services\Mentions\MentionsService::class)->render(...{$expression}); ?>";
+        });
     }
 
     /**

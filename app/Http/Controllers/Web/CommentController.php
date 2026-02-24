@@ -7,11 +7,13 @@ use App\Models\Post;
 use App\Services\Comment\CommentService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Services\Notification\NotificationService;
 
 class CommentController extends Controller
 {
     public function __construct(
-        protected CommentService $commentService
+        protected CommentService $commentService,
+        protected NotificationService $notificationService
     ) {}
 
     /**
@@ -48,7 +50,32 @@ class CommentController extends Controller
             $request->parent_id
         );
 
-        // Return formatted comment with reaction data
+        // Notifications
+        $currentUser = auth()->user();
+
+        if ($request->parent_id) {
+            // It's a reply: notify the owner of the parent comment
+            $parentComment = $this->commentService->find($request->parent_id);
+            if ($parentComment && $parentComment->user_id !== $currentUser->id) {
+                $this->notificationService->commentReplied(
+                    $parentComment->user,
+                    $currentUser,
+                    $parentComment,
+                    $comment
+                );
+            }
+        } else {
+            // It's a top-level comment: notify the post owner
+            if ($post->user_id !== $currentUser->id) {
+                $this->notificationService->postCommented(
+                    $post->user,
+                    $currentUser,
+                    $post,
+                    $comment
+                );
+            }
+        }
+
         return response()->json([
             'success' => true,
             'comment' => $this->commentService->formatNewComment($comment, auth()->user()),

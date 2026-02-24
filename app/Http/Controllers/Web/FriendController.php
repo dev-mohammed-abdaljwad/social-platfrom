@@ -45,19 +45,15 @@ class FriendController extends Controller
             return redirect()->back()->with('error', $result['message']);
         }
 
-        // Send notification to the receiver
         $this->notificationService->friendRequest($receiver, $currentUser, $result['friendship']);
 
-        // Broadcast:
-        // - To the SENDER  → status becomes 'pending_sent'
-        // - To the RECEIVER → status becomes 'pending_received'
         $friendship = $result['friendship'];
         $fromUser   = $this->buildFromUser($currentUser);
 
         broadcast(new FriendRequestAccepted(
             $friendship->sender_id,
             $friendship->receiver_id,
-            'pending',      // raw status; JS will resolve per-user direction
+            'pending',
             $fromUser
         ));
 
@@ -87,7 +83,6 @@ class FriendController extends Controller
         $friendship = $result['friendship'];
         $fromUser   = $this->buildFromUser($currentUser);
 
-        // Notify original sender that their request was accepted
         $this->notificationService->friendAccepted(
             $friendship->sender,
             $currentUser,

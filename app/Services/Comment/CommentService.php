@@ -5,12 +5,14 @@ namespace App\Services\Comment;
 use App\Models\User;
 use App\Models\Comment;
 use App\Repositories\Comment\CommentRepository;
+use App\Services\Mentions\MentionsService;
 use Illuminate\Support\Facades\DB;
 
 class CommentService
 {
     public function __construct(
-        protected CommentRepository $repository
+        protected CommentRepository $repository,
+        protected MentionsService $mentionsService
     ) {}
 
     public function all()
@@ -40,27 +42,42 @@ class CommentService
 
     public function create(array $data)
     {
-        return $this->repository->create($data);
+        $comment = $this->repository->create($data);
+        if (!empty($data['content'])) {
+            $this->mentionsService->handleCreated($comment, $data['content'], $data['user_id'] ?? $comment->user_id);
+        }
+        return $comment;
     }
 
     public function update($model, array $data)
     {
-        return $this->repository->update($model, $data);
+        $comment = $this->repository->update($model, $data);
+        if (isset($data['content'])) {
+            $this->mentionsService->handleUpdated($comment, $data['content'], $comment->user_id);
+        }
+        return $comment;
     }
 
     public function delete($model)
     {
+        $this->mentionsService->handleDeleted($model);
         return $this->repository->delete($model);
     }
 
     public function createForPost($postId, $userId, string $content, $parentId = null)
     {
-        return $this->repository->create([
+        $comment = $this->repository->create([
             'post_id' => $postId,
             'user_id' => $userId,
             'content' => $content,
             'parent_id' => $parentId,
         ]);
+
+        if (!empty($content)) {
+            $this->mentionsService->handleCreated($comment, $content, $userId);
+        }
+
+        return $comment;
     }
 
     /**
@@ -77,7 +94,7 @@ class CommentService
     public function getCommentsForPost(int $postId, ?User $authUser = null): array
     {
         $comments = $this->findRootCommentsByPost($postId)
-            ->load('reactions', 'user'); // Load reactions and user data
+            ->loadMissing(['reactions', 'user', 'mentions.mentionedUser', 'replies.reactions', 'replies.user', 'replies.mentions.mentionedUser']);
 
         return $comments->map(function ($comment) use ($authUser) {
             return $this->formatComment($comment, $authUser);
@@ -97,23 +114,22 @@ class CommentService
         $reactionCounts = [];
 
         if ($authUser) {
-            $userReaction = $comment->reactions()
+            // Use already loaded collection to avoid N+1
+            $userReaction = $comment->reactions
                 ->where('user_id', $authUser->id)
                 ->first();
 
-            // Get all reaction counts grouped by type
-            $reactionCounts = $comment->reactions()
-                ->select('type', DB::raw('count(*) as count'))
+            // Use already loaded collection to count grouped by type
+            $reactionCounts = $comment->reactions
                 ->groupBy('type')
-                ->get()
-                ->pluck('count', 'type')
+                ->map(fn($group) => $group->count())
                 ->toArray();
         }
 
         return [
             'id' => $comment->id,
             'parent_id' => $comment->parent_id,
-            'content' => htmlspecialchars($comment->content),
+            'content' => $this->mentionsService->render($comment->content, $comment->mentions->pluck('mentionedUser')),
             'created_at' => $comment->created_at->diffForHumans(),
             'user' => [
                 'id' => $comment->user->id,
@@ -137,7 +153,11 @@ class CommentService
      */
     public function formatNewComment($comment, ?User $authUser = null): array
     {
-        $comment->load('user', 'reactions');
+        if ($authUser && $comment->user_id === $authUser->id) {
+            $comment->setRelation('user', $authUser);
+        }
+
+        $comment->loadMissing(['user', 'reactions', 'mentions.mentionedUser']);
 
         // New comment has no reactions yet
         $userReaction = null;
@@ -158,7 +178,7 @@ class CommentService
         return [
             'id' => $comment->id,
             'parent_id' => $comment->parent_id,
-            'content' => htmlspecialchars($comment->content),
+            'content' => $this->mentionsService->render($comment->content, $comment->mentions->pluck('mentionedUser')),
             'created_at' => $comment->created_at->diffForHumans(),
             'user' => [
                 'id' => $comment->user->id,

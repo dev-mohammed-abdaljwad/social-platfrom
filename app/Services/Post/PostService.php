@@ -5,13 +5,15 @@ namespace App\Services\Post;
 use App\Models\Post;
 use App\Models\User;
 use App\Repositories\Post\PostRepository;
+use App\Services\Mentions\MentionsService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
 class PostService
 {
     public function __construct(
-        protected PostRepository $repository
+        protected PostRepository $repository,
+        protected MentionsService $mentionsService
     ) {}
 
     public function all()
@@ -56,12 +58,16 @@ class PostService
 
     public function create(array $data)
     {
-        return $this->repository->create($data);
+        $post = $this->repository->create($data);
+        if (!empty($data['content'])) {
+            $this->mentionsService->handleCreated($post, $data['content'], $data['user_id'] ?? $post->user_id);
+        }
+        return $post;
     }
 
     public function createForUser(User $user, array $data)
     {
-        return $this->repository->create([
+        $post = $this->repository->create([
             'user_id' => $user->id,
             'content' => $data['content'],
             'image' => $data['image'] ?? null,
@@ -70,6 +76,10 @@ class PostService
             'privacy' => $data['privacy'] ?? 'public',
             'type' => $data['type'] ?? 'text',
         ]);
+        if (!empty($data['content'])) {
+            $this->mentionsService->handleCreated($post, $data['content'], $user->id);
+        }
+        return $post;
     }
 
     /**
@@ -92,7 +102,7 @@ class PostService
             $type = 'image';
         }
 
-        return $this->repository->create([
+        $post = $this->repository->create([
             'user_id' => $user->id,
             'content' => $data['content'] ?? null,
             'image' => $imagePath,
@@ -101,15 +111,24 @@ class PostService
             'privacy' => $data['privacy'] ?? 'public',
             'type' => $type,
         ]);
+        if (!empty($data['content'])) {
+            $this->mentionsService->handleCreated($post, $data['content'], $user->id);
+        }
+        return $post;
     }
 
     public function update($model, array $data)
     {
-        return $this->repository->update($model, $data);
+        $post = $this->repository->update($model, $data);
+        if (isset($data['content'])) {
+            $this->mentionsService->handleUpdated($post, $data['content'], $post->user_id);
+        }
+        return $post;
     }
 
     public function delete($model)
     {
+        $this->mentionsService->handleDeleted($model);
         return $this->repository->delete($model);
     }
 
@@ -125,7 +144,7 @@ class PostService
         if ($post->video) {
             Storage::disk('public')->delete($post->video);
         }
-
+        $this->mentionsService->handleDeleted($post);
         return $this->repository->delete($post);
     }
 
@@ -154,7 +173,7 @@ class PostService
     /**
      * Get formatted likes for a post.
      */
-   
+
 
     /**
      * Format a post for JSON response.

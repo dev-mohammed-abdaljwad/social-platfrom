@@ -15,6 +15,8 @@ use App\Repositories\Follow\Eloquent\EloquentFollowRepository;
 use App\Repositories\Follow\FollowRepository;
 use App\Repositories\Friendship\FriendshipRepository;
 use App\Repositories\Friendship\Eloquent\EloquentFriendshipRepository;
+use App\Repositories\Mentions\Eloquent\EloquentMentionsRepository;
+use App\Repositories\Mentions\MentionsRepository;
 use App\Repositories\Message\Eloquent\EloquentMessageRepository;
 use App\Repositories\Message\MessageRepository;
 use App\Repositories\Share\ShareRepository;
@@ -38,6 +40,7 @@ class RepositoryServiceProvider extends ServiceProvider
         ReactionRepository::class => EloquentReactionRepository::class,
         ChatRepository::class => EloquentChatRepository::class,
         FollowRepository::class => EloquentFollowRepository::class,
+        MentionsRepository::class => EloquentMentionsRepository::class
     ];
 
     /**

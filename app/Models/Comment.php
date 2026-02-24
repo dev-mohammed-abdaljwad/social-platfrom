@@ -57,11 +57,24 @@ class Comment extends Model
         return $this->morphMany(Reaction::class, 'reactable');
     }
 
+    public function mentions(): MorphMany
+    {
+        return $this->morphMany(Mentions::class, 'mentionable');
+    }
+
     public function getUserReaction()
     {
         return auth()->check()
             ? $this->reactions()->where('user_id', auth()->id())->first()
             : null;
+    }
+
+    /**
+     * Get all notifications for the comment.
+     */
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
     }
     /**
      * Check if the comment is a reply.
@@ -83,6 +96,10 @@ class Comment extends Model
             if ($comment->post_id) {
                 Post::where('id', $comment->post_id)->decrement('comments_count');
             }
+        });
+
+        static::deleting(function ($comment) {
+            $comment->notifications()->delete();
         });
     }
 }

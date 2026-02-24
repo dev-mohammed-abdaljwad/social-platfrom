@@ -21,7 +21,7 @@ class NewNotification implements ShouldBroadcastNow
      */
     public function __construct(Notification $notification)
     {
-        $this->notification = $notification->load('fromUser');
+        $this->notification = $notification->loadMissing('fromUser');
     }
 
     /**

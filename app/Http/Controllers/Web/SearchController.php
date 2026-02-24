@@ -98,4 +98,33 @@ class SearchController extends Controller
             'friendship_status' => $user->friendship_status ?? null,
         ];
     }
+    public function mentionSearch(Request $request)
+    {
+        $query = $request->get('q', '');
+
+        if (strlen($query) < 2) {
+            return response()->json(['users' => []]);
+        }
+
+        $currentUserId = auth()->id();
+        $users = $this->userService->search($query, 5);
+
+        // Filter out current user
+        if ($currentUserId) {
+            $users = $users->filter(fn($user) => $user->id !== $currentUserId);
+        }
+
+        // Add friendship status if authenticated
+        if (auth()->check()) {
+            $currentUser = auth()->user();
+            $users = $users->map(function ($user) use ($currentUser) {
+                $user->friendship_status = $this->friendshipService->getFriendshipStatus($currentUser, $user);
+                return $user;
+            });
+        }
+
+        return response()->json([
+            'users' => $users->values()->map(fn($user) => $this->formatUser($user)),
+        ]);
+    }
 }

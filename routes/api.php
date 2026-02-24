@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\CommentController;
 use App\Http\Controllers\Api\V1\FollowController;
 use App\Http\Controllers\Api\V1\FriendshipController;
 use App\Http\Controllers\Api\V1\ShareController;
+use App\Http\Controllers\Api\V1\MentionsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -141,5 +142,8 @@ Route::prefix('v1')->group(function () {
             // POST   /api/v1/chat/conversations/{conversation}/read           → mark as read
             Route::post('/conversations/{conversation}/read', [ChatController::class, 'markAsRead']);
         });
+
+        // Mentions route
+        Route::get('/mentions', [MentionsController::class, 'index']);
     });
 });

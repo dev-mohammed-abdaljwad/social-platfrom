@@ -36,12 +36,15 @@ class Notification extends Model
     /**
      * Notification types.
      */
-    const TYPE_FRIEND_REQUEST = 'friend_request';
-    const TYPE_FRIEND_ACCEPTED = 'friend_accepted';
-    const TYPE_LIKE = 'like';
-    const TYPE_COMMENT = 'comment';
-    const TYPE_REACTION = 'reaction';
-    const TYPE_MESSAGE = 'message';
+    public const TYPE_FRIEND_REQUEST = 'friend_request';
+    public const TYPE_FRIEND_ACCEPTED = 'friend_accepted';
+
+    public const TYPE_COMMENT = 'comment';
+    public const TYPE_REPLY = 'reply';
+    public const TYPE_REACTION = 'reaction';
+    public const TYPE_MESSAGE = 'message';
+    public const TYPE_MENTION_IN_POST = 'mention_in_post';
+    public const TYPE_MENTION_IN_COMMENT = 'mention_in_comment';
 
     /**
      * Get the recipient user.
@@ -109,8 +112,11 @@ class Notification extends Model
         $data = $this->data ?? [];
 
         return match ($this->type) {
-            self::TYPE_LIKE => isset($data['post_id']) ? '/?post=' . $data['post_id'] . '#likes' : '/',
-            self::TYPE_COMMENT => isset($data['post_id'])
+            self::TYPE_COMMENT, self::TYPE_REPLY => isset($data['post_id'])
+                ? '/?post=' . $data['post_id'] . (isset($data['comment_id']) ? '#comment-' . $data['comment_id'] : '')
+                : '/',
+            self::TYPE_MENTION_IN_POST => isset($data['post_id']) ? '/?post=' . $data['post_id'] : '/',
+            self::TYPE_MENTION_IN_COMMENT => isset($data['post_id'])
                 ? '/?post=' . $data['post_id'] . (isset($data['comment_id']) ? '#comment-' . $data['comment_id'] : '')
                 : '/',
             self::TYPE_FRIEND_REQUEST, self::TYPE_FRIEND_ACCEPTED => '/profile/' . $this->from_user_id,

@@ -36,8 +36,9 @@ class EloquentCommentRepository implements CommentRepository
             ->whereNull('parent_id')
             ->with([
                 'user',
+                'mentions.mentionedUser',
                 'replies' => function ($query) use ($userId) {
-                    $query->with('user')
+                    $query->with(['user', 'mentions.mentionedUser'])
                         ->withCount('reactions')
                         ->latest()
                         ->limit(3); // Only load first 3 replies, load more on demand
@@ -62,7 +63,7 @@ class EloquentCommentRepository implements CommentRepository
         $userId = Auth::id();
 
         $query = $this->model->where('parent_id', $commentId)
-            ->with('user')
+            ->with(['user', 'mentions.mentionedUser'])
             ->withCount('reactions')
             ->latest()
             ->limit($limit);

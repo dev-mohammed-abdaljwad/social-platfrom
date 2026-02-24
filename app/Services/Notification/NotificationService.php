@@ -14,13 +14,14 @@ class NotificationService
      */
     public function create(
         int $userId,
-        int $fromUserId,
+        User|int $fromUser,
         string $type,
         Model $notifiable,
         string $message,
         array $data = []
     ): Notification {
-        // Don't notify yourself
+        $fromUserId = $fromUser instanceof User ? $fromUser->id : $fromUser;
+
         if ($userId === $fromUserId) {
             return new Notification();
         }
@@ -35,7 +36,10 @@ class NotificationService
             'data' => $data,
         ]);
 
-        // Broadcast the notification in real-time
+        if ($fromUser instanceof User) {
+            $notification->setRelation('fromUser', $fromUser);
+        }
+
         broadcast(new NewNotification($notification))->toOthers();
 
         return $notification;
@@ -48,7 +52,7 @@ class NotificationService
     {
         return $this->create(
             $recipient->id,
-            $sender->id,
+            $sender,
             Notification::TYPE_FRIEND_REQUEST,
             $friendship,
             "{$sender->name} sent you a friend request",
@@ -63,7 +67,7 @@ class NotificationService
     {
         return $this->create(
             $recipient->id,
-            $accepter->id,
+            $accepter,
             Notification::TYPE_FRIEND_ACCEPTED,
             $friendship,
             "{$accepter->name} accepted your friend request",
@@ -71,33 +75,57 @@ class NotificationService
         );
     }
 
-    /**
-     * Create a like notification.
-     */
-    public function postLiked(User $postOwner, User $liker, Model $post, Model $like): Notification
-    {
-        return $this->create(
-            $postOwner->id,
-            $liker->id,
-            Notification::TYPE_LIKE,
-            $post,
-            "{$liker->name} liked your post",
-            ['post_id' => $post->id, 'like_id' => $like->id]
-        );
-    }
-
-    /**
-     * Create a comment notification.
-     */
     public function postCommented(User $postOwner, User $commenter, Model $post, Model $comment): Notification
     {
         return $this->create(
             $postOwner->id,
-            $commenter->id,
+            $commenter,
             Notification::TYPE_COMMENT,
             $post,
             "{$commenter->name} commented on your post",
             ['post_id' => $post->id, 'comment_id' => $comment->id, 'comment_preview' => substr($comment->content, 0, 100)]
+        );
+    }
+
+    public function commentReplied(User $commentOwner, User $replier, Model $comment, Model $reply): Notification
+    {
+        return $this->create(
+            $commentOwner->id,
+            $replier,
+            Notification::TYPE_REPLY,
+            $comment,
+            "{$replier->name} replied to your comment",
+            ['post_id' => $comment->post_id, 'comment_id' => $reply->id, 'parent_id' => $comment->id, 'comment_preview' => substr($reply->content, 0, 100)]
+        );
+    }
+
+    /**
+     * Create a mention in post notification.
+     */
+    public function mentionedInPost(User $mentionedUser, User $mentioner, Model $post): Notification
+    {
+        return $this->create(
+            $mentionedUser->id,
+            $mentioner,
+            Notification::TYPE_MENTION_IN_POST,
+            $post,
+            "{$mentioner->name} mentioned you in a post",
+            ['post_id' => $post->id, 'post_preview' => substr($post->content ?? '', 0, 100)]
+        );
+    }
+
+    /**
+     * Create a mention in comment notification.
+     */
+    public function mentionedInComment(User $mentionedUser, User $mentioner, Model $comment): Notification
+    {
+        return $this->create(
+            $mentionedUser->id,
+            $mentioner,
+            Notification::TYPE_MENTION_IN_COMMENT,
+            $comment,
+            "{$mentioner->name} mentioned you in a comment",
+            ['post_id' => $comment->post_id, 'comment_id' => $comment->id, 'comment_preview' => substr($comment->content ?? '', 0, 100)]
         );
     }
 

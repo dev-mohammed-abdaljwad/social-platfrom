@@ -106,6 +106,10 @@ class User extends Authenticatable
     /**
      * Get all comments by the user.
      */
+    public function mentions(): HasMany
+    {
+        return $this->hasMany(Mentions::class, 'mentioned_user_id')->latest()->with('mentionable');
+    }
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);

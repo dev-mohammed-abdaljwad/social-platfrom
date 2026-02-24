@@ -195,4 +195,24 @@ class Post extends Model
     {
         return $this->morphMany(Reaction::class, 'reactable');
     }
+
+    public function mentions(): MorphMany
+    {
+        return $this->morphMany(Mentions::class, 'mentionable');
+    }
+
+    /**
+     * Get all notifications for the post.
+     */
+    public function notifications(): MorphMany
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
+
+    protected static function booted()
+    {
+        static::deleting(function ($post) {
+            $post->notifications()->delete();
+        });
+    }
 }
