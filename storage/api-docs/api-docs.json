@@ -404,6 +404,209 @@
                 ]
             }
         },
+        "/chat/conversations": {
+            "get": {
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "List conversations",
+                "description": "Get the authenticated user's conversations (inbox)",
+                "operationId": "35def0119540132fccfbe8d27d8f1995",
+                "responses": {
+                    "200": {
+                        "description": "List of conversations",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Start/Get conversation",
+                "description": "Start a new conversation or get existing one with another user",
+                "operationId": "f6e7966588e407cc0f92c38e9666db6e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "user_id"
+                                ],
+                                "properties": {
+                                    "user_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Conversation data"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/chat/conversations/{conversation}/messages": {
+            "get": {
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Get messages",
+                "description": "Get paginated messages for a conversation",
+                "operationId": "b09db792c3a55882017f482949920d24",
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of messages",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Send message",
+                "description": "Send a new message in a conversation",
+                "operationId": "f11dde23b5d152b55798fdff5f11d350",
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "content"
+                                ],
+                                "properties": {
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Hello!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Message sent"
+                    },
+                    "422": {
+                        "description": "Validation error"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/chat/conversations/{conversation}/read": {
+            "post": {
+                "tags": [
+                    "Chat"
+                ],
+                "summary": "Mark as read",
+                "description": "Mark all messages in a conversation as read",
+                "operationId": "d4a9ede32b4ed8a723c8debf895494ac",
+                "parameters": [
+                    {
+                        "name": "conversation",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Messages marked as read"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/posts/{postId}/comments": {
             "get": {
                 "tags": [
@@ -686,6 +889,208 @@
                                 }
                             }
                         }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/{userId}/follow": {
+            "post": {
+                "tags": [
+                    "Follows"
+                ],
+                "summary": "Follow user",
+                "description": "Follow another user or send a follow request",
+                "operationId": "033185c184a1a5ef4193d109eb2cbd42",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Follow successful"
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    },
+                    "404": {
+                        "description": "User not found"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Follows"
+                ],
+                "summary": "Unfollow user",
+                "description": "Unfollow a user",
+                "operationId": "43567042a49dba4d30059bbebe25a9e1",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Unfollowed successful"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/{userId}/followers": {
+            "get": {
+                "tags": [
+                    "Follows"
+                ],
+                "summary": "Get followers",
+                "description": "Get list of users following this user",
+                "operationId": "4922f373df6238bb7d9f3ccc1bf06eec",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of followers"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/users/{userId}/following": {
+            "get": {
+                "tags": [
+                    "Follows"
+                ],
+                "summary": "Get following",
+                "description": "Get list of users this user is following",
+                "operationId": "fc5726cb96ef11027f260929c217069e",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of following"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/follow-requests": {
+            "get": {
+                "tags": [
+                    "Follows"
+                ],
+                "summary": "List follow requests",
+                "description": "Get pending follow requests for the authenticated user",
+                "operationId": "838b10b11b4756eb9a60be30f4838122",
+                "responses": {
+                    "200": {
+                        "description": "List of follow requests"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/follow-requests/{userId}/accept": {
+            "post": {
+                "tags": [
+                    "Follows"
+                ],
+                "summary": "Accept follow request",
+                "operationId": "d546236f832b063407675cfada4ede7f",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Request accepted"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/follow-requests/{userId}/decline": {
+            "delete": {
+                "tags": [
+                    "Follows"
+                ],
+                "summary": "Decline follow request",
+                "operationId": "299a8a7758a6e4884c49a18b737c7a35",
+                "parameters": [
+                    {
+                        "name": "userId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Request declined"
                     }
                 },
                 "security": [
@@ -1177,6 +1582,55 @@
                 ]
             }
         },
+        "/mentions": {
+            "get": {
+                "tags": [
+                    "Mentions"
+                ],
+                "summary": "Search mentions",
+                "description": "Search for users to mention (@mentions)",
+                "operationId": "d5474968fd684ab645e80d747d8011a1",
+                "parameters": [
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "description": "Search query",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of users for mentions",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/posts/feed": {
             "get": {
                 "tags": [
@@ -1535,6 +1989,175 @@
                 ]
             }
         },
+        "/posts/{postId}/react": {
+            "post": {
+                "tags": [
+                    "Reactions"
+                ],
+                "summary": "React to post",
+                "description": "Add a reaction (like, love, haha, etc.) to a post. Sending the same type toggles it off.",
+                "operationId": "8e8543e7a55f72e210b18929835847f2",
+                "parameters": [
+                    {
+                        "name": "postId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "type"
+                                ],
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "like",
+                                            "love",
+                                            "haha",
+                                            "wow",
+                                            "sad",
+                                            "angry"
+                                        ],
+                                        "example": "like"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Reaction processed successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "action": {
+                                            "type": "string",
+                                            "enum": [
+                                                "added",
+                                                "removed"
+                                            ]
+                                        },
+                                        "counts": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/posts/{postId}/shares": {
+            "get": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "List shares for post",
+                "operationId": "18833726bcb92786055703b924b9aa8c",
+                "parameters": [
+                    {
+                        "name": "postId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of shares"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "Share post",
+                "operationId": "6b371e4960459e9db5523db29e19fa8f",
+                "parameters": [
+                    {
+                        "name": "postId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Check this out!"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Post shared"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/shares/my": {
+            "get": {
+                "tags": [
+                    "Posts"
+                ],
+                "summary": "List my shares",
+                "operationId": "e08b51f795f6ec3e7ac219d583c92922",
+                "responses": {
+                    "200": {
+                        "description": "List of my shares"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/users": {
             "get": {
                 "tags": [
@@ -1811,6 +2434,22 @@
         {
             "name": "Friendships",
             "description": "Friend requests and friendships"
+        },
+        {
+            "name": "Follows",
+            "description": "User following and follower management"
+        },
+        {
+            "name": "Chat",
+            "description": "Real-time messaging and conversations"
+        },
+        {
+            "name": "Mentions",
+            "description": "Manage and search user mentions"
+        },
+        {
+            "name": "Reactions",
+            "description": "Reactions"
         }
     ]
 }
