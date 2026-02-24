@@ -24,6 +24,8 @@ use OpenApi\Attributes as OA;
 #[OA\Tag(name: "Comments", description: "Comments on posts")]
 #[OA\Tag(name: "Likes", description: "Like posts and comments")]
 #[OA\Tag(name: "Friendships", description: "Friend requests and friendships")]
-class ApiInfo
-{
-}
+#[OA\Tag(name: "Follows", description: "User following and follower management")]
+#[OA\Tag(name: "Chat", description: "Real-time messaging and conversations")]
+#[OA\Tag(name: "Mentions", description: "Manage and search user mentions")]
+
+class ApiInfo {}

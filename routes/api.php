@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\FollowController;
 use App\Http\Controllers\Api\V1\FriendshipController;
 use App\Http\Controllers\Api\V1\ShareController;
 use App\Http\Controllers\Api\V1\MentionsController;
+use App\Http\Controllers\Api\V1\ReactionController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -89,6 +90,9 @@ Route::prefix('v1')->group(function () {
             // Post shares
             Route::get('/{postId}/shares', [ShareController::class, 'index']);
             Route::post('/{postId}/shares', [ShareController::class, 'store']);
+
+            // Post reactions
+            Route::post('/{postId}/react', [ReactionController::class, 'reactToPost']);
         });
 
         // Share routes
